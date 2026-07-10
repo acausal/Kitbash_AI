@@ -36,7 +36,7 @@
 | Socket | Interface | Status | Evidence / Notes |
 |---|---|---|---|
 | LearningObserver | `observe(query_id, query, ctx, result_summary) -> LearningReport` | **GREEN** | Built T3 (`learning_observer.py`, B1–B6 fixes) with TEST-learning_observer.py 7/7 PASS; wired into factory T4; injection ungated on mtr_engine presence T8. Single post-answer learning socket. |
-| MTR engine | `KitbashMTREngine.forward(tokens, state, target_layer, kappa)` + `get_epistemic_snapshot` (instance method) | YELLOW (green-pending) | v6.1 ran on real hardware via TEST-orchestrator_e2e.py (torch 2.13.0, 10/10 — `forward(tokens, state, kappa)` executed, learning_report populated). **But the dedicated `TEST-MTR_v6_1_contract.py` was NOT run this session** — per map rule the cell stays YELLOW until that suite's output exists. v6 in place = RED; do not deploy v6. |
+| MTR engine | `KitbashMTREngine.forward(tokens, state, target_layer, kappa)` + `get_epistemic_snapshot` (instance method) | **GREEN** | `TEST-MTR_v6_1_contract.py` executed on real hardware (torch 2.13.0): 10/10 PASS (2026-07-10). Fixed error_signal shape bug: `MTREbbinghausLayer` emitted `(batch, seq_len, 1, 1)`; corrected to `(batch, seq_len, 1)` (matches docstring + test). v6 in place = RED; do not deploy v6. |
 | Epistemic layer names | `MTR_v6_1.LAYER_NAMES` (single source of truth) | YELLOW | Consumers (`mtr_grain_bridge` weights dict) still on stale names until the one-line diff lands + contract test. |
 | GrainRouter.search_grains | `(concepts, recent) -> [(grain_id, score)]` | **RED (measured)** | Harness run 2026-07-07: MRR 0.131 ≈ random on query-conditioned task; `query_concepts` unused in scoring. Fix path: make score consult concepts, re-run harness, paste delta. If intent is "coarse filter only," rename/document the contract instead — either resolution flips this yellow. |
 | MTR↔Grain bridge | `MTRGrainUnifiedPipeline.process_mtr_query(...)` | RED | Soft-fail patterns (`dict.get` on layer names, bare `except: pass` in concept extraction); salience>0.3 gate calibrated to sigmoid regime. Fail-loud sweep target. |
@@ -86,14 +86,14 @@ The bus is a **socket factory**: future components attach here rather than requi
 | Ranking harness | `TEST-ranking_harness.py` Ranker protocol: `rank(query, candidates) -> permutation` | **GREEN** | Self-check executed passing 2026-07-07 (9/9); sealed boundary, anti-cheat, provenance log. The only green cell — that is the honest baseline. |
 | grain_router harness adapter | wired | GREEN | Executed against live read-only code; produced the RED measurement above. |
 | mtr_pipeline harness adapter | skeleton + wiring guide | PLANNED | Needs: ranked-fact call chain + ingestion route. **The MTR-vs-ablated pair is the money experiment.** |
-| MTR contract suite | `TEST-MTR_v6_1_contract.py` | YELLOW | Written, compile-checked, statically verified; awaiting first execution on hardware with torch. |
+| MTR contract suite | `TEST-MTR_v6_1_contract.py` | **GREEN** | Executed on real hardware (torch 2.13.0): 10/10 PASS (2026-07-10). Was YELLOW awaiting first hardware run; now run. |
 | Orchestrator contract suite | spec §5 | **GREEN** | Delivered as TEST-orchestrator_contract.py (23/23 PASS, T7) — the SPEC §5 8-point boundary contract — plus TEST-orchestrator_e2e.py (10/10 PASS, T8, real torch). Executed on real hardware. |
 
 ---
 
 ## Phase 5 Critical Path (the cells that define "yak shaved")
 
-In dependency order: **Query entry (GREEN) → LearningObserver (GREEN) → MTR v6.1 (execute suite — still YELLOW: dedicated TEST-MTR_v6_1_contract.py not yet run) → stream format spec (RED→) → RedisBlackboard wiring → grain registry format contract → Mutation 1 → L2 service (Mutation 2).** When every cell on this line is GREEN, refactoring is over and building resumes. Everything else on this map is backlog by definition — including things that are genuinely broken. That is the license to stop looking.
+In dependency order: **Query entry (GREEN) → LearningObserver (GREEN) → MTR v6.1 (GREEN: TEST-MTR_v6_1_contract.py 10/10 on hardware) → stream format spec (RED→) → RedisBlackboard wiring → grain registry format contract → Mutation 1 → L2 service (Mutation 2).** When every cell on this line is GREEN, refactoring is over and building resumes. Everything else on this map is backlog by definition — including things that are genuinely broken. That is the license to stop looking.
 
 ## Maintenance Rules
 

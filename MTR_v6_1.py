@@ -292,7 +292,7 @@ class MTREbbinghausLayer(nn.Module):
             # --- Output ---
             yt = vt_pred.transpose(-1, -2).reshape(batch, self.d_state)
             outputs.append(yt)
-            error_signals.append(error.norm(dim=(1, 2), keepdim=True))
+            error_signals.append(error.norm(dim=(1, 2), keepdim=True).squeeze(-1))
 
         # Stack, project back to embedding space
         output = torch.stack(outputs, dim=1)  # (batch, seq_len, d_state)
