@@ -94,12 +94,15 @@ class StubShannon:
 
 class RecordingObserver:
     """Mimics LearningObserver.observe() -> LearningReport-like object."""
-    def __init__(self):
+    def __init__(self, crystallization_interval=51):
         self.calls = 0
         self.last_summary = None
+        self.query_count = 0
+        self.crystallization_interval = crystallization_interval
 
     def observe(self, query_id, user_query, context, result_summary):
         self.calls += 1
+        self.query_count += 1
         self.last_summary = result_summary
         return types.SimpleNamespace(
             mtr_error=0.1, mtr_confidence=0.9, crystallization=None,
@@ -109,6 +112,10 @@ class RecordingObserver:
 
 class BrokenObserver:
     """Proves loud failure isolation: raises, must not crash answering."""
+    def __init__(self, crystallization_interval=51):
+        self.query_count = 0
+        self.crystallization_interval = crystallization_interval
+
     def observe(self, query_id, user_query, context, result_summary):
         raise RuntimeError("observer exploded")
 
