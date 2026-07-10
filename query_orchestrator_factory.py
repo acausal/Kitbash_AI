@@ -37,7 +37,12 @@ from mock_mamba_service import MockMambaService
 try:
     from cartridge_loader import CartridgeInferenceEngine
     from grain_router import GrainRouter
-    from MTR_v5_5_NN import KitbashMTREngine
+    # SPEC §6: MTR import swapped to MTR_v6_1 (the repo's shipping engine).
+    # Fall back to the legacy MTR_v5_5_NN name if a deployment still ships it.
+    try:
+        from MTR_v6_1 import KitbashMTREngine
+    except ImportError:
+        from MTR_v5_5_NN import KitbashMTREngine
     from grain_system import ShannonGrainOrchestrator
     from mtr_state_manager import MTRStateCheckpoint
     from mtr_grain_bridge import MTRGrainUnifiedPipeline, HatKappaMapper
@@ -136,7 +141,11 @@ def create_query_orchestrator(
         # torch is installed (T8) — a missing/absent checkpoint is fine.
         try:
             loaded = state_manager.load(device)
-            if loaded is not None:
+            # loaded == (mtr_state_dict, metadata) or None. Capture the state
+            # so it can be seeded into the LearningObserver after construction
+            # (SPEC Step 4: the counter must RESUME, not restart from 0).
+            loaded_mtr_state = loaded[0] if loaded else None
+            if loaded_mtr_state is not None:
                 logger.info("  ✓ MTR state resumed from checkpoint")
         except Exception:
             logger.debug("  (no prior MTR checkpoint to resume)")
@@ -272,11 +281,12 @@ def create_query_orchestrator(
         from query_orchestrator_posix import QueryOrchestrator as POSIXQueryOrchestrator
         
         # SPEC Step 3: build the LearningObserver from the SAME shared instances
-        # and inject it. Constructed only when grain system is available (it
-        # owns the MTR/grain learning path). Guarded: a missing component must
+        # and inject it. The observer's learning path needs MTR (always required
+        # by this factory), NOT grain — so it is built whenever mtr_engine exists,
+        # independent of enable_grain_system. Guarded: a missing component must
         # NOT prevent orchestrator creation — observer stays optional.
         learning_observer = None
-        if enable_grain_system and GRAIN_SYSTEM_AVAILABLE:
+        if mtr_engine is not None:
             try:
                 from learning_observer import LearningObserver
                 learning_observer = LearningObserver(
@@ -291,6 +301,14 @@ def create_query_orchestrator(
                 logger.info("  ✓ LearningObserver constructed and wired")
             except Exception as e:
                 logger.warning(f"  ⚠ Could not construct LearningObserver: {e}")
+
+        # SPEC Step 4: seed the resumed MTR state into the observer so the
+        # query/time counter continues from the checkpoint instead of 0.
+        if learning_observer is not None and loaded_mtr_state is not None:
+            try:
+                learning_observer.mtr_state = loaded_mtr_state
+            except Exception as e:
+                logger.warning(f"  ⚠ Could not seed observer MTR state: {e}")
 
         orchestrator = POSIXQueryOrchestrator(
             triage_agent=triage_agent,

@@ -204,7 +204,7 @@ class QueryOrchestrator:
         # PHASE 4: PAUSE background work
         if self.heartbeat:
             try:
-                self.heartbeat.pause(priority="query_exec")
+                self.heartbeat.pause()
                 self._metrics["heartbeat_pauses"] += 1
             except Exception as e:
                 logger.warning(f"Heartbeat pause failed: {e}")
@@ -434,8 +434,8 @@ class QueryOrchestrator:
         """Retrieve mamba context for query."""
         try:
             request = MambaContextRequest(
-                query=user_query,
-                context=context.get("mamba_context", {}),
+                user_id=context.get("user_id"),
+                session_id=context.get("session_id"),
             )
             return self.mamba_service.get_context(request)
         except Exception as e:
@@ -451,11 +451,11 @@ class QueryOrchestrator:
         """Get triage decision for layer sequence."""
         try:
             request = TriageRequest(
-                query=user_query,
+                user_query=user_query,
                 context=context,
-                query_id=query_id,
+                metadata={"query_id": query_id},
             )
-            return self.triage_agent.decide(request)
+            return self.triage_agent.route(request)
         except Exception as e:
             logger.warning(f"Triage decision failed: {e}")
             # Fallback: Try GRAIN only
@@ -480,11 +480,10 @@ class QueryOrchestrator:
 
         try:
             request = InferenceRequest(
-                query=user_query,
+                user_query=user_query,
                 context=context,
-                query_id=query_id,
             )
-            response = engine.infer(request)
+            response = engine.query(request)
             latency = (time.perf_counter() - attempt_start) * 1000
 
             passed = response.confidence >= threshold

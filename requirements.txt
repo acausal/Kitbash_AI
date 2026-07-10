@@ -1,0 +1,8 @@
+# Kitbash_AI — Python dependencies
+# Install into a local venv:  python -m venv .venv && source .venv/Scripts/activate && python -m pip install -r requirements.txt
+# (.venv/ is git-ignored; do not commit it.)
+
+torch      # MTR temporal-reasoning engine (CPU build: pip install torch --index-url https://download.pytorch.org/whl/cpu)
+numpy      # tensor<->numpy bridge used by torch/MTR
+redis      # Python client for the coupling-validation Redis server (server optional; only needed for T9-T13)
+requests   # used by bitnet_engine for the optional BitNet LLM server
