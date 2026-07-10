@@ -262,6 +262,27 @@ def create_query_orchestrator(
         # Import the POSIX version from uploaded file
         from query_orchestrator_posix import QueryOrchestrator as POSIXQueryOrchestrator
         
+        # SPEC Step 3: build the LearningObserver from the SAME shared instances
+        # and inject it. Constructed only when grain system is available (it
+        # owns the MTR/grain learning path). Guarded: a missing component must
+        # NOT prevent orchestrator creation — observer stays optional.
+        learning_observer = None
+        if enable_grain_system and GRAIN_SYSTEM_AVAILABLE:
+            try:
+                from learning_observer import LearningObserver
+                learning_observer = LearningObserver(
+                    mtr_engine=mtr_engine,
+                    state_manager=state_manager,
+                    cartridge_engine=cartridge_engine_phase3e,
+                    grain_router=grain_router,
+                    mtr_grain_pipeline=mtr_grain_pipeline,
+                    l2_service=None,  # L2WorkingTheoryService is read-only audit; optional
+                    dream_bucket_writer=dream_bucket_writer,
+                )
+                logger.info("  ✓ LearningObserver constructed and wired")
+            except Exception as e:
+                logger.warning(f"  ⚠ Could not construct LearningObserver: {e}")
+
         orchestrator = POSIXQueryOrchestrator(
             triage_agent=triage_agent,
             engines=engines,
@@ -272,6 +293,7 @@ def create_query_orchestrator(
             shannon=grain_orchestrator if enable_grain_system else None,
             diagnostic_feed=None,  # Phase 3B: no Redis yet
             redis_client=None,  # Phase 3B: no Redis yet
+            learning_observer=learning_observer,  # SPEC Step 3
         )
         
         logger.info(f"  ✓ QueryOrchestrator initialized with {len(engines)} engines")

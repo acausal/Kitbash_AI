@@ -32,6 +32,7 @@ from interfaces.mamba_context_service import MambaContextService, MambaContextRe
 from resonance_weights import ResonanceWeightService
 from heartbeat_service import HeartbeatService
 from metabolism_scheduler import MetabolismScheduler
+from learning_observer import LearningObserver
 
 # Phase 3B.3: Coupling Geometry Validation
 try:
@@ -59,6 +60,7 @@ class QueryResult:
     total_latency_ms: float
     resonance_pattern_recorded: bool
     coupling_deltas: List[Dict[str, Any]] = field(default_factory=list)  # Phase 3B.3
+    learning_report: Optional[dict] = None  # SPEC Step 3: LearningObserver output
 
 
 @dataclass
@@ -123,12 +125,14 @@ class QueryOrchestrator:
         shannon=None,
         diagnostic_feed=None,
         redis_client=None,  # Phase 3B.3: For coupling validation
+        learning_observer: Optional[LearningObserver] = None,  # SPEC Step 3
     ) -> None:
         self.triage_agent = triage_agent
         self.engines = engines
         self.mamba_service = mamba_service
         self.resonance = resonance
         self.shannon = shannon
+        self.learning_observer = learning_observer  # SPEC Step 3 (may be None)
 
         # Week 3 Metabolism components
         self.heartbeat = heartbeat or HeartbeatService(initial_turn=0)
@@ -266,9 +270,6 @@ class QueryOrchestrator:
                     )
                 pattern_recorded = True
 
-                if self.shannon:
-                    self._record_phantom_hit(winning_response, user_query)
-
                 self.feed.log_query_completed(query_id, engine_name, confidence, total_latency)
                 self._metrics["queries_answered"] += 1
             else:
@@ -281,6 +282,40 @@ class QueryOrchestrator:
             self._metrics["queries_total"] += 1
             self._metrics["triage_latencies_ms"].append(triage_latency)
             self._metrics["total_latencies_ms"].append(total_latency)
+
+            # SPEC Step 3: post-answer learning. Failure isolation with LOUD
+            # telemetry — learning must never break answering, but a dead
+            # observer must scream into the feed + logs every query (never a
+            # bare pass, which is how F1 stayed invisible).
+            learning_report = None
+            if self.learning_observer:
+                try:
+                    fact_ids = set()
+                    grain_ids = []
+                    if winning_response is not None:
+                        # InferenceResponse exposes fact_id / grain_id on metadata
+                        md = getattr(winning_response, "metadata", {}) or {}
+                        fid = md.get("fact_id")
+                        if fid is not None:
+                            fact_ids.add(fid)
+                        gid = md.get("grain_id") or md.get("grain_ids")
+                        if gid:
+                            grain_ids.extend(gid if isinstance(gid, list) else [gid])
+                    result_summary = {
+                        "answered": winning_response is not None
+                        and bool(getattr(winning_response, "answer", None)),
+                        "engine_name": engine_name,
+                        "confidence": confidence,
+                        "fact_ids": fact_ids,
+                        "grain_ids": grain_ids,
+                    }
+                    learning_report = self.learning_observer.observe(
+                        query_id, user_query, context, result_summary
+                    ).__dict__
+                except Exception as e:
+                    learning_report = {"error": str(e)}
+                    self.feed.log_error(query_id, "LEARNING_OBSERVER", str(e))
+                    logger.error(f"Learning observer failed: {e}")
 
             # Phase 3B.3: Collect coupling deltas
             coupling_deltas = []
@@ -301,6 +336,7 @@ class QueryOrchestrator:
                 total_latency_ms=total_latency,
                 resonance_pattern_recorded=pattern_recorded,
                 coupling_deltas=coupling_deltas,  # Phase 3B.3
+                learning_report=learning_report,  # SPEC Step 3
             )
 
         finally:
@@ -459,15 +495,3 @@ class QueryOrchestrator:
     def _hash_query(self, user_query: str) -> str:
         """Hash query for resonance pattern matching."""
         return hashlib.sha256(user_query.encode()).hexdigest()[:16]
-
-    def _record_phantom_hit(self, response: InferenceResponse, user_query: str) -> None:
-        """Record to Shannon grain orchestrator if available."""
-        if self.shannon:
-            try:
-                self.shannon.record_phantom_hit(
-                    query=user_query,
-                    engine=response.engine_name,
-                    confidence=response.confidence,
-                )
-            except Exception as e:
-                logger.debug(f"Shannon recording failed: {e}")
