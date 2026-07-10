@@ -317,6 +317,17 @@ class QueryOrchestrator:
                     self.feed.log_error(query_id, "LEARNING_OBSERVER", str(e))
                     logger.error(f"Learning observer failed: {e}")
 
+            # SPEC Step 4: periodic checkpointing — flush observer (learning)
+            # state every crystallization interval so learning survives restarts.
+            if (self.learning_observer
+                    and self.learning_observer.query_count > 0
+                    and self.learning_observer.query_count
+                    % self.learning_observer.crystallization_interval == 0):
+                try:
+                    self.learning_observer.save_state(session_id or "default")
+                except Exception as e:
+                    logger.debug(f"Periodic checkpoint failed: {e}")
+
             # Phase 3B.3: Collect coupling deltas
             coupling_deltas = []
             if self.coupling_validator:
@@ -355,6 +366,17 @@ class QueryOrchestrator:
                         
                 except Exception as e:
                     logger.warning(f"Turn advancement failed: {e}")
+
+    def close(self, session_id: str = "default") -> None:
+        """Shutdown hook (SPEC Step 4): flush observer (learning) state to disk.
+
+        Safe to call multiple times; no-ops when no observer is wired.
+        """
+        if self.learning_observer is not None:
+            try:
+                self.learning_observer.save_state(session_id)
+            except Exception as e:
+                logger.warning(f"Observer save on close failed: {e}")
 
     def get_metrics(self) -> Dict[str, Any]:
         """Return session-level performance metrics."""

@@ -131,6 +131,15 @@ def create_query_orchestrator(
     # State Manager
     try:
         state_manager = MTRStateCheckpoint(state_dir)
+        # SPEC Step 4: resume MTR state at build if a checkpoint exists.
+        # Guarded: load() deserializes torch tensors, so it is a no-op until
+        # torch is installed (T8) — a missing/absent checkpoint is fine.
+        try:
+            loaded = state_manager.load(device)
+            if loaded is not None:
+                logger.info("  ✓ MTR state resumed from checkpoint")
+        except Exception:
+            logger.debug("  (no prior MTR checkpoint to resume)")
         logger.info(f"  ✓ StateManager initialized")
     except Exception as e:
         logger.error(f"  ✗ Failed to initialize StateManager: {e}")
