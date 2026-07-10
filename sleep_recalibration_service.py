@@ -25,6 +25,20 @@ from typing import Dict, List, Optional, Any, Tuple
 from collections import defaultdict
 from datetime import datetime, timezone
 
+from dream_bucket import log_hypothesis
+
+# AXIOM_CONTRADICTION_THRESHOLD (SPEC_AXIOM_RECALIBRATION.md §2.2 / §4 Step 2):
+# an axiom grain is only FLAGGED (never silently decremented) when the MTR error
+# signal exceeds this. Set to 0.5 to REUSE MTR's existing high-error band
+# (MTR_v6_1.py: error_signal > 0.5 AND returned_confidence > 0.8 is the
+# "serious contradiction" marker) rather than inventing a new magic number.
+# Observations decrement on any signal above the 0.3 inclusion floor, so the
+# band 0.3-0.5 is where observations erode but axioms stay untouched (by design).
+AXIOM_CONTRADICTION_THRESHOLD = 0.5
+# Existing violation-inclusion floor (sleep_recalibration_service.py:254): a
+# violation is even considered for recalibration only above this.
+VIOLATION_INCLUSION_FLOOR = 0.3
+
 
 class RecalibrationService:
     """
@@ -92,7 +106,12 @@ class RecalibrationService:
     # CORE RECALIBRATION LOGIC
     # ========================================================================
     
-    def _apply_feedback(self, violations: List[Dict[str, Any]]) -> Tuple[int, int, float, Dict[str, Any]]:
+    def _apply_feedback(
+        self,
+        violations: List[Dict[str, Any]],
+        grain_router: Any = None,
+        db_writer: Any = None,
+    ) -> Tuple[int, int, float, Dict[str, Any]]:
         """
         Apply feedback from violations to grains and edges.
         
@@ -109,58 +128,108 @@ class RecalibrationService:
         Returns:
             (grains_updated_count, edges_updated_count, total_adjustment, edge_status)
         """
-        grains_updates = defaultdict(float)  # grain_id → penalty
-        edges_updates = defaultdict(float)   # edge_key → penalty
-        
-        # Extract feedback signals
+        grains_updates = defaultdict(float)  # fact_id → penalty (kept for total_adjustment)
+        edges_updates = defaultdict(float)   # edge_key → penalty (stopgap no-op)
+
+        # Extract feedback signals; resolve fact_id -> (max_error_signal, penalty)
+        # so a fact mapping to MULTIPLE grains (1:N) carries one consolidated signal.
+        facts: Dict[int, Tuple[float, float]] = {}
         for violation in violations:
             returned_confidence = violation.get('returned_confidence', 0.0)
             error_signal = violation.get('mtr_error_signal', 0.0)
             returned_id = violation.get('returned_fact_id')
-            
-            # Calculate penalty (confidence mismatch)
-            # High confidence + high error = large penalty
+            if returned_id is None:
+                continue
+
+            # Calculate penalty (confidence mismatch) — observation decrement magnitude
             penalty = min(error_signal * 0.15, 0.1)  # Cap at 0.1 per violation
-            
-            if penalty > 0.01 and returned_id:
-                # Grain penalty (via fact_id → grain mapping would be needed)
-                # For now, we record the penalty by fact_id
-                grains_updates[f"grain_from_fact_{returned_id}"] += penalty
-        
-        # Load and update grain index
-        grains_updated = self._update_grain_confidences(grains_updates)
-        
+
+            if returned_id not in facts:
+                facts[returned_id] = (error_signal, penalty)
+            else:
+                prev_sig, prev_pen = facts[returned_id]
+                facts[returned_id] = (max(prev_sig, error_signal), max(prev_pen, penalty))
+            grains_updates[returned_id] += penalty
+
+        # Load and update grain index (1:N write-back; see _update_grain_confidences)
+        grains_updated, axiom_flags = self._update_grain_confidences(facts, grain_router, db_writer)
+
         # Load and update edge index (stopgap: guarded no-op-and-report — see method docstring)
         edges_updated, edge_status = self._update_edge_weights(edges_updates, violations)
-        
+
         total_adjustment = sum(grains_updates.values()) + sum(edges_updates.values())
-        
+
+        # Stash axiom-flag events for introspection/tests (does not change return shape)
+        self.last_axiom_flags = axiom_flags
+
         return grains_updated, edges_updated, total_adjustment, edge_status
-    
-    def _update_grain_confidences(self, updates: Dict[str, float]) -> int:
-        """
-        Update grain confidences based on feedback.
-        
+
+    def _update_grain_confidences(
+        self,
+        facts: Dict[int, Tuple[float, float]],
+        grain_router: Any = None,
+        db_writer: Any = None,
+    ) -> Tuple[int, List[Dict[str, Any]]]:
+        """Apply fact->grain feedback with axiom/observation asymmetry (§2.2).
+
+        For each fact, resolves to EVERY grain it maps to via grain_router.grain_by_fact
+        (now Dict[int, List[str]] — 1:N, NOT just the first). For each grain:
+          - observation: decrement confidence on signal > VIOLATION_INCLUSION_FLOOR (0.3)
+          - axiom: FLAG via log_hypothesis(subtype="contradiction") only when signal >
+                   AXIOM_CONTRADICTION_THRESHOLD (0.5); never decrement at any lower signal.
+
         Args:
-            updates: Dict mapping grain_id → penalty amount
-        
+            facts: fact_id -> (max_error_signal, observation_penalty)
+            grain_router: GrainRouter with .grain_by_fact (1:N) and .grains (id->dict).
+                          If None, no mutation occurs (prior no-op preserved).
+            db_writer: DreamBucketWriter passed to log_hypothesis for axiom flags.
+
         Returns:
-            Count of grains actually updated
+            (count of grains actually updated, list of axiom-flag event dicts)
         """
         updated_count = 0
-        
-        # Note: Full implementation would require grain registry access
-        # For now, we log that recalibration would occur
-        for grain_id, penalty in updates.items():
-            if penalty > 0.0:
-                # In full implementation:
-                # grain = grain_registry.get(grain_id)
-                # if grain.confidence_mutable:
-                #     grain.confidence = max(0.0, grain.confidence - penalty)
-                #     grain_registry.save(grain)
-                updated_count += 1
-        
-        return updated_count
+        axiom_flags: List[Dict[str, Any]] = []
+
+        if grain_router is None:
+            # No registry/router wired: record would-be updates but don't mutate
+            # (matches prior guarded no-op; production wiring happens in Step 5).
+            return 0, axiom_flags
+
+        for fact_id, (error_signal, penalty) in facts.items():
+            grain_ids = grain_router.grain_by_fact.get(fact_id, [])
+            for gid in grain_ids:  # 1:N: apply to ALL grains this fact resolves to
+                grain = grain_router.grains.get(gid)
+                if grain is None:
+                    continue
+                gtype = grain.get('grain_type', 'observation')  # legacy grains default to observation
+                conf = float(grain.get('confidence', 0.0))
+                mutable = grain.get('confidence_mutable', True)
+
+                if gtype == 'axiom':
+                    if error_signal > AXIOM_CONTRADICTION_THRESHOLD:
+                        # Flag, do NOT decrement. A downstream sleep stage reconciles.
+                        if db_writer is not None:
+                            log_hypothesis(
+                                db_writer,
+                                hypothesis_subtype="contradiction",
+                                entities=[fact_id],
+                                hypothesis_text=(
+                                    f"Grain {gid} (axiom) contradicted by new evidence, "
+                                    f"signal={error_signal}"
+                                ),
+                                confidence=error_signal,
+                                evidence=[f"violation mtr_error_signal={error_signal}"],
+                                generated_by="recalibration_service",
+                            )
+                        axiom_flags.append({"grain_id": gid, "fact_id": fact_id, "signal": error_signal})
+                    # axioms below the contradiction threshold: NO change at all
+                else:
+                    # observation: decrement on any signal above the inclusion floor
+                    if error_signal > VIOLATION_INCLUSION_FLOOR and mutable and conf > 0.0:
+                        grain['confidence'] = max(0.0, conf - penalty)
+                        updated_count += 1
+
+        return updated_count, axiom_flags
     
     def _update_edge_weights(self, updates: Dict[str, float],
                              violations: List[Dict[str, Any]]) -> Tuple[int, Dict[str, Any]]:
