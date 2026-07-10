@@ -323,13 +323,30 @@ class GrainRouter:
         """
         if recent_grains is None:
             recent_grains = []
-        
+
+        # Concept overlap: keyword/token recall between query_concepts and the
+        # grain's text content. This is the query-conditioned signal the router
+        # previously ignored (search_grains scored query-independently). Grains
+        # with no "text" field (e.g. on-disk grains that carry only metadata)
+        # get overlap 0 and fall back to confidence-based ranking — no regression
+        # for the live path. Scoped to scoring logic only; no grain storage change.
+        query_tokens = set(tok.lower() for tok in query_concepts if tok)
+
         results = []
-        
+
         for grain_id, grain in self.grains.items():
             # Base score: confidence
             score = grain.get('confidence', 0.0)
-            
+
+            # Concept overlap boost (dominant, query-conditioned signal).
+            if query_tokens:
+                grain_text = grain.get('text', '') or ''
+                grain_tokens = set(tok.lower() for tok in grain_text.split() if tok)
+                if grain_tokens:
+                    matched = len(query_tokens & grain_tokens)
+                    recall = matched / len(query_tokens)
+                    score += 1.0 * recall  # concept coverage dominates the 0.5 confidence baseline
+
             # Bonus if grain has derivations
             delta = grain.get('delta', {})
             derivation_count = (
@@ -339,19 +356,19 @@ class GrainRouter:
             )
             if derivation_count > 0:
                 score += 0.05
-            
+
             # Phase 1: Graph boost (grain is adjacent to recent grains)
             for recent_gid in recent_grains:
                 if recent_gid in self.grain_graph.get(grain_id, set()):
                     score += 0.20  # Higher boost for grains (+0.20 vs cartridge +0.15)
                     break
-            
+
             # Phase 1.5: CTR boost (grains with high success rate)
             ctr_data = self.grain_ctr.get(grain_id, {})
             if ctr_data.get('selected', 0) > 5:  # Threshold for meaningful data
                 success_rate = ctr_data.get('good', 0) / ctr_data.get('selected', 1)
                 score += success_rate * 0.10  # Up to +0.10 boost
-            
+
             if score > 0:
                 results.append((grain_id, score))
         
