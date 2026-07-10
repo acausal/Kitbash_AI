@@ -1,5 +1,25 @@
 #!/usr/bin/env python3
+# ============================================================================
+# ARCHIVED — attic/phase3e_orchestrator.py
+# ============================================================================
+# Moved here 2026-07-10 as part of SPEC_ORCHESTRATOR_RECONCILIATION (Step 0 / T1).
+#
+# This is the LEGACY donor orchestrator. It is intentionally out of the import
+# path now. The live orchestration entry point is:
+#     query_orchestrator_factory.create_query_orchestrator()
+# which builds query_orchestrator_posix.QueryOrchestrator (+ the new
+# LearningObserver in Steps 2-4).
+#
+# DO NOT import from this file. The 10 phase3e importers that referenced it are
+# repointed to the factory in T6 (merged Step-0 acceptance + Step 5). Until then
+# those importers are expected to fail at import (tolerated, resolved by T6).
+#
+# This file is retained for reference / archaeology only.
+# ============================================================================
 """
+ARCHIVED MODULE — see header block above. Original docstring follows.
+
+
 Phase 3E Integration: MTR 5.5 + CartridgeLoader + GrainSystem
 
 Wires together:
