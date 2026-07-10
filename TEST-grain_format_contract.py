@@ -152,23 +152,20 @@ def main():
           idx_1n.get(10) == ["gA", "gB"],
           f"fact 10 should map to both gA and gB; got {idx_1n.get(10)}")
 
-    # Document current behavior: GrainRouter.grain_by_fact is 1:1 last-wins.
-    is_1to1 = getattr(gr.GrainRouter, "__init__", None) is not None
-    from typing import get_type_hints
-    try:
-        hints = get_type_hints(gr.GrainRouter.__init__)
-        ft_type = hints.get("grain_by_fact", str(gr.GrainRouter.__dict__.get("grain_by_fact", "n/a")))
-    except Exception:
-        ft_type = "unknown"
-    # Inspect the actual annotation if present on the class
+    # Document current behavior: GrainRouter.grain_by_fact must now be 1:N.
+    # Instance annotations aren't captured in class __annotations__, so verify the
+    # implemented assignment statically (the contract asserts the code is 1:N, not
+    # that a heavy GrainRouter() construction succeeds).
+    import inspect as _inspect
+    src = _inspect.getsource(gr.GrainRouter)
+    is_1n = "Dict[int, List[str]]" in src and ".append(grain_id)" in src
     ann = gr.GrainRouter.__annotations__.get("grain_by_fact", None) if hasattr(gr.GrainRouter, "__annotations__") else None
-    check("current GrainRouter.grain_by_fact is 1:1 (last-wins) — being changed to 1:N",
-          ann is None or "Dict[int, str]" in str(ann) or "Dict[int,List[str]]" in str(ann),
-          f"annotation={ann}")
-    print(f"  NOTE: GrainRouter.grain_by_fact annotation = {ann} "
-          f"-> Mutation 1 must change this to Dict[int, List[str]] and build from fact_ids.")
+    check("GrainRouter.grain_by_fact is now 1:N (Dict[int, List[str]])", is_1n,
+          f"annotation={ann}; expected 1:N assignment in __init__")
+    print(f"  NOTE: GrainRouter.grain_by_fact impl = 1:N (Dict[int, List[str]], .append accumulate) "
+          f"-> Mutation 1 changed this from 1:1 last-wins to 1:N, built from fact_ids.")
     global f3_resolved_1N
-    f3_resolved_1N = "1:N (accumulate) — confirmed: crystallizer stores fact_ids as a list; grains share facts."
+    f3_resolved_1N = "1:N (accumulate) — confirmed: crystallizer stores fact_ids as a list; grains share facts. Index flipped to Dict[int, List[str]]."
 
 
 def report():

@@ -60,7 +60,7 @@ class GrainRouter:
         
         # Indices (original functionality)
         self.grains: Dict[str, Dict[str, Any]] = {}  # grain_id -> grain data
-        self.grain_by_fact: Dict[int, str] = {}  # fact_id -> grain_id
+        self.grain_by_fact: Dict[int, List[str]] = defaultdict(list)  # fact_id -> [grain_ids] (1:N; facts map to many grains)
         self.grain_by_cartridge: Dict[str, List[str]] = defaultdict(list)  # cartridge -> [grain_ids]
         self.grain_by_confidence: List[tuple] = []  # [(confidence, grain_id), ...] sorted desc
         
@@ -131,11 +131,13 @@ class GrainRouter:
                     # Store grain
                     self.grains[grain_id] = grain
                     
-                    # Index by fact_id
-                    fact_id = grain.get('fact_id')
-                    if fact_id is not None:
-                        self.grain_by_fact[fact_id] = grain_id
-                    
+                    # Index by fact_id (1:N: a fact maps to many grains; accumulate)
+                    fact_ids = grain.get('fact_ids')
+                    if not fact_ids and grain.get('fact_id') is not None:
+                        fact_ids = [grain['fact_id']]
+                    for fid in (fact_ids or []):
+                        self.grain_by_fact[fid].append(grain_id)
+
                     # Index by cartridge (use source cartridge if available, else 'unknown')
                     cartridge_id = grain.get('cartridge_id', 'unknown')
                     self.grain_by_cartridge[cartridge_id].append(grain_id)
@@ -179,11 +181,13 @@ class GrainRouter:
                         # Store grain
                         self.grains[grain_id] = grain
                         
-                        # Index by fact_id
-                        fact_id = grain.get('fact_id')
-                        if fact_id is not None:
-                            self.grain_by_fact[fact_id] = grain_id
-                        
+                        # Index by fact_id (1:N: a fact maps to many grains; accumulate)
+                        fact_ids = grain.get('fact_ids')
+                        if not fact_ids and grain.get('fact_id') is not None:
+                            fact_ids = [grain['fact_id']]
+                        for fid in (fact_ids or []):
+                            self.grain_by_fact[fid].append(grain_id)
+
                         # Index by cartridge
                         self.grain_by_cartridge[cartridge_id].append(grain_id)
                         
@@ -292,11 +296,13 @@ class GrainRouter:
         Returns:
             Grain data if found, None otherwise
         """
-        grain_id = self.grain_by_fact.get(fact_id)
-        if grain_id:
-            return self.grains.get(grain_id)
+        grain_ids = self.grain_by_fact.get(fact_id)
+        if grain_ids:
+            # 1:N: a fact may map to multiple grains; return the first (callers needing
+            # all grains for a fact should iterate self.grain_by_fact[fact_id] directly).
+            return self.grains.get(grain_ids[0])
         return None
-    
+
     def lookup_by_grain_id(self, grain_id: str) -> Optional[Dict[str, Any]]:
         """
         Look up a grain by grain_id.

@@ -138,7 +138,8 @@ class GrainMetadata:
     # Axiom linkage
     axiom_ids: List[str] = field(default_factory=list)
     evidence_hash: str = ""           # SHA-256 of supporting observations
-    
+    fact_ids: List[int] = field(default_factory=list)  # facts this grain was crystallized from (F3 fact->grain lookup; many-to-many)
+
     # Quality metrics
     internal_hamming: float = 0.0     # Avg distance between cluster members
     weight_skew: float = 0.0          # Std dev / mean of weights
@@ -160,23 +161,29 @@ class GrainMetadata:
     bit_array_minus: bytes = b""      # Actual bit array for -1 weights
     
     def __post_init__(self):
-        """Validate grain type and confidence relationship"""
+        """Validate grain type and confidence relationship.
+
+        confidence == 0.0 is treated as UNSET/legacy (grains written before the
+        Phase 5A confidence field): axioms still require >=0.95 (never unset),
+        but observations may be unset (0.0) so legacy on-disk grains load without
+        tripping the band check. Nonzero out-of-band values are still rejected.
+        """
         if self.grain_type not in ("axiom", "observation"):
             raise ValueError(f"Invalid grain_type: {self.grain_type}. Must be 'axiom' or 'observation'.")
-        
+
         if self.grain_type == "axiom" and self.confidence < 0.95:
             raise ValueError(f"Axiom grain must have confidence >= 0.95, got {self.confidence}")
-        
-        if self.grain_type == "observation" and not (0.70 <= self.confidence < 0.95):
-            raise ValueError(f"Observation grain must have confidence in [0.70, 0.95), got {self.confidence}")
-        
+
+        if self.grain_type == "observation" and self.confidence != 0.0 and not (0.70 <= self.confidence < 0.95):
+            raise ValueError(f"Observation grain must have confidence in [0.70, 0.95) or be unset (0.0), got {self.confidence}")
+
         if self.grain_type == "axiom" and self.confidence_mutable:
             raise ValueError("Axiom grains must have confidence_mutable=False")
-        
+
         # Sync legacy avg_confidence with new confidence field
         if self.avg_confidence == 0.0 and self.confidence > 0.0:
             self.avg_confidence = self.confidence
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary with L1/L2 stratification info"""
         return {
@@ -195,6 +202,8 @@ class GrainMetadata:
                 "void": self.bits_void,
             },
             "axiom_ids": self.axiom_ids,
+            "fact_ids": list(self.fact_ids),
+            "evidence_hash": self.evidence_hash,
             "quality_metrics": {
                 "internal_hamming": round(self.internal_hamming, 3),
                 "weight_skew": round(self.weight_skew, 3),
@@ -205,7 +214,51 @@ class GrainMetadata:
             "epistemic_level": self.epistemic_level.name,
             "size_bytes": len(self.bit_array_plus) + len(self.bit_array_minus),
         }
-    
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "GrainMetadata":
+        """Reconstruct a GrainMetadata from to_dict() output.
+
+        Triggers __post_init__ validation on reload (axiom=>conf>=0.95,
+        observation=>0.70-0.95) so invariants hold on read, not only at
+        in-memory construction (Mutation 1 / SPEC_AXIOM_RECALIBRATION F3).
+        EpistemicLevel + GrainState are reconstructed from their .name/.value
+        string forms emitted by to_dict().
+        """
+        epistemic_level = d.get("epistemic_level")
+        if isinstance(epistemic_level, str):
+            epistemic_level = EpistemicLevel[epistemic_level]
+        state = d.get("state")
+        if isinstance(state, str):
+            state = GrainState(state)
+        return cls(
+            grain_id=d["grain_id"],
+            source_phantom_id=d.get("source_phantom_id", ""),
+            cartridge_id=d.get("cartridge_id", "default"),
+            grain_type=d.get("grain_type", "observation"),
+            confidence=float(d.get("confidence", 0.0)),
+            confidence_mutable=d.get("confidence_mutable", True),
+            num_bits=d.get("num_bits", 256),
+            bits_positive=d.get("weight_distribution", {}).get("positive", 0),
+            bits_negative=d.get("weight_distribution", {}).get("negative", 0),
+            bits_void=d.get("weight_distribution", {}).get("void", 0),
+            axiom_ids=list(d.get("axiom_ids", [])),
+            fact_ids=[int(f) for f in d.get("fact_ids", [])],
+            evidence_hash=d.get("evidence_hash", ""),
+            internal_hamming=d.get("quality_metrics", {}).get("internal_hamming", 0.0),
+            weight_skew=d.get("quality_metrics", {}).get("weight_skew", 0.0),
+            avg_confidence=d.get("quality_metrics", {}).get("avg_confidence", 0.0),
+            observation_count=d.get("quality_metrics", {}).get("observation_count", 0),
+            created_at=d.get("created_at", ""),
+            crystallized_at=d.get("crystallized_at", ""),
+            last_hit=d.get("last_hit"),
+            hit_count=d.get("hit_count", 0),
+            state=state if state is not None else GrainState.CANDIDATE,
+            epistemic_level=epistemic_level if epistemic_level is not None else EpistemicLevel.L2_AXIOMATIC,
+            bit_array_plus=d.get("bit_array_plus", b""),
+            bit_array_minus=d.get("bit_array_minus", b""),
+        )
+
     def size_mb(self) -> float:
         """Size in megabytes"""
         return (len(self.bit_array_plus) + len(self.bit_array_minus)) / (1024 * 1024)
