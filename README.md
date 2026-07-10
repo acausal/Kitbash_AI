@@ -1,0 +1,48 @@
+# Kitbash
+
+A local-first personal cognitive architecture built around a small language model, designed for continuous learning without catastrophic forgetting.
+
+This is a personal, long-running project, not a commercial product or a business tool. It is built primarily through LLM-assisted development by someone without a professional software background, and it is under active, sometimes messy, construction. The status section below is honest about what currently works and what doesn't.
+
+## What this is
+
+Kitbash treats the language model as a swappable generation component rather than as the seat of orchestration, memory, or routing. State tracking, long-term memory, contextual routing, and identity continuity are handled by deterministic, symbolic code around the model, not by the model itself. The design bet is that a disciplined, mostly symbolic memory and routing layer, paired with a small local model, can behave more consistently over time than a larger model operating without persistent structure around it.
+
+Everything runs locally by default. There are no required cloud services and no subscription dependency. An external, stronger model can optionally be called for specific high-value analytical work (code review, architecture audits), but this is gated behind explicit consent and is not part of the runtime loop.
+
+## How this differs from typical agent frameworks
+
+Most agent frameworks put the LLM in charge: it plans, calls tools, decides what to remember, and often decides how to route its own reasoning. Kitbash inverts that relationship in a few specific ways.
+
+**The model does not orchestrate itself.** Routing, memory writes, and layer selection are handled by separate, testable code. The model is called to generate text once the surrounding system has already decided what context it should see and why. This is a deliberate rejection of the assumption that scaling capability means scaling context windows, parameter counts, or how much responsibility gets handed to the model itself.
+
+**Learning is pushed to the cheapest layer that can hold it.** New information first tries to live in coarse structural relationships between stored knowledge units ("cartridges"). If a pattern proves stable, it gets crystallized during an offline consolidation pass. Only patterns that survive that process become candidates for small, targeted fine-tuning. Full retraining of the base model is treated as a near-last resort, not a routine operation. Most frameworks either skip persistent learning entirely (the model just gets a longer prompt) or default to fine-tuning as the first lever pulled.
+
+**Retrieval is deliberately two-stage and deliberately imprecise at the first stage.** A cheap, high-recall filter (allowing false positives on purpose) narrows a large knowledge base down to a candidate set. A separate, more expensive ranking stage than picks from that candidate set, or escalates to a full scan if it isn't confident. The false positives from the first stage are treated as useful signal about the shape of the knowledge base, not as noise to eliminate.
+
+**Knowledge mutation is separated from query execution in time, not just in code.** The knowledge structures are effectively read-only while a query is being answered. Learning, reweighting, and structural changes happen during a separate offline consolidation phase, modeled loosely on sleep-stage memory consolidation. This avoids a class of bugs common to frameworks that mutate shared state mid-conversation, and it makes the live query path easier to reason about and to keep fast.
+
+**Verification is structural, not narrative.** Components are tracked against a contract map showing which interfaces have an executed, passing test suite versus which are merely wired up and working by habit. A module is not considered done because it reads correctly or because a description of it sounds right; it is considered done when there is executed output proving the contract holds. This same standard is applied to the project owner's own judgment, not only to model output.
+
+**Anomalies are treated as information about the system, not just as errors to suppress.** When the system's internal predictions don't match outcomes, that mismatch is logged and used during consolidation to recalibrate confidence, rather than discarded or immediately corrected in-context.
+
+## Architecture, briefly
+
+- A six-layer knowledge stack, from hardwired facts and crystallized long-term knowledge at the bottom, up through working theory, immediate context, behavioral mode, and session-level state at the top. Lower layers change rarely; upper layers change per query or per session.
+- Knowledge units ("cartridges") indexed by topic, with hot/cold storage tiering.
+- A noisy, high-recall filtering layer ("grains") followed by a separate ranking and salience engine.
+- An append-only episodic log that overflow and working memory get written to during live use.
+- An offline, multi-stage consolidation pipeline that reads that log, extracts patterns, generates and tests hypotheses, and folds validated results back into the knowledge stack.
+- A shared-state coordination layer (Redis-backed) intended to let multiple components observe consistent system state without direct calls between them.
+
+## Status
+
+This is not a finished system. Several components described above are designed and partially implemented but not yet verified end to end; some are stubs. The project maintains an internal contract map tracking, per component, whether it has an executed passing test or is running on unverified assumptions, and treats that distinction as important rather than glossing over it. Anyone looking at this code should assume active development, not a stable release.
+
+## Influences
+
+Cyc, Complementary Learning Systems theory, ACT-R and SOAR style cognitive architectures, blackboard architectures (Hearsay-II lineage), and Lakoff and Johnson's work on image schemas.
+
+## License
+
+(add license here)
