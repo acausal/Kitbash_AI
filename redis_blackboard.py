@@ -44,7 +44,10 @@ SCHEMA_VERSIONS = {
 QUERY_TTL_SEC = 24 * 60 * 60        # queries:state, refreshed on every update
 HEALTH_TTL_SEC = 5 * 60             # health:<worker> (unchanged, already correct)
 METRIC_RETENTION_SEC = 7 * 24 * 60 * 60  # metrics ZSET rolling window
-
+# epistemic:<query_id> TTL — SPEC §4 does NOT pin an epistemic row. 24h chosen as a
+# placeholder consistent with queries:state (both are per-query transient state). FLAG:
+# confirm/replace when §4 is updated; this is a provisional value, not a ratified spec number.
+EPISTEMIC_TTL_SEC = 24 * 60 * 60
 
 class BusEnvelopeError(ValueError):
     """Raised when a bus value fails envelope/version validation (loud-reject)."""
@@ -259,6 +262,44 @@ class RedisBlackboard:
         pattern = f"{self.prefix}grains:*"
         return len(self.redis.keys(pattern))
 
+    # Epistemic snapshot (SPEC §3.8) — MTR persists its epistemic summary to the bus.
+
+    def store_epistemic_snapshot(
+        self,
+        query_id: str,
+        snapshot: Dict[str, Any],
+        layer_names: Optional[List[str]] = None,
+        kappa: float = 1.0,
+        mtr_state_time: int = 0,
+        producer: str = "mtr",
+    ) -> None:
+        """
+        Persist an epistemic snapshot for a query to `kitbash:epistemic:<query_id>`.
+
+        `snapshot` is either:
+          - a raw router output: Dict[layer_name] -> (representation, salience) tensor tuple
+            (as returned by KitbashMTREngine.get_epistemic_snapshot), which we FLATTEN to
+            salience floats (vectors never cross the bus, per §3.8); or
+          - an already-flattened dict with a `salience` mapping (passed through).
+
+        Layer names MUST come from MTR_v6_1.LAYER_NAMES (single source of truth) — callers
+        must not hardcode them. If omitted, we require the flattened form to already carry
+        `layer_names`/`salience`.
+        """
+        flat = flatten_epistemic_snapshot(
+            snapshot, query_id=query_id, layer_names=layer_names,
+            kappa=kappa, mtr_state_time=mtr_state_time,
+        )
+        key = f"{self.prefix}epistemic:{query_id}"
+        self.redis.set(key, _wrap("epistemic_snapshot", producer, flat), ex=EPISTEMIC_TTL_SEC)
+
+    def get_epistemic_snapshot(self, query_id: str) -> Optional[Dict[str, Any]]:
+        """Read an epistemic snapshot for a query, or None if absent. Envelope-unwrapped."""
+        key = f"{self.prefix}epistemic:{query_id}"
+        raw = self.redis.get(key)
+        return _unwrap(raw, "epistemic_snapshot")
+
+
     # Diagnostic Event Logging
 
     def log_diagnostic_event(
@@ -445,6 +486,49 @@ class RedisBlackboard:
         """Close Redis connection."""
         self.redis.close()
         logger.info("Redis connection closed")
+
+
+def flatten_epistemic_snapshot(
+    snapshot: Dict[str, Any],
+    query_id: str,
+    layer_names: Optional[List[str]] = None,
+    kappa: float = 1.0,
+    mtr_state_time: int = 0,
+) -> Dict[str, Any]:
+    """
+    Flatten a raw MTR epistemic snapshot (Dict[layer] -> (representation, salience)) into the
+    on-the-wire `epistemic_snapshot@1` payload (§3.8): layer_names + salience floats only.
+    Vectors stay in-process; only the epistemic summary crosses the bus.
+
+    If `snapshot` already has a `salience` mapping (pre-flattened), it is normalized/passed
+    through and `layer_names` is taken from the snapshot or the caller.
+
+    Raises ValueError if a layer's salience cannot be coerced to a float (loud, not silent).
+    """
+    if "salience" in snapshot:
+        salience = {k: float(v) for k, v in snapshot["salience"].items()}
+        names = list(salience.keys()) if layer_names is None else list(layer_names)
+    else:
+        names = list(layer_names) if layer_names is not None else list(snapshot.keys())
+        salience = {}
+        for layer in names:
+            if layer not in snapshot:
+                raise ValueError(f"layer {layer!r} missing from snapshot")
+            entry = snapshot[layer]
+            # router returns (representation, salience); salience is the 2nd element
+            sal = entry[1] if isinstance(entry, (tuple, list)) else entry
+            try:
+                salience[layer] = float(sal)
+            except (TypeError, ValueError) as e:
+                raise ValueError(f"layer {layer!r} salience not coercible to float: {sal!r}") from e
+
+    return {
+        "query_id": query_id,
+        "layer_names": names,
+        "salience": salience,
+        "kappa": float(kappa),
+        "mtr_state_time": int(mtr_state_time),
+    }
 
 
 if __name__ == "__main__":

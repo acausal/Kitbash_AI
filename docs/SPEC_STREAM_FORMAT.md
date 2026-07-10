@@ -136,6 +136,7 @@ Layer names are sourced from the single-source-of-truth `MTR_v6_1.LAYER_NAMES` (
 | `health:<worker>` | 300s | none — absence = dead |
 | `metrics:<name>` | 7d rolling (ZREMRANGEBYSCORE on write) | roll up to daily aggregate before prune |
 | `coupling:<id>:deltas` | 24h (matches Lua `EXPIRE` at redis_coupling.py:151) | none |
+| `epistemic:<query_id>` | 24h (PROVISIONAL — §4 does not pin an epistemic row; chosen consistent with `queries:state` as both are per-query transient state. Confirm/replace before RATIFY. See `EPISTEMIC_TTL_SEC` in redis_blackboard.py.) | none |
 
 `queries:state` gaining a 24h TTL replaces the manual `cleanup_old_queries(hours=24)` — same window, now automatic and refreshed on every `update_query_status`.
 
@@ -151,10 +152,10 @@ Layer names are sourced from the single-source-of-truth `MTR_v6_1.LAYER_NAMES` (
 
 ## 6. DONE WHEN (this spec's exit criteria → flips the socket GREEN)
 
-1. `redis_blackboard.py` wraps/unwraps the §1 envelope on every read/write; unknown `v`/`schema` loud-rejects.
-2. `redis_coupling.py` writes `kitbash:coupling:<id>:deltas` (GAP-1), envelope-wrapped, with legacy dual-read.
-3. TTLs from §4 applied at write sites.
-4. A contract test (`TEST-bus_stream_format.py`) runs against `fakeredis`: for every payload in §2, round-trips value → envelope → value, asserts version gating (a v2 value is rejected by a v1 consumer), and asserts every produced key is under `kitbash:`.
-5. This file moves from DRAFT to RATIFIED; SOCKET_MAP "Intentional data stream format" cell → GREEN.
+1. ✅ `redis_blackboard.py` wraps/unwraps the §1 envelope on every read/write; unknown `v`/`schema` loud-rejects.
+2. ✅ `redis_coupling.py` writes `kitbash:coupling:<id>:deltas` (GAP-1), envelope-wrapped, with legacy dual-read.
+3. ✅ TTLs from §4 applied at write sites (query 24h, health 5m, metrics 7d, coupling 24h, epistemic 24h provisional).
+4. ✅ Contract test `TEST-bus_stream_format.py` runs (fakeredis for blackboard payloads + live Redis for the coupling Lua `evalsha` path, which fakeredis cannot execute): round-trips every §2 payload value → envelope → value, asserts version-gating (future v / future payload v / wrong name all loud-reject), and asserts every key is under `kitbash:`. `epistemic_snapshot@1` (§3.8) writer implemented + covered.
+5. **This file moves from DRAFT to RATIFIED; SOCKET_MAP "Intentional data stream format" cell → GREEN** — pending the epistemic-TTL confirmation above and a one-line SOCKET_MAP update. All code + tests are in place; the remaining action is the doc-state flip, not more engineering.
 
 Until #1–#5 land, the cell is YELLOW (specified, not wired) — up from RED (unspecified).
