@@ -75,6 +75,7 @@ Build the document store: chunked content, stable addressable chunk IDs, SQLite 
 **Step 2 — Fixed tool surface.**
 Implement the four tools from §2.2 as callable functions/methods against the Step 1 storage.
 *Acceptance:* unit tests for each tool in isolation (stub or real storage), all passing, output pasted.
+*Done 2026-07-10:* `document_tools.py` wraps `DocumentStore` with `search`/`get_chunk`/`list_chunks`/`grep` (TEST-document_tools.py 8/8 PASS). `trace_fn` seam provided for Step 7 (fires on every get_chunk pull, not implemented yet). Recursion-guard knobs (`max_depth`/`max_sub_calls`) exposed as PLACEHOLDERS (depth=1, sub_calls=4) — Step 4 sets real values from large-model trajectory data. No Redis dep, no embeddings.
 
 **Step 3 — Large-model validation, both variants (§3, steps 2–4).**
 Wire the fixed tool surface AND a free-form code-generation variant against a larger model. Run both on realistic multi-chunk documents requiring at least one recursive sub-call to answer correctly. Report success/failure per variant with example transcripts, not just pass/fail counts.
