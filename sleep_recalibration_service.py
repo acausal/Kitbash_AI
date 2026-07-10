@@ -24,7 +24,6 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
 from collections import defaultdict
 from datetime import datetime, timezone
-import statistics
 
 
 class RecalibrationService:
@@ -63,6 +62,7 @@ class RecalibrationService:
             'grains_updated': 0,
             'edges_updated': 0,
             'total_confidence_adjustment': 0.0,
+            'edge_recalibration_status': None,
             'error': None,
         }
         
@@ -75,11 +75,12 @@ class RecalibrationService:
                 return report
             
             # Load grain and edge indices
-            grains_updated, edges_updated, total_adjustment = self._apply_feedback(violations)
+            grains_updated, edges_updated, total_adjustment, edge_status = self._apply_feedback(violations)
             
             report['grains_updated'] = grains_updated
             report['edges_updated'] = edges_updated
             report['total_confidence_adjustment'] = total_adjustment
+            report['edge_recalibration_status'] = edge_status
         
         except Exception as e:
             report['error'] = str(e)
@@ -91,7 +92,7 @@ class RecalibrationService:
     # CORE RECALIBRATION LOGIC
     # ========================================================================
     
-    def _apply_feedback(self, violations: List[Dict[str, Any]]) -> Tuple[int, int, float]:
+    def _apply_feedback(self, violations: List[Dict[str, Any]]) -> Tuple[int, int, float, Dict[str, Any]]:
         """
         Apply feedback from violations to grains and edges.
         
@@ -106,7 +107,7 @@ class RecalibrationService:
             violations: List of violation records from dream bucket
         
         Returns:
-            (grains_updated_count, edges_updated_count, total_adjustment)
+            (grains_updated_count, edges_updated_count, total_adjustment, edge_status)
         """
         grains_updates = defaultdict(float)  # grain_id → penalty
         edges_updates = defaultdict(float)   # edge_key → penalty
@@ -129,12 +130,12 @@ class RecalibrationService:
         # Load and update grain index
         grains_updated = self._update_grain_confidences(grains_updates)
         
-        # Load and update edge index
-        edges_updated = self._update_edge_weights(edges_updates)
+        # Load and update edge index (stopgap: guarded no-op-and-report — see method docstring)
+        edges_updated, edge_status = self._update_edge_weights(edges_updates, violations)
         
         total_adjustment = sum(grains_updates.values()) + sum(edges_updates.values())
         
-        return grains_updated, edges_updated, total_adjustment
+        return grains_updated, edges_updated, total_adjustment, edge_status
     
     def _update_grain_confidences(self, updates: Dict[str, float]) -> int:
         """
@@ -161,49 +162,70 @@ class RecalibrationService:
         
         return updated_count
     
-    def _update_edge_weights(self, updates: Dict[str, float]) -> int:
+    def _update_edge_weights(self, updates: Dict[str, float],
+                             violations: List[Dict[str, Any]]) -> Tuple[int, Dict[str, Any]]:
         """
-        Update edge weights based on feedback.
-        
-        Args:
-            updates: Dict mapping edge_key → penalty amount
-        
+        Apply feedback to edge weights ONLY for edges a violation actually
+        implicates.
+
+        STOPGAP (SPEC_AXIOM_RECALIBRATION.md F2, Option 1): the previous
+        implementation averaged the penalty across all pending violations and
+        applied it to EVERY edge in procedural_edge_graph.json (gated only on
+        confidence_mutable, which defaults True) — a blanket penalty unrelated
+        to which edges were involved. That is a latent correctness bug.
+
+        Real edge targeting requires a violation record to name the edge(s) or
+        the fact-chain it involved. The current violation schema carries no such
+        field (keys: dissonance_type, mtr_error_signal, returned_confidence,
+        returned_fact_id, session_id, timestamp — none resolve to an edge key).
+        Per the spec, we do NOT invent a targeting heuristic. When no violation
+        can be targeted to a specific edge, we change NOTHING and report why.
+
         Returns:
-            Count of edges actually updated
+            (updated_count, status) where status explains the outcome.
         """
-        try:
-            edge_graph = self._load_edge_graph()
-            if not edge_graph:
-                return 0
-            
-            updated_count = 0
-            edges = edge_graph.get('edges', {})
-            
-            # Apply feedback to edges
-            for edge_key, edge_data in edges.items():
-                if not edge_data.get('confidence_mutable', True):
-                    continue
-                
-                # Apply general penalty (errors affect all edges uniformly)
-                # More sophisticated: could track which edges were involved
-                if updates:
-                    avg_penalty = statistics.mean(updates.values())
-                    old_weight = edge_data.get('edge_weight', 0.5)
-                    new_weight = max(0.0, old_weight - avg_penalty * 0.05)
-                    
-                    if abs(new_weight - old_weight) > 0.001:
-                        edge_data['edge_weight'] = new_weight
-                        edge_data['last_recalibrated'] = datetime.now(timezone.utc).isoformat()
-                        updated_count += 1
-            
-            # Save updated edge graph
-            self._save_edge_graph(edge_graph)
-            
-            return updated_count
-        
-        except Exception as e:
-            print(f"[RecalibrationService] Error updating edges: {e}")
-            return 0
+        # Fields that could target a specific edge / fact-chain. None of these
+        # exist in the current violation schema; if the schema later adds one
+        # (see SPEC_AXIOM_RECALIBRATION.md violation-schema-gap), real targeting
+        # becomes possible and this stopgap should be revisited.
+        EDGE_TARGET_FIELDS = ("edge_key", "edge_keys", "edge_id", "context",
+                              "recent_facts", "fact_chain", "involved_edges")
+
+        targetable = [v for v in violations
+                      if any(v.get(f) for f in EDGE_TARGET_FIELDS)]
+
+        if not targetable:
+            status = {
+                'action': 'no-op',
+                'reason': 'no_edge_targeting_field_in_violations',
+                'missing_fields': list(EDGE_TARGET_FIELDS),
+                'violations_seen': len(violations),
+                'violations_targetable': 0,
+                'detail': ('Violation records carry no edge or fact-chain '
+                           'reference; refusing to apply an untargeted blanket '
+                           'penalty. No edges changed.'),
+            }
+            print(f"[RecalibrationService] Edge recalibration skipped: {status['detail']} "
+                  f"({len(violations)} violation(s) seen, 0 targetable)")
+            return 0, status
+
+        # Reaching here means the violation schema gained a targeting field.
+        # Real per-edge targeting is out of scope for this stopgap (it needs a
+        # confirmed, sound mapping from the new field to edge keys) — stop and
+        # report rather than guess, exactly as the spec requires.
+        status = {
+            'action': 'no-op',
+            'reason': 'targeting_field_present_but_mapping_unimplemented',
+            'violations_seen': len(violations),
+            'violations_targetable': len(targetable),
+            'detail': ('Violations now carry a potential targeting field, but a '
+                       'sound field->edge-key mapping is not implemented. '
+                       'Revisit SPEC_AXIOM_RECALIBRATION.md Step 1 before '
+                       'applying penalties. No edges changed.'),
+        }
+        print(f"[RecalibrationService] Edge recalibration deferred: {status['detail']} "
+              f"({len(targetable)}/{len(violations)} targetable)")
+        return 0, status
     
     # ========================================================================
     # DREAM BUCKET I/O
