@@ -16,7 +16,7 @@ Run: python test_full_system.py
 Expected total time: ~30-60 seconds depending on system speed
 """
 
-from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+from phase3e_compat import Phase3EOrchestrator, QueryContext
 from dream_bucket import DreamBucketReader
 import time
 import sys

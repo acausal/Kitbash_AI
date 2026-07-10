@@ -4,7 +4,7 @@ Quick end-to-end test: orchestrator + cartridges (no grains yet)
 """
 import torch
 from pathlib import Path
-from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+from phase3e_compat import Phase3EOrchestrator, QueryContext
 
 def main():
     print("Initializing Phase3E with test cartridges...\n")

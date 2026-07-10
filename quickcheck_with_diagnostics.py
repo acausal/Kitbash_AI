@@ -4,7 +4,7 @@ Quick end-to-end test with MTR diagnostics
 """
 import torch
 from pathlib import Path
-from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+from phase3e_compat import Phase3EOrchestrator, QueryContext
 from mtr_diagnostics import MTRDiagnostics
 
 def main():

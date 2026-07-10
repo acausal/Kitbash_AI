@@ -5,7 +5,7 @@ Captures and analyzes what the MTR engine learns during inference.
 """
 import torch
 from pathlib import Path
-from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+from phase3e_compat import Phase3EOrchestrator, QueryContext
 from mtr_diagnostics import MTRDiagnostics
 
 def main():

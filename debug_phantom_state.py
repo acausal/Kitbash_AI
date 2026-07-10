@@ -3,7 +3,7 @@ Deep dive: Check phantom state at exactly 100 queries
 """
 
 import statistics
-from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+from phase3e_compat import Phase3EOrchestrator, QueryContext
 
 print("\n" + "="*70)
 print("PHANTOM STATE AT 100 QUERIES")

@@ -27,7 +27,7 @@ def run_extended_test(num_queries: int = 250) -> Dict:
         Dict with detailed metrics
     """
     try:
-        from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+        from phase3e_compat import Phase3EOrchestrator, QueryContext
         
         print("\n" + "="*70)
         print(f"EXTENDED LONG-RUN TEST ({num_queries} QUERIES)")

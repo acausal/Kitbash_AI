@@ -1,5 +1,22 @@
 #!/usr/bin/env python3
 """
+================================================================================
+  ARCHIVED — DO NOT IMPORT
+================================================================================
+This is the DONOR orchestrator from before the SPEC_ORCHESTRATOR_RECONCILIATION
+migration (Step 5, 2026-07-10). It is RETIRED.
+
+  * Live entry point:  query_orchestrator_factory.create_query_orchestrator()
+  * Reconciled orchestrator: query_orchestrator_posix.py (QueryOrchestrator)
+  * Compat facade for the donor's 10 importers: phase3e_compat.py
+    (exposes Phase3EOrchestrator / QueryContext with the donor API shape;
+     importers changed ONLY their import line:
+       from phase3e_orchestrator import ...  ->  from phase3e_compat import ...)
+
+This file is kept only as migration history. The B1-B6 bugs it carried were
+fixed in the new LearningObserver (learning_observer.py). Do NOT import it.
+================================================================================
+
 QueryOrchestrator: Phase 3E+ Query Processing Pipeline
 
 Main entry point for all user queries. Coordinates:

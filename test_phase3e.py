@@ -105,7 +105,7 @@ class TestSuite:
 def test_imports() -> bool:
     """Test that all required modules can be imported"""
     try:
-        from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+        from phase3e_compat import Phase3EOrchestrator, QueryContext
         from grain_system import ShannonGrainOrchestrator, PhantomTracker
         from grain_router import GrainRouter
         from grain_activation import GrainActivation, Hat
@@ -119,7 +119,7 @@ def test_imports() -> bool:
 def test_orchestrator_init() -> bool:
     """Test Phase3EOrchestrator initialization"""
     try:
-        from phase3e_orchestrator import Phase3EOrchestrator
+        from phase3e_compat import Phase3EOrchestrator
         orch = Phase3EOrchestrator(
             cartridges_dir="./cartridges",
             enable_grain_system=True
@@ -137,7 +137,7 @@ def test_orchestrator_init() -> bool:
 def test_query_processing(query_count: int = 10) -> Dict:
     """Test basic query processing"""
     try:
-        from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+        from phase3e_compat import Phase3EOrchestrator, QueryContext
         
         orch = Phase3EOrchestrator(
             cartridges_dir="./cartridges",
@@ -238,7 +238,7 @@ def test_grain_router_search() -> Dict:
 def test_state_persistence() -> Dict:
     """Test MTR state save/load"""
     try:
-        from phase3e_orchestrator import Phase3EOrchestrator
+        from phase3e_compat import Phase3EOrchestrator
         
         orch = Phase3EOrchestrator(
             cartridges_dir="./cartridges",
@@ -287,7 +287,7 @@ def test_cartridge_learning() -> Dict:
 def test_mtr_learning() -> Dict:
     """Test MTR weight learning"""
     try:
-        from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+        from phase3e_compat import Phase3EOrchestrator, QueryContext
         
         orch = Phase3EOrchestrator(
             cartridges_dir="./cartridges",
@@ -314,7 +314,7 @@ def test_mtr_learning() -> Dict:
 def test_latency_benchmarks() -> Dict:
     """Test latency targets"""
     try:
-        from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+        from phase3e_compat import Phase3EOrchestrator, QueryContext
         
         orch = Phase3EOrchestrator(
             cartridges_dir="./cartridges",

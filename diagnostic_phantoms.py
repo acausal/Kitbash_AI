@@ -3,7 +3,7 @@ Diagnostic: Check phantom tracking state
 Shows why crystallization isn't triggering
 """
 
-from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+from phase3e_compat import Phase3EOrchestrator, QueryContext
 
 print("\n" + "="*70)
 print("PHANTOM TRACKING DIAGNOSTICS")

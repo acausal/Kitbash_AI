@@ -1,7 +1,11 @@
 """
-kitbash/orchestration/query_orchestrator.py
+Kitbash_AI/query_orchestrator_posix.py
 
 QueryOrchestrator - the single external entry point for user queries.
+
+(Reconciled orchestrator per SPEC_ORCHESTRATOR_RECONCILIATION. Built by
+query_orchestrator_factory.create_query_orchestrator(). Donor-style callers
+use the phase3e_compat.py facade.)
 
 Coordinates:
   1. Background work scheduling (via MetabolismScheduler)
@@ -61,6 +65,7 @@ class QueryResult:
     resonance_pattern_recorded: bool
     coupling_deltas: List[Dict[str, Any]] = field(default_factory=list)  # Phase 3B.3
     learning_report: Optional[dict] = None  # SPEC Step 3: LearningObserver output
+    cartridge_facts: List[Dict[str, Any]] = field(default_factory=list)  # compat: winning fact
 
 
 @dataclass
@@ -255,6 +260,16 @@ class QueryOrchestrator:
                 confidence = winning_response.confidence
                 engine_name = winning_response.engine_name
 
+                # Enrich cartridge_facts from winning response metadata so the
+                # compat shim (and donor-style callers) can read fact provenance.
+                _md = getattr(winning_response, "metadata", {}) or {}
+                _cid = _md.get("fact_id")
+                _csrc = _md.get("source") or _md.get("cartridge")
+                cartridge_facts = (
+                    [{"fact_id": _cid, "source": _csrc, "confidence": confidence}]
+                    if _cid is not None else []
+                )
+
                 # Record pattern to resonance
                 pattern_hash = self._hash_query(user_query)
                 if pattern_hash in self.resonance.weights:
@@ -276,6 +291,7 @@ class QueryOrchestrator:
                 answer = "I don't know."
                 confidence = 0.0
                 engine_name = "NONE"
+                cartridge_facts = []
                 self.feed.log_query_completed(query_id, "NONE", 0.0, total_latency)
                 self._metrics["queries_exhausted"] += 1
 
@@ -348,6 +364,7 @@ class QueryOrchestrator:
                 resonance_pattern_recorded=pattern_recorded,
                 coupling_deltas=coupling_deltas,  # Phase 3B.3
                 learning_report=learning_report,  # SPEC Step 3
+                cartridge_facts=cartridge_facts,  # compat: winning fact provenance
             )
 
         finally:

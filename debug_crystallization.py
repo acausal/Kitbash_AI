@@ -3,7 +3,7 @@ Debug crystallization trigger
 Run 120 queries and see if crystallization fires at 100
 """
 
-from phase3e_orchestrator import Phase3EOrchestrator, QueryContext
+from phase3e_compat import Phase3EOrchestrator, QueryContext
 
 print("\n" + "="*70)
 print("CRYSTALLIZATION TRIGGER DEBUG")

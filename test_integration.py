@@ -18,7 +18,7 @@ def test_orchestrator_initialization():
     """Test that Phase3EOrchestrator initializes with dream bucket."""
     with tempfile.TemporaryDirectory() as tmpdir:
         try:
-            from phase3e_orchestrator import Phase3EOrchestrator
+            from phase3e_compat import Phase3EOrchestrator
             from cartridge_loader import CartridgeInferenceEngine
             
             # We don't have real cartridges, so this will fail on loading
