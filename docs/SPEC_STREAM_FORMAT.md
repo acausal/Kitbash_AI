@@ -121,6 +121,10 @@ Layer names are sourced from the single-source-of-truth `MTR_v6_1.LAYER_NAMES` (
 
 ---
 
+### 3.9 Procedural edges — deferred payload (NOT specified here)
+
+`context_tag`/`hat_tag` fields: **NOT INCLUDED.** Empirical check to justify them could not run — sleep pipeline currently produces single-fact chains with null hat (writer/extractor chain-shape mismatch, likely the same issue as Sleep Plane B4 in SOCKET_MAP.md). Revisit this field decision once that's fixed and the empirical check can actually run. Do not add these fields speculatively before then.
+
 ## 4. TTL & archival policy  ← **GAP-3 fix**
 
 | Namespace | TTL | Archival on expiry/trim |
