@@ -1,6 +1,7 @@
 # KITBASH SOCKET MAP
 
 **Date:** 2026-07-07 (initial pass, from Fable audit of read-only copies)
+**Updated:** 2026-07-10 — SPEC_ORCHESTRATOR_RECONCILIATION Steps 0–6 executed (tasks T1–T8). Cells flipped GREEN where a contract suite passed on real hardware (Query entry, TriageAgent, InferenceEngine:CARTRIDGE, DiagnosticFeed, LearningObserver, Phantom tracker, Resonance weights, MTR state manager, Dream Bucket write, Orchestrator contract suite). MTR engine + MTR contract suite remain YELLOW: the dedicated TEST-MTR_v6_1_contract.py was not executed this session (engine ran on hardware only via the orchestrator e2e). GRAIN/BITNET/LLM/MambaContextService/Epistemic layer names/HatKappaMapper/GrainRouter.search_grains/MTR↔Grain bridge/L2 service unchanged.
 **Purpose:** The project-level answer to "is it done?" A socket is a module boundary another component plugs into. Each socket has a contract status. **"Done for now" = every socket on the active phase's path is GREEN.** Cells off the path may stay red indefinitely without meaning anything — they are unvisited territory, not failure.
 
 **How this document is used:**
@@ -21,35 +22,35 @@
 
 | Socket | Interface | Status | Evidence / Notes |
 |---|---|---|---|
-| Query entry (factory → orchestrator) | `create_query_orchestrator()` → `process_query(str, ctx) -> QueryResult` | **RED** | F1: factory builds MTR/state/pipeline and never passes them; F2: duplicate engine registries. SPEC_ORCHESTRATOR_RECONCILIATION governs. Green = Steps 0–6 complete + contract suite. |
-| TriageAgent | `interfaces/triage_agent.py`: `decide(TriageRequest) -> TriageDecision` | YELLOW | Interface-driven, swappable (rule-based today, learned later — Phase 5+). Interfaces package **unverified**: not in audit scope; implementing models must request it. |
-| InferenceEngine: GRAIN | `interfaces/inference_engine.py`: `infer(InferenceRequest) -> InferenceResponse` | YELLOW | Cascade slot. Adapter builds own registry (F2, fixed in Step 1 of spec). |
-| InferenceEngine: CARTRIDGE | same | YELLOW | Same F2 caveat. |
+| Query entry (factory → orchestrator) | `create_query_orchestrator()` → `process_query(str, ctx) -> QueryResult` | **GREEN** | Steps 0–6 complete (T1–T8). Evidence: TEST-orchestrator_contract.py 23/23 PASS (T7, SPEC §5 boundary contract) + TEST-orchestrator_e2e.py 10/10 PASS (T8, real torch 2.13.0). F1/F2 resolved: factory builds shared MTR/state/pipeline and passes them; single engine registry. Committed 82a4f31. |
+| TriageAgent | `interfaces/triage_agent.py`: `route(TriageRequest) -> TriageDecision` | **GREEN** | Interface is `route` (ABC declares `route`, not `decide` — orchestrator corrected in T8). Exercised on real hardware: T8 e2e calls `RuleBasedTriageAgent.route()`, cascade honors its layer_sequence (CARTRIDGE answered). Triage sequence+thresholds+ESCALATE asserted in T7 #1. |
+| InferenceEngine: GRAIN | `interfaces/inference_engine.py`: `query(InferenceRequest) -> InferenceResponse` | YELLOW | Cascade slot. Interface is `query` (not `infer` — orchestrator corrected in T8). Registry shared via factory (F2, T2). Real `query()` path exercised through cascade in T7/T8 but GRAIN not observed *answering* in e2e (CARTRIDGE selected); stays YELLOW until a GRAIN-answer e2e is captured. |
+| InferenceEngine: CARTRIDGE | same | **GREEN** | `query()` path fixed in T8; answered a real query in TEST-orchestrator_e2e.py (CARTRIDGE, conf 0.75, real torch). T7 #1 asserts first-passing-engine-wins through this slot. |
 | InferenceEngine: BITNET | same (HTTP to local server) | PLANNED | Factory slot exists behind `enable_bitnet`; server not deployed. |
 | InferenceEngine: LLM / specialists | same | PLANNED | Phase 4+ cascade tail. The "LLM as generation peripheral" socket. |
-| MambaContextService | `get_context(MambaContextRequest)` | YELLOW | Mock only (`mock_mamba_service.py`). Real temporal-window service is a future swap; socket shape already honored by orchestrator. |
-| DiagnosticFeed | `log_query_*`, `log_layer_*`, `log_error`, `log_metric` | YELLOW | No-op stand-in when Redis absent (acceptable soft-fail: telemetry, not contract data). Real feed = bus attachment (§4). |
+| MambaContextService | `get_context(MambaContextRequest)` | YELLOW | Mock only (`mock_mamba_service.py`). Orchestrator's `_get_mamba_context` now builds `MambaContextRequest(user_id=, session_id=)` correctly (T8 fixed the `query=`→`user_query=` drift). Real temporal-window service still a future swap. |
+| DiagnosticFeed | `log_query_*`, `log_layer_*`, `log_error`, `log_metric` | **GREEN** | No-op stand-in when Redis absent (acceptable soft-fail: telemetry). Loud failure path verified: observer exception routes to `feed.log_error("LEARNING_OBSERVER", ...)` and does NOT change the answer (T7 #5, executed) + real run in T8. |
 
 ## 2. Learning Plane (the observing path)
 
 | Socket | Interface | Status | Evidence / Notes |
 |---|---|---|---|
-| LearningObserver | `observe(query_id, query, ctx, result_summary) -> LearningReport` | PLANNED→ | Defined in reconciliation spec §3.1; Step 2 builds it, Step 3 wires it. The single socket for all post-answer learning. |
-| MTR engine | `KitbashMTREngine.forward(tokens, state, target_layer, kappa)` + `get_epistemic_snapshot` | YELLOW (green-pending) | v6.1 written with `TEST-MTR_v6_1_contract.py`; **suite not yet executed on real hardware** — flips green when the run output exists. v6 in place = RED; do not deploy v6. |
+| LearningObserver | `observe(query_id, query, ctx, result_summary) -> LearningReport` | **GREEN** | Built T3 (`learning_observer.py`, B1–B6 fixes) with TEST-learning_observer.py 7/7 PASS; wired into factory T4; injection ungated on mtr_engine presence T8. Single post-answer learning socket. |
+| MTR engine | `KitbashMTREngine.forward(tokens, state, target_layer, kappa)` + `get_epistemic_snapshot` (instance method) | YELLOW (green-pending) | v6.1 ran on real hardware via TEST-orchestrator_e2e.py (torch 2.13.0, 10/10 — `forward(tokens, state, kappa)` executed, learning_report populated). **But the dedicated `TEST-MTR_v6_1_contract.py` was NOT run this session** — per map rule the cell stays YELLOW until that suite's output exists. v6 in place = RED; do not deploy v6. |
 | Epistemic layer names | `MTR_v6_1.LAYER_NAMES` (single source of truth) | YELLOW | Consumers (`mtr_grain_bridge` weights dict) still on stale names until the one-line diff lands + contract test. |
 | GrainRouter.search_grains | `(concepts, recent) -> [(grain_id, score)]` | **RED (measured)** | Harness run 2026-07-07: MRR 0.131 ≈ random on query-conditioned task; `query_concepts` unused in scoring. Fix path: make score consult concepts, re-run harness, paste delta. If intent is "coarse filter only," rename/document the contract instead — either resolution flips this yellow. |
 | MTR↔Grain bridge | `MTRGrainUnifiedPipeline.process_mtr_query(...)` | RED | Soft-fail patterns (`dict.get` on layer names, bare `except: pass` in concept extraction); salience>0.3 gate calibrated to sigmoid regime. Fail-loud sweep target. |
 | HatKappaMapper | `get_kappa(hat) -> float` | YELLOW | The L4→routing rigidity channel. Severed in v6, restored in v6.1; needs one contract assertion (kappa reaches MTR — in orchestrator contract suite Step 3). |
-| Phantom tracker / crystallization | `advance_phantom_cycle`, crystallize-at-interval | RED | Donor bugs B1/B2 (double increment, double advance) mean the 51-query cadence has never been the real cadence. Fixed inside LearningObserver (Step 2). |
-| Resonance weights | `record_pattern / reinforce_pattern / advance_turn` | YELLOW | Single-owner rule: orchestrator owns it; observer must not touch (spec §3.1). |
-| MTR state manager | `MTRStateCheckpoint.save/load/exists` | YELLOW | Loaded-then-dropped in factory today (F1). Lifecycle defined in spec Step 4. |
+| Phantom tracker / crystallization | `advance_phantom_cycle`, crystallize-at-interval | **GREEN** | B1/B2 fixed inside LearningObserver (T3); TEST-learning_observer.py asserts single counter (B1) + single advance (B2), 7/7 PASS. T7 #6 asserts exactly one cycle-advance per query on the real path. 51-query cadence now the real cadence. |
+| Resonance weights | `record_pattern / reinforce_pattern / advance_turn` | **GREEN** | Single-owner rule honored (orchestrator owns; observer does not touch). Exercised: T7 #4 asserts `record_pattern` once per answered query; real run in T8. |
+| MTR state manager | `MTRStateCheckpoint.save/load/exists` | **GREEN** | F1 resolved: factory loads checkpoint (T5) AND seeds it into the observer (T8) so the counter resumes. TEST-factory_smoke.py 6/6 (T5) + T8 e2e asserts persist-on-close + resume-on-rebuild (time 19→27). |
 | L2 Working Theory service | `L2WorkingTheoryService` (read-only audit) | PLANNED→ | Initialized in donor only; canonical wiring lands with observer. Full service = Phase 5 blocker #3 (Mutation 2). |
 
 ## 3. Sleep Plane (the consolidating path)
 
 | Socket | Interface | Status | Evidence / Notes |
 |---|---|---|---|
-| Dream Bucket write | `DreamBucketWriter` + `log_false_positive / log_consistency_violation / log_hypothesis / log_trace` | YELLOW | Append-only JSONL, clean function contracts. But: canonical path never wrote to it (F1/F3), and donor trace path had B3 (AttributeError) + B4 (unbounded mislabeled chains) — so **verify existing trace records' provenance and shape before Stage 1.5 trusts them.** |
+| Dream Bucket write | `DreamBucketWriter` + `log_false_positive / log_consistency_violation / log_hypothesis / log_trace` | **GREEN** | Canonical path now writes: observer emits one trace/query (chain==fact_ids, chain_type truthful, context JSON-serializable) — T7 #8 asserts shape; T3 B3/B4 fixed AttributeError + per-query chain labeling. Append-only JSONL. |
 | Dream Bucket read | `DreamBucketReader` | YELLOW | Consumed by sleep stages. |
 | Sleep pipeline stages (1, 1.5, 2–6) | `SleepOrchestrator.run_stage_N() -> report dict` | YELLOW | Per-stage try/except with error recorded in report — acceptable soft-fail (errors ARE surfaced). No contract tests per stage; synthetic-bucket fixtures (`generate_synthetic_dream_bucket.py`) make these cheap to write. |
 | Procedural edge extractor | Stage 1.5, consumes trace chains | YELLOW | Contract must be reconciled with B4 fix: define what a chain IS (per-query) in one place both writer and extractor import. |
@@ -86,13 +87,13 @@ The bus is a **socket factory**: future components attach here rather than requi
 | grain_router harness adapter | wired | GREEN | Executed against live read-only code; produced the RED measurement above. |
 | mtr_pipeline harness adapter | skeleton + wiring guide | PLANNED | Needs: ranked-fact call chain + ingestion route. **The MTR-vs-ablated pair is the money experiment.** |
 | MTR contract suite | `TEST-MTR_v6_1_contract.py` | YELLOW | Written, compile-checked, statically verified; awaiting first execution on hardware with torch. |
-| Orchestrator contract suite | spec §5 | PLANNED | Deliverable of reconciliation Steps 3–6. |
+| Orchestrator contract suite | spec §5 | **GREEN** | Delivered as TEST-orchestrator_contract.py (23/23 PASS, T7) — the SPEC §5 8-point boundary contract — plus TEST-orchestrator_e2e.py (10/10 PASS, T8, real torch). Executed on real hardware. |
 
 ---
 
 ## Phase 5 Critical Path (the cells that define "yak shaved")
 
-In dependency order: **Query entry (RED→) → LearningObserver (build+wire) → MTR v6.1 (execute suite) → stream format spec (RED→) → RedisBlackboard wiring → grain registry format contract → Mutation 1 → L2 service (Mutation 2).** When every cell on this line is GREEN, refactoring is over and building resumes. Everything else on this map is backlog by definition — including things that are genuinely broken. That is the license to stop looking.
+In dependency order: **Query entry (GREEN) → LearningObserver (GREEN) → MTR v6.1 (execute suite — still YELLOW: dedicated TEST-MTR_v6_1_contract.py not yet run) → stream format spec (RED→) → RedisBlackboard wiring → grain registry format contract → Mutation 1 → L2 service (Mutation 2).** When every cell on this line is GREEN, refactoring is over and building resumes. Everything else on this map is backlog by definition — including things that are genuinely broken. That is the license to stop looking.
 
 ## Maintenance Rules
 
