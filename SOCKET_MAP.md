@@ -65,7 +65,7 @@ The bus is a **socket factory**: future components attach here rather than requi
 |---|---|---|
 | RedisBlackboard core | YELLOW | Clean API; no contract suite; **not wired into canonical path** (factory passes `redis_client=None`). Wiring = Phase 5 blocker #2. |
 | Coupling validator | YELLOW | `CouplingDelta` schema + Lua scripts; orchestrator already consumes deltas when present. |
-| Intentional data stream format | **RED (unspecified)** | Known gap: payload schemas, fact-injection format, epistemic snapshots, TTL/archival boundaries. **This spec is the primary deliverable of Phase 5 blocker #2** — write it contract-first before wiring. |
+| Intentional data stream format | **YELLOW (specified)** | SPEC written 2026-07-10: `docs/SPEC_STREAM_FORMAT.md` — versioned envelope (§1), payload registry (§2), per-namespace schemas incl. fact-injection (`grain@1`) and epistemic-snapshot serialization (§3), TTL/archival policy (§4). Surfaced 3 real gaps: GAP-1 coupling writes outside `kitbash:` prefix; GAP-2 no payload versioning; GAP-3 inconsistent TTLs. RED→YELLOW (specified, not wired). GREEN when the spec's §6 DONE-WHEN lands (envelope in redis_blackboard, GAP-1 fix, TTLs, `TEST-bus_stream_format.py` on fakeredis). |
 | Worker health registry | YELLOW | `set/get_worker_health`, `all_workers_healthy` — this is the attach-point every future worker registers with. |
 
 **Bus attachment protocol (requirement for ALL future plug-ins):** any new component attaching to the bus must declare, in its own header and in a new row here: (1) its key namespace under `kitbash:<component>:`, (2) the schema version of every payload it reads/writes (versioned from day one — the stream-format spec defines the envelope), (3) TTL/archival policy for its keys, (4) worker-health registration, and (5) a contract test that runs against a local Redis (or fakeredis) proving read/write round-trip. A bus attachment without these five is a v6 waiting to happen. **Reserved rows:** SLM-v3 persistence layer (PLANNED — decision pending: sleep-consolidation vs query-time parallel), microspecialist NNs (PLANNED — anaphora/sense-disambiguation workers), BitNet synthesis worker (PLANNED), real Mamba context service (PLANNED), handshake LoRA manager (PLANNED — gated on stable sleep signal).
@@ -93,7 +93,7 @@ The bus is a **socket factory**: future components attach here rather than requi
 
 ## Phase 5 Critical Path (the cells that define "yak shaved")
 
-In dependency order: **Query entry (GREEN) → LearningObserver (GREEN) → MTR v6.1 (GREEN: TEST-MTR_v6_1_contract.py 10/10 on hardware) → stream format spec (RED→) → RedisBlackboard wiring → grain registry format contract → Mutation 1 → L2 service (Mutation 2).** When every cell on this line is GREEN, refactoring is over and building resumes. Everything else on this map is backlog by definition — including things that are genuinely broken. That is the license to stop looking.
+In dependency order: **Query entry (GREEN) → LearningObserver (GREEN) → MTR v6.1 (GREEN: TEST-MTR_v6_1_contract.py 10/10 on hardware) → stream format spec (YELLOW: docs/SPEC_STREAM_FORMAT.md written; GREEN on §6 DONE-WHEN) → RedisBlackboard wiring → grain registry format contract → Mutation 1 → L2 service (Mutation 2).** When every cell on this line is GREEN, refactoring is over and building resumes. Everything else on this map is backlog by definition — including things that are genuinely broken. That is the license to stop looking.
 
 ## Maintenance Rules
 
