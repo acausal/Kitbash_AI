@@ -43,21 +43,28 @@ class GrainEngine(InferenceEngine):
     
     engine_name = "GRAIN"
     
-    def __init__(self, cartridges_dir: str = "./cartridges"):
+    def __init__(self, cartridges_dir: str = "./cartridges",
+                 grain_router: "GrainRouter" = None):
         """
         Initialize Grain Engine.
-        
+
         Args:
-            cartridges_dir: Path to cartridges directory (where grains live)
-        
+            cartridges_dir: Path to cartridges directory (where grains live).
+                Used only when grain_router is not injected.
+            grain_router: Optional shared GrainRouter instance (F2 coherence).
+                When provided, the adapter wraps this shared instance instead of
+                building its own — so the adapter's router IS the learning
+                subsystem's router (object identity, no split-brain).
+
         Raises:
-            RuntimeError: If grain loading fails
+            RuntimeError: If grain loading fails and no router was injected.
         """
         super().__init__()
         
         self.cartridges_dir = Path(cartridges_dir)
-        self.grain_router = None
-        self.is_loaded = False
+        # F2: prefer the injected shared router; fall back to standalone build.
+        self.grain_router = grain_router
+        self.is_loaded = grain_router is not None
         
         # Statistics
         self.query_count = 0
@@ -69,8 +76,14 @@ class GrainEngine(InferenceEngine):
         # NEW: Initialize event logger
         self.logger = get_event_logger("grain_engine")
         
-        # Try to load grains
-        self._load_grains()
+        # Try to load grains (only if not injected)
+        if self.grain_router is None:
+            self._load_grains()
+        else:
+            self.is_loaded = True
+            logger.info(
+                f"✓ Wrapped shared GrainRouter ({self.grain_router.total_grains} grains)"
+            )
     
     def _load_grains(self) -> None:
         """Load all crystallized grains from disk."""

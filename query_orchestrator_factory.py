@@ -100,8 +100,17 @@ def create_query_orchestrator(
     
     # CartridgeLoader
     try:
-        cartridge_engine_phase3e = CartridgeInferenceEngine(cartridges_dir)
-        logger.info(f"  ✓ CartridgeLoader: {cartridge_engine_phase3e.registry.get_stats()['total_facts']} facts")
+        from cartridge_loader import CartridgeInferenceEngine
+        from dream_bucket import DreamBucketWriter
+
+        dream_bucket_writer = DreamBucketWriter(dream_bucket_dir) if dream_bucket_dir else None
+
+        cartridge_engine_phase3e = CartridgeInferenceEngine(
+            cartridges_dir,
+            dream_bucket_writer=dream_bucket_writer,
+        )
+        logger.info(f"  ✓ CartridgeLoader: {cartridge_engine_phase3e.registry.get_stats()['total_facts']} facts"
+                    + (f" (dream_bucket={dream_bucket_dir})" if dream_bucket_writer else " (dream_bucket=None)"))
     except Exception as e:
         logger.error(f"  ✗ Failed to initialize CartridgeLoader: {e}")
         raise
@@ -142,7 +151,8 @@ def create_query_orchestrator(
             
             grain_router = GrainRouter(
                 cartridges_dir=cartridges_dir,
-                cartridge_engine=cartridge_engine_phase3e
+                cartridge_engine=cartridge_engine_phase3e,
+                dream_bucket_writer=dream_bucket_writer,
             )
             
             first_cartridge = next(
@@ -192,18 +202,24 @@ def create_query_orchestrator(
     engines: Dict[str, InferenceEngine] = {}
     
     try:
-        # Grain Engine
-        grain_engine = GrainEngine(cartridges_dir=cartridges_dir)
+        # Grain Engine (F2: wrap the shared GrainRouter, do not rebuild it)
+        grain_engine = GrainEngine(
+            cartridges_dir=cartridges_dir,
+            grain_router=grain_router,
+        )
         engines["GRAIN"] = grain_engine
-        logger.info(f"  ✓ GrainEngine created")
+        logger.info(f"  ✓ GrainEngine created (wraps shared GrainRouter)")
     except Exception as e:
         logger.warning(f"  ⚠ Failed to create GrainEngine: {e}")
     
     try:
-        # Cartridge Engine
-        cartridge_engine = CartridgeEngine(cartridges_dir=cartridges_dir)
+        # Cartridge Engine (F2: wrap the shared CartridgeInferenceEngine)
+        cartridge_engine = CartridgeEngine(
+            cartridges_dir=cartridges_dir,
+            cartridge_engine=cartridge_engine_phase3e,
+        )
         engines["CARTRIDGE"] = cartridge_engine
-        logger.info(f"  ✓ CartridgeEngine created")
+        logger.info(f"  ✓ CartridgeEngine created (wraps shared CartridgeInferenceEngine)")
     except Exception as e:
         logger.warning(f"  ⚠ Failed to create CartridgeEngine: {e}")
     

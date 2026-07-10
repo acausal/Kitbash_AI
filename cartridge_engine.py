@@ -44,21 +44,33 @@ class CartridgeEngine(InferenceEngine):
     
     engine_name = "CARTRIDGE"
     
-    def __init__(self, cartridges_dir: str = "./cartridges"):
+    def __init__(self, cartridges_dir: str = "./cartridges",
+                 cartridge_engine: "CartridgeInferenceEngine" = None):
         """
         Initialize Cartridge Engine.
-        
+
         Args:
-            cartridges_dir: Path to cartridges directory
-        
+            cartridges_dir: Path to cartridges directory. Used only when
+                cartridge_engine is not injected.
+            cartridge_engine: Optional shared CartridgeInferenceEngine (F2
+                coherence). When provided, the adapter wraps this shared instance
+                instead of re-loading .kbc files itself — so
+                `adapter.registry is cartridge_engine.registry` (object identity,
+                no split-brain) and learning writes land in the one true registry.
+
         Raises:
-            RuntimeError: If cartridge loading fails
+            RuntimeError: If cartridge loading fails and no engine was injected.
         """
         super().__init__()
         
         self.cartridges_dir = Path(cartridges_dir)
         self.cartridges: Dict[str, Any] = {}
         self.is_loaded = False
+        
+        # F2: prefer the injected shared engine; fall back to standalone build.
+        self.cartridge_engine = cartridge_engine
+        # Expose the shared registry for identity assertions (F2).
+        self.registry = cartridge_engine.registry if cartridge_engine else None
         
         # Statistics
         self.query_count = 0
@@ -71,8 +83,15 @@ class CartridgeEngine(InferenceEngine):
         # NEW: Initialize event logger
         self.logger = get_event_logger("cartridge_engine")
         
-        # Try to load cartridges
-        self._load_cartridges()
+        # Try to load cartridges (only if not injected)
+        if self.cartridge_engine is None:
+            self._load_cartridges()
+        else:
+            self.is_loaded = True
+            logger.info(
+                f"✓ Wrapped shared CartridgeInferenceEngine "
+                f"({self.registry.get_stats()['total_facts']} facts)"
+            )
     
     def _load_cartridges(self) -> None:
         """Load all cartridges from disk."""
@@ -124,6 +143,8 @@ class CartridgeEngine(InferenceEngine):
     
     def is_available(self) -> bool:
         """Check if cartridge engine is ready to use."""
+        if self.cartridge_engine is not None:
+            return True  # F2: wrapped shared engine is the source of truth
         return self.is_loaded and len(self.cartridges) > 0
     
     def query(self, request: InferenceRequest) -> InferenceResponse:
@@ -142,6 +163,68 @@ class CartridgeEngine(InferenceEngine):
         if not self.is_available():
             raise RuntimeError("CartridgeEngine not loaded - check cartridge availability")
         
+        # F2: when wrapping the shared CartridgeInferenceEngine, delegate to it
+        # (one true registry, learning writes land in the same world the
+        # cascade answers from).
+        if self.cartridge_engine is not None:
+            return self._query_shared(request)
+        return self._query_local(request)
+    
+    def _query_shared(self, request: InferenceRequest) -> InferenceResponse:
+        """Delegate to the injected CartridgeInferenceEngine (F2 coherence)."""
+        start_time = time.perf_counter()
+        self.query_count += 1
+        
+        from cartridge_loader import CartridgeInferenceRequest
+        resp = self.cartridge_engine.query(
+            CartridgeInferenceRequest(request.user_query), limit=5
+        )
+        
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        self.total_latency_ms += latency_ms
+        
+        if resp is None:
+            self.no_matches += 1
+            self.logger.log(
+                event_type="cartridge_miss",
+                data={"latency_ms": latency_ms, "query_count": self.query_count},
+                category="layer_execution",
+            )
+            return InferenceResponse(
+                answer="[No cartridge matches - escalate to next layer]",
+                confidence=0.0,
+                engine_name=self.engine_name,
+                sources=[],
+                latency_ms=latency_ms,
+                metadata={"reason": "no_cartridge_matches", "query_count": self.query_count},
+            )
+        
+        self.cartridge_hits += 1
+        self.logger.log(
+            event_type="cartridge_hit",
+            data={
+                "cartridges_searched": self.registry.get_stats().get("cartridges_loaded", 0),
+                "confidence": resp.confidence,
+                "latency_ms": latency_ms,
+                "query_count": self.query_count,
+            },
+            category="layer_execution",
+        )
+        return InferenceResponse(
+            answer=resp.answer,
+            confidence=resp.confidence,
+            engine_name=self.engine_name,
+            sources=[f"fact_{resp.fact_id}"],
+            latency_ms=latency_ms,
+            metadata={
+                "fact_id": resp.fact_id,
+                "cartridge": resp.cartridge,
+                "query_count": self.query_count,
+            },
+        )
+    
+    def _query_local(self, request: InferenceRequest) -> InferenceResponse:
+        """Original .kbc-backed query path (fallback when no engine injected)."""
         start_time = time.perf_counter()
         self.query_count += 1
         
