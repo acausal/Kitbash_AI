@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "organic_chemistry_general",
+  "domain": "organic_chemistry",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.184174",
+  "last_updated": "2026-02-23T11:30:34.213452",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for organic_chemistry (general)",
+  "domains": [
+    "organic_chemistry"
+  ],
+  "tags": [
+    "organic_chemistry"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

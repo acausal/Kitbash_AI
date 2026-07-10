@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "library_science_general",
+  "domain": "library_science",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.884012",
+  "last_updated": "2026-02-23T11:30:33.908856",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for library_science (general)",
+  "domains": [
+    "library_science"
+  ],
+  "tags": [
+    "library_science"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

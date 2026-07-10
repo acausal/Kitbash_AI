@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "information_theory_general",
+  "domain": "information_theory",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.852929",
+  "last_updated": "2026-02-23T11:30:33.878037",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for information_theory (general)",
+  "domains": [
+    "information_theory"
+  ],
+  "tags": [
+    "information_theory"
+  ],
+  "dependencies": [],
+  "fact_count": 17
+}

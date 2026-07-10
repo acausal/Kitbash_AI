@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "quantum_mechanics_general",
+  "domain": "quantum_mechanics",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.419546",
+  "last_updated": "2026-02-23T11:30:34.443819",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for quantum_mechanics (general)",
+  "domains": [
+    "quantum_mechanics"
+  ],
+  "tags": [
+    "quantum_mechanics"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "geology _general _general",
+  "domain": "geology _general ",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.787638",
+  "last_updated": "2026-02-23T11:30:33.812622",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for geology _general  (general)",
+  "domains": [
+    "geology _general "
+  ],
+  "tags": [
+    "geology _general "
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

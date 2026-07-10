@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "game_theory_general",
+  "domain": "game_theory",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.751375",
+  "last_updated": "2026-02-23T11:30:33.780434",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for game_theory (general)",
+  "domains": [
+    "game_theory"
+  ],
+  "tags": [
+    "game_theory"
+  ],
+  "dependencies": [],
+  "fact_count": 13
+}

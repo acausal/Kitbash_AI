@@ -1,0 +1,38 @@
+# Kitbash_AI — gitignore
+# Track source (Python, design docs, cartridges, manifests).
+# Exclude runtime state, indexes, models, logs, caches.
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Runtime state / persistence
+*.db
+*.sqlite
+*.sqlite3
+*.idx
+*.jsonl
+*.pt
+*.pth
+*.gz
+*.bin
+
+# Live runtime data dirs
+/data/state/
+/data/subconscious/
+/grains/*.json
+/phantom_tracker.json
+
+# Virtual envs
+.venv/
+venv/
+env/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local git remote config (keep repo portable)
+.git/

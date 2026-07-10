@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "thermodynamics_general",
+  "domain": "thermodynamics",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.520404",
+  "last_updated": "2026-02-23T11:30:34.549546",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for thermodynamics (general)",
+  "domains": [
+    "thermodynamics"
+  ],
+  "tags": [
+    "thermodynamics"
+  ],
+  "dependencies": [],
+  "fact_count": 21
+}

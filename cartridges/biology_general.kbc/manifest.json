@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "biology_general",
+  "domain": "biology",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.317269",
+  "last_updated": "2026-02-23T11:30:33.353922",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for biology (general)",
+  "domains": [
+    "biology"
+  ],
+  "tags": [
+    "biology"
+  ],
+  "dependencies": [],
+  "fact_count": 20
+}

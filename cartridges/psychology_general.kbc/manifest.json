@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "psychology_general",
+  "domain": "psychology",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.388147",
+  "last_updated": "2026-02-23T11:30:34.414061",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for psychology (general)",
+  "domains": [
+    "psychology"
+  ],
+  "tags": [
+    "psychology"
+  ],
+  "dependencies": [],
+  "fact_count": 13
+}

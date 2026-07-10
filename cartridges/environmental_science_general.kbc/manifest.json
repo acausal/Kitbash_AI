@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "environmental_science_general",
+  "domain": "environmental_science",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.584232",
+  "last_updated": "2026-02-23T11:30:33.609645",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for environmental_science (general)",
+  "domains": [
+    "environmental_science"
+  ],
+  "tags": [
+    "environmental_science"
+  ],
+  "dependencies": [],
+  "fact_count": 13
+}

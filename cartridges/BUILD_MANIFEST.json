@@ -1,0 +1,238 @@
+{
+  "batch_build_info": {
+    "seed_directory": "inbox",
+    "output_directory": "inbox\\cartridges",
+    "total_cartridges": 38
+  },
+  "cartridges": [
+    {
+      "domain": "anthropology",
+      "seed_file": "AnthropologySeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "astronomy",
+      "seed_file": "AstronomySeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "biochemistry",
+      "seed_file": "BiochemistrySeed.md",
+      "faction": "general",
+      "fact_count": 19
+    },
+    {
+      "domain": "biology",
+      "seed_file": "BiologySeed.md",
+      "faction": "general",
+      "fact_count": 20
+    },
+    {
+      "domain": "chemistry",
+      "seed_file": "ChemistrySeed.md",
+      "faction": "general",
+      "fact_count": 28
+    },
+    {
+      "domain": "computer_science",
+      "seed_file": "ComputerScienceSeed.md",
+      "faction": "general",
+      "fact_count": 15
+    },
+    {
+      "domain": "conflict_deescalation",
+      "seed_file": "ConflictDeescalationSeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "cybernetics",
+      "seed_file": "CyberneticsSeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "economics",
+      "seed_file": "EconomicsSeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "engineering",
+      "seed_file": "EngineeringSeed.md",
+      "faction": "general",
+      "fact_count": 25
+    },
+    {
+      "domain": "environmental_science",
+      "seed_file": "EnvironmentalScienceSeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "epistemology",
+      "seed_file": "EpistemologySeed.md",
+      "faction": "general",
+      "fact_count": 20
+    },
+    {
+      "domain": "ethics",
+      "seed_file": "EthicsSeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "evolutionary",
+      "seed_file": "EvolutionarySeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "formal_logic",
+      "seed_file": "FormalLogicSeed.md",
+      "faction": "general",
+      "fact_count": 27
+    },
+    {
+      "domain": "game_theory",
+      "seed_file": "GameTheorySeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "geology _general ",
+      "seed_file": "Geology General Seed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "historyof_computing",
+      "seed_file": "HistoryofComputingSeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "information_theory",
+      "seed_file": "InformationTheorySeed.md",
+      "faction": "general",
+      "fact_count": 17
+    },
+    {
+      "domain": "library_science",
+      "seed_file": "LibraryScienceSeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "linguistics",
+      "seed_file": "LinguisticsSeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "logistics",
+      "seed_file": "LogisticsSeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "materials_science",
+      "seed_file": "MaterialsScienceSeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "mathematics",
+      "seed_file": "MathematicsSeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "microbiology",
+      "seed_file": "MicrobiologySeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "neurobiology",
+      "seed_file": "NeurobiologySeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "neuroscience",
+      "seed_file": "NeuroscienceSeed.md",
+      "faction": "general",
+      "fact_count": 22
+    },
+    {
+      "domain": "organic_chemistry",
+      "seed_file": "OrganicChemistrySeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "pedagogy",
+      "seed_file": "PedagogySeed.md",
+      "faction": "general",
+      "fact_count": 15
+    },
+    {
+      "domain": "pharmacology",
+      "seed_file": "PharmacologySeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "philosophyof_science",
+      "seed_file": "PhilosophyofScienceSeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "physics",
+      "seed_file": "PhysicsSeed.md",
+      "faction": "general",
+      "fact_count": 20
+    },
+    {
+      "domain": "political_science",
+      "seed_file": "PoliticalScienceSeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "psychology",
+      "seed_file": "PsychologySeed.md",
+      "faction": "general",
+      "fact_count": 13
+    },
+    {
+      "domain": "quantum_mechanics",
+      "seed_file": "QuantumMechanicsSeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "statistics",
+      "seed_file": "StatisticsSeed.md",
+      "faction": "general",
+      "fact_count": 19
+    },
+    {
+      "domain": "systems_theory",
+      "seed_file": "SystemsTheorySeed.md",
+      "faction": "general",
+      "fact_count": 14
+    },
+    {
+      "domain": "thermodynamics",
+      "seed_file": "ThermodynamicsSeed.md",
+      "faction": "general",
+      "fact_count": 21
+    }
+  ],
+  "failed": []
+}

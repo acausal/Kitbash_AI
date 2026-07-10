@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "linguistics_general",
+  "domain": "linguistics",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.914453",
+  "last_updated": "2026-02-23T11:30:33.938387",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for linguistics (general)",
+  "domains": [
+    "linguistics"
+  ],
+  "tags": [
+    "linguistics"
+  ],
+  "dependencies": [],
+  "fact_count": 13
+}

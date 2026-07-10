@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "political_science_general",
+  "domain": "political_science",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.354970",
+  "last_updated": "2026-02-23T11:30:34.381484",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for political_science (general)",
+  "domains": [
+    "political_science"
+  ],
+  "tags": [
+    "political_science"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

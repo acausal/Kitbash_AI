@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "pharmacology_general",
+  "domain": "pharmacology",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.255333",
+  "last_updated": "2026-02-23T11:30:34.280676",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for pharmacology (general)",
+  "domains": [
+    "pharmacology"
+  ],
+  "tags": [
+    "pharmacology"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

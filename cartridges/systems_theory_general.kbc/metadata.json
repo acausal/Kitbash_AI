@@ -1,0 +1,17 @@
+{
+  "cartridge_name": "systems_theory_general",
+  "domain": "systems_theory",
+  "faction": "general",
+  "created_at": "2026-02-23T11:30:34.486529",
+  "last_updated": "2026-02-23T11:30:34.513978",
+  "version": "0.1.0",
+  "status": "active",
+  "split_status": "intact",
+  "health": {
+    "fact_count": 14,
+    "active_facts": 14,
+    "annotation_count": 14,
+    "grain_count": 0,
+    "avg_confidence": 0.75
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "logistics_general",
+  "domain": "logistics",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.947315",
+  "last_updated": "2026-02-23T11:30:33.979792",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for logistics (general)",
+  "domains": [
+    "logistics"
+  ],
+  "tags": [
+    "logistics"
+  ],
+  "dependencies": [],
+  "fact_count": 13
+}

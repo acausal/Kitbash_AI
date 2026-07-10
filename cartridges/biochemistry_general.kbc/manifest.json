@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "biochemistry_general",
+  "domain": "biochemistry",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.270772",
+  "last_updated": "2026-02-23T11:30:33.304724",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for biochemistry (general)",
+  "domains": [
+    "biochemistry"
+  ],
+  "tags": [
+    "biochemistry"
+  ],
+  "dependencies": [],
+  "fact_count": 19
+}

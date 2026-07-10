@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "neuroscience_general",
+  "domain": "neuroscience",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.152285",
+  "last_updated": "2026-02-23T11:30:34.176369",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for neuroscience (general)",
+  "domains": [
+    "neuroscience"
+  ],
+  "tags": [
+    "neuroscience"
+  ],
+  "dependencies": [],
+  "fact_count": 22
+}

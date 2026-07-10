@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "cybernetics_general",
+  "domain": "cybernetics",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.486902",
+  "last_updated": "2026-02-23T11:30:33.510443",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for cybernetics (general)",
+  "domains": [
+    "cybernetics"
+  ],
+  "tags": [
+    "cybernetics"
+  ],
+  "dependencies": [],
+  "fact_count": 13
+}

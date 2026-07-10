@@ -1,0 +1,17 @@
+{
+  "cartridge_name": "thermodynamics_general",
+  "domain": "thermodynamics",
+  "faction": "general",
+  "created_at": "2026-02-23T11:30:34.520404",
+  "last_updated": "2026-02-23T11:30:34.547101",
+  "version": "0.1.0",
+  "status": "active",
+  "split_status": "intact",
+  "health": {
+    "fact_count": 21,
+    "active_facts": 21,
+    "annotation_count": 21,
+    "grain_count": 0,
+    "avg_confidence": 0.75
+  }
+}

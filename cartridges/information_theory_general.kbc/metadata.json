@@ -1,0 +1,17 @@
+{
+  "cartridge_name": "information_theory_general",
+  "domain": "information_theory",
+  "faction": "general",
+  "created_at": "2026-02-23T11:30:33.852929",
+  "last_updated": "2026-02-23T11:30:33.876873",
+  "version": "0.1.0",
+  "status": "active",
+  "split_status": "intact",
+  "health": {
+    "fact_count": 17,
+    "active_facts": 17,
+    "annotation_count": 17,
+    "grain_count": 0,
+    "avg_confidence": 0.75
+  }
+}

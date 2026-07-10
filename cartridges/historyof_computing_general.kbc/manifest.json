@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "historyof_computing_general",
+  "domain": "historyof_computing",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.821113",
+  "last_updated": "2026-02-23T11:30:33.846862",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for historyof_computing (general)",
+  "domains": [
+    "historyof_computing"
+  ],
+  "tags": [
+    "historyof_computing"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "microbiology_general",
+  "domain": "microbiology",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.083406",
+  "last_updated": "2026-02-23T11:30:34.108525",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for microbiology (general)",
+  "domains": [
+    "microbiology"
+  ],
+  "tags": [
+    "microbiology"
+  ],
+  "dependencies": [],
+  "fact_count": 13
+}

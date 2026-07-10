@@ -1,0 +1,17 @@
+{
+  "cartridge_name": "neuroscience_general",
+  "domain": "neuroscience",
+  "faction": "general",
+  "created_at": "2026-02-23T11:30:34.152285",
+  "last_updated": "2026-02-23T11:30:34.175980",
+  "version": "0.1.0",
+  "status": "active",
+  "split_status": "intact",
+  "health": {
+    "fact_count": 22,
+    "active_facts": 22,
+    "annotation_count": 22,
+    "grain_count": 0,
+    "avg_confidence": 0.75
+  }
+}

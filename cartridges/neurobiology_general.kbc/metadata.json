@@ -1,0 +1,17 @@
+{
+  "cartridge_name": "neurobiology_general",
+  "domain": "neurobiology",
+  "faction": "general",
+  "created_at": "2026-02-23T11:30:34.117505",
+  "last_updated": "2026-02-23T11:30:34.145038",
+  "version": "0.1.0",
+  "status": "active",
+  "split_status": "intact",
+  "health": {
+    "fact_count": 13,
+    "active_facts": 13,
+    "annotation_count": 13,
+    "grain_count": 0,
+    "avg_confidence": 0.75
+  }
+}

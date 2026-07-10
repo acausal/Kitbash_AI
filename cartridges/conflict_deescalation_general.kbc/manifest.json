@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "conflict_deescalation_general",
+  "domain": "conflict_deescalation",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.448455",
+  "last_updated": "2026-02-23T11:30:33.479370",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for conflict_deescalation (general)",
+  "domains": [
+    "conflict_deescalation"
+  ],
+  "tags": [
+    "conflict_deescalation"
+  ],
+  "dependencies": [],
+  "fact_count": 13
+}

@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "statistics_general",
+  "domain": "statistics",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.451661",
+  "last_updated": "2026-02-23T11:30:34.479945",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for statistics (general)",
+  "domains": [
+    "statistics"
+  ],
+  "tags": [
+    "statistics"
+  ],
+  "dependencies": [],
+  "fact_count": 19
+}

@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "mathematics_general",
+  "domain": "mathematics",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.043018",
+  "last_updated": "2026-02-23T11:30:34.076300",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for mathematics (general)",
+  "domains": [
+    "mathematics"
+  ],
+  "tags": [
+    "mathematics"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

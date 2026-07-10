@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "systems_theory_general",
+  "domain": "systems_theory",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.486529",
+  "last_updated": "2026-02-23T11:30:34.514323",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for systems_theory (general)",
+  "domains": [
+    "systems_theory"
+  ],
+  "tags": [
+    "systems_theory"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "computer_science_general",
+  "domain": "computer_science",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.403235",
+  "last_updated": "2026-02-23T11:30:33.439622",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for computer_science (general)",
+  "domains": [
+    "computer_science"
+  ],
+  "tags": [
+    "computer_science"
+  ],
+  "dependencies": [],
+  "fact_count": 15
+}

@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "astronomy_general",
+  "domain": "astronomy",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.198097",
+  "last_updated": "2026-02-23T11:30:33.260563",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for astronomy (general)",
+  "domains": [
+    "astronomy"
+  ],
+  "tags": [
+    "astronomy"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

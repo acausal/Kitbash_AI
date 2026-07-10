@@ -1,0 +1,17 @@
+{
+  "cartridge_name": "library_science_general",
+  "domain": "library_science",
+  "faction": "general",
+  "created_at": "2026-02-23T11:30:33.884012",
+  "last_updated": "2026-02-23T11:30:33.907815",
+  "version": "0.1.0",
+  "status": "active",
+  "split_status": "intact",
+  "health": {
+    "fact_count": 14,
+    "active_facts": 14,
+    "annotation_count": 14,
+    "grain_count": 0,
+    "avg_confidence": 0.75
+  }
+}

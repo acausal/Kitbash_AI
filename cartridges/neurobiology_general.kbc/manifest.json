@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "neurobiology_general",
+  "domain": "neurobiology",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.117505",
+  "last_updated": "2026-02-23T11:30:34.145980",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for neurobiology (general)",
+  "domains": [
+    "neurobiology"
+  ],
+  "tags": [
+    "neurobiology"
+  ],
+  "dependencies": [],
+  "fact_count": 13
+}

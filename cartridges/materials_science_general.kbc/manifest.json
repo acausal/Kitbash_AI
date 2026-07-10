@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "materials_science_general",
+  "domain": "materials_science",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.994811",
+  "last_updated": "2026-02-23T11:30:34.032683",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for materials_science (general)",
+  "domains": [
+    "materials_science"
+  ],
+  "tags": [
+    "materials_science"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}

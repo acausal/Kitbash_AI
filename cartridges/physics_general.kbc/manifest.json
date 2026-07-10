@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "physics_general",
+  "domain": "physics",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:34.322893",
+  "last_updated": "2026-02-23T11:30:34.349101",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for physics (general)",
+  "domains": [
+    "physics"
+  ],
+  "tags": [
+    "physics"
+  ],
+  "dependencies": [],
+  "fact_count": 20
+}

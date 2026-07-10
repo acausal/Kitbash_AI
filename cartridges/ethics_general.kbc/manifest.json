@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "ethics_general",
+  "domain": "ethics",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.650696",
+  "last_updated": "2026-02-23T11:30:33.676089",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for ethics (general)",
+  "domains": [
+    "ethics"
+  ],
+  "tags": [
+    "ethics"
+  ],
+  "dependencies": [],
+  "fact_count": 13
+}

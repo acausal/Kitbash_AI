@@ -1,0 +1,19 @@
+{
+  "cartridge_name": "economics_general",
+  "domain": "economics",
+  "faction": "general",
+  "version": "0.1.0",
+  "api_version": "1.0",
+  "created": "2026-02-23T11:30:33.518228",
+  "last_updated": "2026-02-23T11:30:33.543688",
+  "author": "CartridgeBuilder",
+  "description": "Knowledge cartridge for economics (general)",
+  "domains": [
+    "economics"
+  ],
+  "tags": [
+    "economics"
+  ],
+  "dependencies": [],
+  "fact_count": 14
+}
