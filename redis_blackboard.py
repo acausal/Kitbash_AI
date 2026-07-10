@@ -16,11 +16,71 @@ Schema:
 import json
 import logging
 from typing import Any, Dict, List, Optional, Set
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import redis
 from redis import Redis
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Stream-format envelope (docs/SPEC_STREAM_FORMAT.md §1)
+# Every bus value is wrapped {v, schema, produced_at, producer, data}.
+# Unknown envelope version or payload version is loud-rejected — never
+# best-effort parsed (this is the v6 failure mode the spec guards against).
+# ---------------------------------------------------------------------------
+ENVELOPE_VERSION = 1
+
+# Payload schema registry (SPEC §2): name -> current version this code emits.
+SCHEMA_VERSIONS = {
+    "query_state": 1,
+    "grain": 1,
+    "diagnostic_event": 1,
+    "worker_health": 1,
+    "coupling_delta": 1,
+    "epistemic_snapshot": 1,
+}
+
+# TTL / archival policy (SPEC §4).
+QUERY_TTL_SEC = 24 * 60 * 60        # queries:state, refreshed on every update
+HEALTH_TTL_SEC = 5 * 60             # health:<worker> (unchanged, already correct)
+METRIC_RETENTION_SEC = 7 * 24 * 60 * 60  # metrics ZSET rolling window
+
+
+class BusEnvelopeError(ValueError):
+    """Raised when a bus value fails envelope/version validation (loud-reject)."""
+
+
+def _wrap(name: str, producer: str, data: Any) -> str:
+    """Serialize `data` inside the versioned envelope (SPEC §1)."""
+    return json.dumps({
+        "v": ENVELOPE_VERSION,
+        "schema": f"{name}@{SCHEMA_VERSIONS[name]}",
+        "produced_at": datetime.now(timezone.utc).isoformat(),
+        "producer": producer,
+        "data": data,
+    })
+
+
+def _unwrap(raw: Any, expected_name: str) -> Optional[Any]:
+    """Validate the envelope and return its `data`, or None if `raw` is None.
+
+    Loud-rejects (raises BusEnvelopeError) on: unknown envelope version,
+    wrong payload name, or a payload version newer than this code understands.
+    """
+    if raw is None:
+        return None
+    obj = json.loads(raw) if isinstance(raw, str) else raw
+    v = obj.get("v")
+    if not isinstance(v, int) or v > ENVELOPE_VERSION:
+        raise BusEnvelopeError(f"unsupported envelope version: {v!r} (max {ENVELOPE_VERSION})")
+    schema = obj.get("schema", "")
+    payload_name, _, ver = schema.partition("@")
+    if payload_name != expected_name:
+        raise BusEnvelopeError(f"expected payload {expected_name!r}, got {schema!r}")
+    known = SCHEMA_VERSIONS.get(expected_name)
+    if known is None or not ver.isdigit() or int(ver) > known:
+        raise BusEnvelopeError(f"unsupported {expected_name} version: {schema!r} (max {known})")
+    return obj.get("data")
 
 
 class RedisBlackboard:
@@ -81,7 +141,7 @@ class RedisBlackboard:
             "metadata": metadata or {},
         }
         key = f"{self.prefix}queries:state:{query_id}"
-        self.redis.set(key, json.dumps(query_state))
+        self.redis.set(key, _wrap("query_state", "orchestrator", query_state), ex=QUERY_TTL_SEC)
         logger.debug(f"Created query state: {query_id}")
 
     def get_query(self, query_id: str) -> Optional[Dict[str, Any]]:
@@ -96,7 +156,7 @@ class RedisBlackboard:
         """
         key = f"{self.prefix}queries:state:{query_id}"
         data = self.redis.get(key)
-        return json.loads(data) if data else None
+        return _unwrap(data, "query_state")
 
     def update_query_status(
         self,
@@ -131,7 +191,7 @@ class RedisBlackboard:
             })
 
         key = f"{self.prefix}queries:state:{query_id}"
-        self.redis.set(key, json.dumps(query_state))
+        self.redis.set(key, _wrap("query_state", "orchestrator", query_state), ex=QUERY_TTL_SEC)
 
     def delete_query(self, query_id: str) -> None:
         """Delete query state from Redis."""
@@ -173,15 +233,15 @@ class RedisBlackboard:
             grain_data: Grain data (dict with ternary representation)
         """
         key = f"{self.prefix}grains:{fact_id}"
-        self.redis.hset(key, "data", json.dumps(grain_data))
-        self.redis.hset(key, "updated_at", datetime.now().isoformat())
+        self.redis.hset(key, "data", _wrap("grain", "grain_registry", grain_data))
+        self.redis.hset(key, "updated_at", datetime.now(timezone.utc).isoformat())
         logger.debug(f"Stored grain: {fact_id}")
 
     def get_grain(self, fact_id: str) -> Optional[Dict[str, Any]]:
         """Retrieve grain from index."""
         key = f"{self.prefix}grains:{fact_id}"
         data = self.redis.hget(key, "data")
-        return json.loads(data) if data else None
+        return _unwrap(data, "grain")
 
     def grain_exists(self, fact_id: str) -> bool:
         """Check if grain exists in index."""
@@ -216,13 +276,12 @@ class RedisBlackboard:
             details: Event details
         """
         event = {
-            "timestamp": datetime.now().isoformat(),
             "event_type": event_type,
             "query_id": query_id,
             "details": details,
         }
         feed_key = f"{self.prefix}diagnostic:feed"
-        self.redis.lpush(feed_key, json.dumps(event))
+        self.redis.lpush(feed_key, _wrap("diagnostic_event", "orchestrator", event))
 
         # Trim to last 10000 events
         self.redis.ltrim(feed_key, 0, 9999)
@@ -231,7 +290,7 @@ class RedisBlackboard:
         """Get recent diagnostic events."""
         feed_key = f"{self.prefix}diagnostic:feed"
         events = self.redis.lrange(feed_key, 0, count - 1)
-        return [json.loads(e) for e in events]
+        return [_unwrap(e, "diagnostic_event") for e in events]
 
     def clear_diagnostic_feed(self) -> None:
         """Clear all diagnostic events."""
@@ -252,17 +311,17 @@ class RedisBlackboard:
         health_data = {
             "worker_name": worker_name,
             "status": status,
-            "last_heartbeat": datetime.now().isoformat(),
+            "last_heartbeat": datetime.now(timezone.utc).isoformat(),
             "details": details or {},
         }
         key = f"{self.prefix}health:{worker_name}"
-        self.redis.set(key, json.dumps(health_data), ex=300)  # 5 minute expiry
+        self.redis.set(key, _wrap("worker_health", worker_name, health_data), ex=HEALTH_TTL_SEC)
 
     def get_worker_health(self, worker_name: str) -> Optional[Dict[str, Any]]:
         """Get worker health status."""
         key = f"{self.prefix}health:{worker_name}"
         data = self.redis.get(key)
-        return json.loads(data) if data else None
+        return _unwrap(data, "worker_health")
 
     def all_workers_healthy(self) -> Dict[str, str]:
         """Get health status of all workers."""
@@ -273,7 +332,7 @@ class RedisBlackboard:
             worker_name = key.replace(f"{self.prefix}health:", "")
             data = self.redis.get(key)
             if data:
-                status = json.loads(data)
+                status = _unwrap(data, "worker_health")
                 health_status[worker_name] = status.get("status", "unknown")
             else:
                 health_status[worker_name] = "unknown"
@@ -296,6 +355,8 @@ class RedisBlackboard:
         score = timestamp.timestamp()
         key = f"{self.prefix}metrics:{metric_name}"
         self.redis.zadd(key, {str(value): score})
+        # SPEC §4: 7d rolling window — prune points older than retention on write.
+        self.redis.zremrangebyscore(key, "-inf", score - METRIC_RETENTION_SEC)
 
     def get_metrics(self, metric_name: str, minutes: int = 60) -> List[float]:
         """
@@ -353,7 +414,7 @@ class RedisBlackboard:
         for key in keys:
             data = self.redis.get(key)
             if data:
-                query_state = json.loads(data)
+                query_state = _unwrap(data, "query_state")
                 created_at = datetime.fromisoformat(query_state.get("created_at", ""))
                 if created_at < cutoff_time:
                     self.redis.delete(key)
