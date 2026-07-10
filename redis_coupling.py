@@ -15,6 +15,8 @@ from datetime import datetime
 import redis
 from redis import Redis
 
+from redis_blackboard import _wrap, _unwrap, BusEnvelopeError
+
 logger = logging.getLogger(__name__)
 
 
@@ -141,16 +143,18 @@ class CouplingValidator:
             record_script = """
             local query_id = KEYS[1]
             local delta_json = ARGV[1]
-            
-            local deltas_key = "query:" .. query_id .. ":deltas"
+
+            local deltas_key = "kitbash:coupling:" .. query_id .. ":deltas"
             redis.call("LPUSH", deltas_key, delta_json)
-            
-            -- Keep TTL in sync
-            local ttl = redis.call("TTL", "query:" .. query_id .. ":metadata")
+
+            -- SPEC §4: coupling deltas expire 24h; sync to metadata TTL if longer-lived.
+            local ttl = redis.call("TTL", "kitbash:coupling:" .. query_id .. ":metadata")
             if ttl > 0 then
                 redis.call("EXPIRE", deltas_key, ttl)
+            else
+                redis.call("EXPIRE", deltas_key, 86400)
             end
-            
+
             return "OK"
             """
             
@@ -239,10 +243,11 @@ class CouplingValidator:
             return False
         
         try:
-            # Run Lua script to record the delta
+            # Envelope-wrap the delta (SPEC §1) before the Lua script stores it.
+            enveloped = _wrap("coupling_delta", "coupling_validator", json.loads(delta.to_json()))
             result = self.script_record(
                 keys=[delta.query_id],
-                args=[delta.to_json()]
+                args=[enveloped]
             )
             
             logger.debug(f"Delta recorded: {delta.layer_a} vs {delta.layer_b}")
@@ -289,14 +294,24 @@ class CouplingValidator:
             List of CouplingDelta objects
         """
         try:
-            deltas_key = f"query:{query_id}:deltas"
-            delta_jsons = self.redis_client.lrange(deltas_key, 0, -1)
-            
-            deltas = [
-                CouplingDelta.from_json(d.decode() if isinstance(d, bytes) else d)
-                for d in delta_jsons
-            ]
-            
+            # SPEC §3.7 GAP-1: read canonical namespace; dual-read legacy for one
+            # release so deltas written before the migration are still visible.
+            canonical_key = f"kitbash:coupling:{query_id}:deltas"
+            delta_jsons = self.redis_client.lrange(canonical_key, 0, -1)
+            if not delta_jsons:
+                delta_jsons = self.redis_client.lrange(f"query:{query_id}:deltas", 0, -1)
+
+            deltas = []
+            for d in delta_jsons:
+                raw = d.decode() if isinstance(d, bytes) else d
+                try:
+                    # New format: envelope-wrapped. _unwrap returns the delta dict.
+                    payload = _unwrap(raw, "coupling_delta")
+                    deltas.append(CouplingDelta(**payload))
+                except BusEnvelopeError:
+                    # Legacy format: bare CouplingDelta JSON (pre-migration).
+                    deltas.append(CouplingDelta.from_json(raw))
+
             return deltas
             
         except Exception as e:
