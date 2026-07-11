@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kitbash POC</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+  #answer { white-space: pre-wrap; border: 1px solid #ccc; padding: 1rem; min-height: 4rem; margin: 1rem 0; border-radius: 6px; }
+  #meta { color: #666; font-size: 0.85rem; min-height: 1.2rem; }
+  textarea { width: 100%; height: 3rem; padding: 0.5rem; font: inherit; }
+  button { padding: 0.5rem 1rem; font: inherit; cursor: pointer; }
+  #ops { display: none; background: #111; color: #0f0; font-family: monospace; font-size: 0.75rem; padding: 1rem; height: 220px; overflow: auto; white-space: pre; border-radius: 6px; margin-top: 1rem; }
+  .row { display: flex; gap: 0.5rem; }
+</style>
+</head>
+<body>
+  <h2>Kitbash — chat POC</h2>
+  <div class="row">
+    <textarea id="q" placeholder="Ask something...">What is entropy?</textarea>
+  </div>
+  <div class="row">
+    <button id="send">Send</button>
+    <button id="opsbtn" type="button">Toggle OPS stream</button>
+  </div>
+  <div id="answer"></div>
+  <div id="meta"></div>
+  <pre id="ops"></pre>
+
+<script>
+const answer = document.getElementById('answer');
+const meta = document.getElementById('meta');
+const ops = document.getElementById('ops');
+const q = document.getElementById('q');
+
+document.getElementById('opsbtn').onclick = async () => {
+  ops.style.display = ops.style.display === 'block' ? 'none' : 'block';
+  if (ops.style.display === 'block') refreshOps();
+};
+
+async function refreshOps() {
+  try {
+    const r = await fetch('/ops');
+    ops.textContent = await r.text();
+    ops.scrollTop = ops.scrollHeight;
+  } catch (e) { /* ignore */ }
+}
+
+async function send() {
+  const text = q.value.trim();
+  if (!text) return;
+  answer.textContent = '';
+  meta.textContent = 'thinking...';
+  document.getElementById('send').disabled = true;
+
+  try {
+    const resp = await fetch('/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: text }),
+    });
+    const reader = resp.body.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    let done_meta = false;
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (!line) continue;
+        let obj;
+        try { obj = JSON.parse(line); } catch { continue; }
+        if (obj.type === 'answer_chunk') {
+          answer.textContent += obj.text + ' ';
+        } else if (obj.type === 'answer_done') {
+          meta.textContent = `engine=${obj.engine}  confidence=${obj.confidence}  latency=${obj.total_latency_ms}ms`;
+          done_meta = true;
+        } else if (obj.type === 'error') {
+          answer.textContent += `\n[error] ${obj.message}`;
+        }
+      }
+    }
+    if (!done_meta) meta.textContent = 'done';
+    if (ops.style.display === 'block') refreshOps();
+  } catch (e) {
+    answer.textContent = 'request failed: ' + e;
+  } finally {
+    document.getElementById('send').disabled = false;
+  }
+}
+
+document.getElementById('send').onclick = send;
+q.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+</script>
+</body>
+</html>
