@@ -39,6 +39,11 @@ The Chat Milestone spec forbade swapping a real component "without asking first 
 
 *Acceptance:* runtime choice recorded (A or B), with the reason, before Step 1.
 
+### Step 0 decision — RECORDED 2026-07-11
+- **Choice: Option B** — C++ binary / subprocess behind a lightweight shim; the orchestrator shells out to (or POSTs at) a separate BitMamba process. NOT in-process PyTorch.
+- **Reason (user):** BitMamba has already been run successfully "with what the drive has already," at least to chat with, so the C++/subprocess path is known-good on this machine — lower risk than standing up an in-process torch stack. Additionally, the SSM-in-ternary-model field has split across different underlying frameworks, so the underlying engine may need swapping later; Option B's process isolation makes that a shim change, not an orchestrator rewrite. This also aligns with the user's stated isolation/containerization preference.
+- **Consequences:** `real_mamba_service.py` wraps a subprocess/HTTP shim, it does NOT load torch in-process. The venv `transformers` gap is therefore not on the critical path for B. Requires a build step (CMake + AVX2) and IPC plumbing in Steps 1–2. Model/paths stay config-driven (not hardcoded to `B:\`).
+
 ## 4. Step 1 — Verify environment for the chosen runtime
 
 - Option A: confirm `transformers` + the bitmamba `torch_model.py` import cleanly in `.venv`; load `bitmamba_255m.bin` (smaller, faster to validate) and run one fwd-pass on a sample `user_query`. Report model load time + a sample output.
@@ -47,7 +52,19 @@ The Chat Milestone spec forbade swapping a real component "without asking first 
 
 *Acceptance:* chosen runtime loads/runs a model and produces output that can populate at least one `MambaContext` window; evidence pasted.
 
-## 5. Step 2 — Implement `RealMambaService(MambaContextService)`
+### Step 1 grounding — RECORDED 2026-07-11 (read-only investigation, no build yet)
+- **CLI shape (`examples/main.cpp`):** one-shot executable. Signature
+  `./bitmamba <model.bin> "<prompt>" <mode> [temp] [penalty] [min_p] [top_p] [top_k] [max_tokens] [output_mode]`.
+  `mode` = `tokenizer` (text in/out) or `raw` (token IDs). `output_mode=clean` → stdout carries ONLY the generated text (no `[INFO]`/`[STATS]` noise); all diagnostics go to stderr. The model is loaded **fresh on every invocation** (`BitMambaModel model(argv[1])` at main.cpp:105) — the binary is **stateless / no persistent server**. **Constraint:** `tokenizer.bin` MUST sit in the same directory as the exe (main.cpp:121) — packaging must copy it next to the built binary (or run the exe from the source dir).
+- **Build:** `CMakeLists.txt` present, builds a `bitmamba` lib + `bitmamba` CLI (`build/bitmamba`). Flags: `-O3 -march=native -fopenmp` → **must compile on this machine** (native tuning); a copied prebuilt exe from another box would be wrong. `cmake` IS on PATH (`C:\Program Files\CMake\bin\cmake`) but **`g++`/`gcc`/`make` are NOT** — CMake may fail to find a C++ toolchain. Need to confirm a compiler is available (VS MSVC cl.exe? or install MinGW/g++) before the build will succeed. **Open risk, not yet resolved.**
+- **Weights:** already on disk at `B:\ai\llm\kitbash\models\bitmamba\` — `bitmamba_1b.bin` (644 MB), `bitmamba_255m.bin` (258 MB), plus `.msgpack` sources. `.bin` files exist, so **no `export_bin.py` step needed** if they are valid for this build (verify at build time). 255M is the smaller/faster validation target.
+- **Toolchain (PROBED 2026-07-11):** NO MinGW `g++`/`gcc`, NO standalone MSVC `cl.exe` found via vswhere. **clang/clang++ IS present** at `C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\Llvm\x64\bin\` (VS-bundled LLVM 18 → reports Clang 20.1.8). CMake default generator = "Visual Studio 18 2026". The `CMakeLists.txt` flags `-O3 -march=native -fopenmp` are **GCC/Clang flags** — clang-cl understands them (maps `-march=native`→native, supports `-fopenmp`), but MSVC `cl.exe` does not (`/arch:AVX2`, `/openmp`). **Build path: `cmake -G "Visual Studio 18 2026" -T clangcl -B build`** (clang-cl under the VS generator), then build the `bitmamba` lib + a new `bitmamba_server` target. **Configure-only probe SUCCEEDED (RC=0):** Clang 20.1.8 identified via clang-cl, build files generated. NOTE: CMake (native Win binary) requires Windows-style paths (`B:\...`), not msys `/b/...`. Probe dir removed after.
+- **IPC design sub-decision (B1 vs B2) — CHOICE: B2 (2026-07-11, user)**
+  - **B1 (per-call shell-out):** `real_mamba_service.py` calls the CLI via `subprocess` on each `get_context()`, passes the prompt, reads stdout. Minimal code, matches the existing CLI exactly. Cost: the model **reloads every call** (model load is not free) → slow per query.
+  - **B2 (persistent shim):** write a tiny long-running wrapper (keep `BitMambaModel` loaded; answer requests over stdio/TCP) so `get_context()` talks to a warm process. No per-call reload, true isolation + swappable engine — but more code (the wrapper + the Python client).
+  - **Picked B2:** user's reason for Option B was future SSM/ternary-framework swappability; a persistent, isolated process best honors that (engine swap = shim change, not orchestrator change). Implementation: a small C++ server program (`bitmamba_server`, links `bitmamba_lib`) that loads the model once and answers requests over a local socket/stdio; `real_mamba_service.py` is the Python client. Build target added to `CMakeLists.txt`.
+
+### Step 0 decision — RECORDED 2026-07-11
 
 New file: `real_mamba_service.py` (Kitbash_AI root, alongside `mock_mamba_service.py`). Subclass `MambaContextService`, implement `get_context(request) -> MambaContext`:
 
