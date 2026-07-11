@@ -1,10 +1,16 @@
-# status/ — repo-local work record
+# status/ — repo-local Kitbash work record
 
-Canonical, git-tracked log of Kitbash_AI work. Every entry here is versioned
-with the code it describes and synced to `origin/main` on each push, so the
-"what changed and why" record travels with the source instead of living only
-in the agent-sandbox root (`session_log.md`, which is outside the repo and not
-synced).
+Git-tracked, Kitbash-scoped log of work done in this repo. Every entry here is
+versioned with the code it describes and synced to `origin/main` on each push,
+so the "what changed and why" record for Kitbash travels with the source.
+
+## Why this dir exists separately from session_log.md
+- `session_log.md` (agent-sandbox root, **outside this repo**) is the broad,
+  cross-project agent activity ledger. It may include work unrelated to Kitbash,
+  so it is deliberately kept OUT of the repo.
+- `status/` is the Kitbash-only subset: work that belongs with the code and
+  should be versioned and pushed. The two are complementary, not redundant.
+- Nothing here should ever pull non-Kitbash content into the repo.
 
 ## What belongs here
 - One dated file per work session/turn: `YYYY-MM-DD.md` (or
@@ -24,9 +30,5 @@ Terse, additive, honest. Mirror the discipline in `STATUS_2026-07-10.md` and
 - `STATUS_2026-07-10.md` / `SOCKET_MAP.md` remain the socket-level "is it done?"
   map (separate files, updated in place). This `status/` dir is the chronological
   work log that references them.
+- Cross-project / non-Kitbash activity — that stays in `session_log.md`.
 - Raw session transcripts, secrets, or local-only config.
-
-## Legacy
-`../session_log.md` (agent-sandbox root, outside repo) is the prior external
-activity log. New work goes here; `session_log.md` is retained for the morning
-brief's overnight pull but is no longer the canonical record.
