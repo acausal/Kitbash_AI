@@ -65,6 +65,33 @@ The Chat Milestone spec forbade swapping a real component "without asking first 
   - **B2 (persistent shim):** write a tiny long-running wrapper (keep `BitMambaModel` loaded; answer requests over stdio/TCP) so `get_context()` talks to a warm process. No per-call reload, true isolation + swappable engine — but more code (the wrapper + the Python client).
   - **Picked B2:** user's reason for Option B was future SSM/ternary-framework swappability; a persistent, isolated process best honors that (engine swap = shim change, not orchestrator change). Implementation: a small C++ server program (`bitmamba_server`, links `bitmamba_lib`) that loads the model once and answers requests over a local socket/stdio; `real_mamba_service.py` is the Python client. Build target added to `CMakeLists.txt`.
 
+## 2b. DECISION REGISTER — likely to revisit
+
+Two decisions in this spec are provisional and expected to need re-examination later. Recorded so they are not silently treated as permanent.
+
+### D1 — IPC shape: Option B2 (persistent shim) over B1 (per-call shell-out)
+- **Made:** 2026-07-11 (user). Built `bitmamba_server` (C++ TCP shim) + `real_mamba_service.py` client.
+- **Why:** user's stated reason for Option B was that the SSM/ternary-model field is splitting across underlying frameworks, so isolation (engine swap = shim change, not orchestrator change) was worth the extra code.
+- **Revisit triggers:**
+  - The SSM/ternary framework split the user anticipated actually happens and a *different* runtime shape (e.g. an HTTP-capable engine, or in-process) becomes clearly better → re-evaluate B1 or a new B3.
+  - The shim's per-connection "load model once, generate, close" design proves too slow / the TCP line protocol needs to become request/response framed (currently newline-delimited, single prompt per connection) → protocol or transport change.
+  - Operational burden of managing a separate process (launch/crash/restart) outweighs isolation benefit → reconsider B1.
+- **What protects us:** the shim boundary means changing the engine = editing `bitmamba_server.cpp` / `CMakeLists.txt` (engine tree, outside repo), NOT `real_mamba_service.py` or the orchestrator.
+
+### D2 — Window mapping: Option 1 (context_1hour only; 1day/72h/1week left empty; active_topics heuristic)
+- **Made:** 2026-07-11 (user approved "Option 1 + refinement"). Implemented in `real_mamba_service.py`.
+- **Why:** BitMamba (as wired) is **stateless** — one-shot generation off the prompt, no cross-query memory. So only `context_1hour` (most recent) can be honestly populated; fabricating the three longer windows would violate the spec's "populate honestly / no mock-shaped placeholders" rule. `user_query` is forwarded so the generation is query-relevant. `active_topics` is a crude regex extractor (capitalized/long words, stopword-filtered), not semantic.
+- **Revisit triggers:**
+  - **Stateful memory lands (mock docstring names "Phase 4 → Real Mamba with stateful hidden_state swapping").** Once the model can carry cross-query hidden state, the 1day/72h/1week windows should be populated from real temporal context — at which point Option 1's "leave empty" rule must be lifted and D2 re-decided.
+  - The crude `active_topics` heuristic proves noisy/unuseful in production → replace with a proper extractor (or drop `active_topics` and rely on `context_1hour` text).
+  - A downstream consumer actually reads `context_1day/72hours/1week` and needs content there → either wire real memory or explicitly document the windows as intentionally unused.
+- **Current honest gap:** the three longer windows are empty BY DESIGN. Do not "fill them" to satisfy a consumer without real temporal data.
+
+### D3 — Build toolchain pinned to clang-cl / VS2026 generator (environment-specific)
+- **Made:** 2026-07-11 (discovered, not a user choice). No MinGW/MSVC `cl.exe`; clang-cl 20.1.8 (VS-bundled) is the only working compiler. CMake requires Windows-style `B:\` paths. `-fopenmp` is ignored by clang-cl (MSBuild sets OpenMP).
+- **Revisit triggers:** a MinGW or real MSVC toolchain is installed → re-evaluate the generator/flags; the `CMakeLists.txt` `-O3 -march=native -fopenmp` are GCC/Clang flags and would need adjustment for a pure-MSVC build.
+- **Note:** this is environment-specific, not a design decision, but it is the reason the engine only builds on this machine as configured.
+
 ### Step 0 decision — RECORDED 2026-07-11
 
 New file: `real_mamba_service.py` (Kitbash_AI root, alongside `mock_mamba_service.py`). Subclass `MambaContextService`, implement `get_context(request) -> MambaContext`:
