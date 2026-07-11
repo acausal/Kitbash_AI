@@ -15,7 +15,7 @@ import types
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
 
-sys.path.insert(0, ".")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from learning_observer import LearningObserver, LearningReport
 

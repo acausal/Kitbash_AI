@@ -24,7 +24,7 @@ import types
 from pathlib import Path
 from typing import Optional
 
-sys.path.insert(0, ".")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from query_orchestrator_posix import QueryOrchestrator, LayerAttempt
 

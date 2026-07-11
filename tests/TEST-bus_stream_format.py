@@ -25,7 +25,7 @@ import fakeredis
 import redis
 
 # repo on path (run from Kitbash_AI root)
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import redis_blackboard as rb  # noqa: E402
 import redis_coupling as rc  # noqa: E402
 from MTR_v6_1 import LAYER_NAMES  # noqa: E402

@@ -1,7 +1,7 @@
 """
 TEST-grain_router.py — contract test for GrainRouter.search_grains.
 
-Run:  .venv\\Scripts\\activate && python TEST-grain_router.py
+Run (from repo root):  .venv\Scripts\activate && python tests/TEST-grain_router.py
 
 Locks in the behavior that moved the socket YELLOW (concept-overlap fix):
   - query-conditioned ranking: a grain whose `text` overlaps the query concepts
@@ -17,7 +17,7 @@ Synthetic grains injected in-memory (no disk dependency). No pytest.
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from grain_router import GrainRouter
 

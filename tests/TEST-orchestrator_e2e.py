@@ -22,7 +22,7 @@ import os
 import logging
 
 logging.basicConfig(level=logging.WARNING)
-sys.path.insert(0, ".")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 results = []
 def check(name, ok, detail=""):

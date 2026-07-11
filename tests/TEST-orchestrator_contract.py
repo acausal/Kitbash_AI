@@ -41,7 +41,7 @@ import types
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
-sys.path.insert(0, ".")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from query_orchestrator_posix import QueryOrchestrator, LayerAttempt
 from interfaces.inference_engine import InferenceRequest, InferenceResponse

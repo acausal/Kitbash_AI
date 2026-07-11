@@ -22,7 +22,7 @@ No pytest dependency — plain asserts, exit 0 on all-pass.
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from interfaces.mamba_context_service import MambaContextService, MambaContext, MambaContextRequest
 from real_mamba_service import RealMambaService

@@ -489,7 +489,7 @@ def write_result(path: str, row: Dict) -> None:
 # ============================================================================
 
 def load_kitbash_adapters(harness_module) -> List[Ranker]:
-    here = os.path.dirname(os.path.abspath(__file__))
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     path = os.path.join(here, "TEST-ranking_adapters_kitbash.py")
     if not os.path.exists(path):
         print("  [skip] TEST-ranking_adapters_kitbash.py not found")

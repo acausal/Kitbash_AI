@@ -21,7 +21,7 @@ Run: python TEST-mutation2_l2_wiring.py
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from query_orchestrator_factory import create_query_orchestrator
 from l2_working_theory_service import L2WorkingTheoryService

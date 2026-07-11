@@ -1,7 +1,7 @@
 """
 TEST-kitbash_cli.py — contract test for kitbash_cli.py stdio JSON bridge.
 
-Run:  .venv\\Scripts\\activate && python TEST-kitbash_cli.py
+Run (from repo root):  .venv\Scripts\activate && python tests/TEST-kitbash_cli.py
 
 Locks in the CLI protocol contract (the "chat-only stdout / ops-on-stderr"
 split that the web-UI POC depends on):
@@ -20,8 +20,8 @@ import os
 import json
 import subprocess
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-REPO = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CLI = os.path.join(REPO, "kitbash_cli.py")
 
 

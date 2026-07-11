@@ -25,7 +25,7 @@ import sys
 import traceback
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 FAILURES = []
 f3_resolved_1N = None  # captured for the summary note

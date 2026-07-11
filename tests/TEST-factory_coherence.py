@@ -29,7 +29,7 @@ import logging
 
 logging.basicConfig(level=logging.WARNING)
 
-sys.path.insert(0, ".")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from cartridge_loader import CartridgeInferenceEngine
 from grain_router import GrainRouter

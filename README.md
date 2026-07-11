@@ -37,7 +37,22 @@ Most agent frameworks put the LLM in charge: it plans, calls tools, decides what
 
 ## Status
 
-This is not a finished system. Several components described above are designed and partially implemented but not yet verified end to end; some are stubs. The project maintains an internal contract map tracking, per component, whether it has an executed passing test or is running on unverified assumptions, and treats that distinction as important rather than glossing over it. Anyone looking at this code should assume active development, not a stable release.
+Last updated: 2026-07-11. This is not a finished system — active development, not a stable release. Component status is tracked on `SOCKET_MAP.md` (per-interface contract map: GREEN = executed passing test suite, YELLOW/RED = wired but not fully verified). What follows is the honest high-level picture.
+
+**Query / cascade plane — GREEN and externally reachable.**
+The chat path runs end to end and is verified:
+- Routing/triage, CARTRIDGE (crystallized knowledge), BITNET (BitNet ternary-net fallback), and MambaContextService (RealMambaService, Option B2 over a persistent `bitmamba_server` shim) are all wired and tested.
+- Both models run standalone and are integrated into the orchestrator; in normal traffic CARTRIDGE answers first (winner-take-all), BITNET fires when CARTRIDGE misses, and BitMamba supplies query-relevant context.
+- GrainRouter.search_grains, LearningObserver, MTR engine + contract suite, Phantom/crystallization, Resonance, and L2 working-theory service are GREEN.
+
+**Two ways to drive it (both verified this session):**
+- `kitbash_cli.py` — stdio JSON bridge. stdin = `{"query":...}`, **stdout = chat-only JSON** (`answer_chunk` / `answer_done` / `error`), **stderr = internal ops/logs**. Env toggles: `KITBASH_ENABLE_BITNET`, `KITBASH_ENABLE_MAMBA`, `KITBASH_BITNET_URL`. Wire contract in `docs/CLI_PROTOCOL.md`.
+- `kitbash_web.py` — dead-simple POC web UI (stdlib `http.server`, no deps). `GET /` serves a chat page, `POST /query` streams the CLI's chat output to the browser, `GET /ops` exposes the internal operational stream. Run `python kitbash_web.py` → http://127.0.0.1:8777.
+
+**Not yet done (separate workstreams, not blockers for chat):**
+- Sleep pipeline stages (consolidation, hypothesis generation, recalibration), MTR↔Grain bridge (RED — soft-fail patterns), Epistemic layer names (YELLOW), HatKappaMapper, Dream Bucket read, RedisBlackboard core (API built, not wired into canonical path), Coupling validator, Cartridge file format, MTR checkpoints, SQLite stores. These are the memory/consolidation and shared-state planes — intentionally out of scope for the current chat-POC milestone.
+
+**Tests** live in `tests/` (run `python tests/TEST-<name>.py` from the repo root). **Specs/docs** live in `docs/`. `SOCKET_MAP.md` and `STATUS_2026-07-10.md` remain at the repo root.
 
 ## Influences
 
