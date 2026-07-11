@@ -1,0 +1,106 @@
+# SPEC — Real MambaContextService (swap mock for real BitMamba)
+
+**Date:** 2026-07-11
+**Status:** APPROVED FOR IMPLEMENTATION — execute steps in order, no skipping.
+**Audience:** implementing model(s). Read the whole document before writing any code. Working rules apply: surgical edits, TEST-/DIAGNOSTIC- prefixes for non-shipping files, paste executed test output — claimed success is not success.
+**Priority:** Independent of Mutation 2 / Chat Milestone (those are DONE). This is the follow-up the Chat Milestone Phase B explicitly deferred ("swap the real MambaContextService in place of the mock — that's separate work, possibly its own spec"). Blocks nothing upstream. Can run before or after Docker containerization; containerization should consume this service's interface, not precede it.
+**Blocking:** nothing. (Not a Phase 5 critical-path blocker — MambaContextService was YELLOW/mock-accepted; this upgrades it to real.)
+
+---
+
+## 1. Purpose
+
+`SPEC_ONE_REAL_SLEEP_CYCLE.md` and the End-to-End Chat Milestone both ran against `MockMambaService` (the MVP no-op). The user then recalled that a real **BitMamba** framework exists on disk. Investigation (2026-07-11) confirmed:
+
+- **Framework present:** `B:\ai\llm\kitbash\bitmamba.cpp` — BitMamba2 (255M / 1B params), a C++ AVX2 inference library + a Python `scripts/fast_inference.py` that runs the model **in-process via PyTorch** (`DEVICE = cuda if available else cpu`). It is **NOT an HTTP server** (unlike the BitNet `llama-server.exe`).
+- **Weights present:** `B:\ai\llm\kitbash\models\bitmamba\` — `bitmamba_1b.bin`, `bitmamba_255m.bin`, plus `.msgpack` checkpoints.
+- **No real service implementation exists.** The repo's `src/context/` (and the Kitbash_AI copy `mock_mamba_service.py`) contains **only `MockMambaService`**. The ABC `MambaContextService` defines `get_context(request: MambaContextRequest) -> MambaContext`; no class implements it for real.
+
+So "running BitMamba" (model inference) and "a `MambaContextService` the orchestrator can call" are **two different things**. This spec's job: write the adapter that bridges them, wire it into the factory replacing the mock, and prove it returns a populated `MambaContext`.
+
+## 2. Interface contract (must satisfy exactly)
+
+From `interfaces/mamba_context_service.py` (read before coding):
+
+- `MambaContextRequest` — fields include `user_id`, `session_id`, `user_query`, and a `windows` selector (the four time windows the mock ignores). Confirm the exact field names from the ABC + `query_orchestrator_posix.py:_get_mamba_context` (which already builds `MambaContextRequest(user_id=, session_id=)` — likely needs `user_query=` too).
+- `MambaContext` — the return type. Has four time-window slots (the mock returns all empty) + `active_topics`. The real service must populate at least some windows with real context the model produces.
+- `MambaContextService` (ABC) — `get_context(request) -> MambaContext`. **Never returns None** (mock contract guarantees this; the real impl must too — orchestrator relies on it).
+
+The orchestrator calls `self.mamba_service.get_context(request)` at `query_orchestrator_posix.py:440`. Swapping is a construction change in `query_orchestrator_factory.py` (where `MockMambaService` is currently instantiated — find the exact site; it was confirmed present at the factory per Chat Milestone recon).
+
+## 3. Step 0 — Decide the runtime shape (DO NOT GUESS)
+
+The framework offers two runtimes; they imply different service designs. Pick ONE with user sign-off before coding:
+
+- **Option A — PyTorch in-process (`fast_inference.py`):** load `BitMambaLM` (scripts/torch_model.py) with a `.bin` weight, run inference in the orchestrator's own Python process. Pros: simplest, no IPC. Cons: couples torch model + `transformers` into the orchestrator venv; blocks the query thread on model fwd-pass; the venv currently has torch 2.13.0+cpu but **may lack `transformers`** (verify in Step 0).
+- **Option B — C++ binary / subprocess:** build `bitmamba.cpp` (CMakeLists.txt present; needs AVX2 x86 build) and wrap it behind a small service (stdio/pipe or a lightweight HTTP shim) so `get_context()` shells out / POSTs. Pros: keeps heavy model out of the orchestrator; matches the BitNet pattern. Cons: build step + IPC plumbing; more code.
+
+The Chat Milestone spec forbade swapping a real component "without asking first (that's separate work, possibly its own spec)." This spec IS that separate work — but the **runtime choice (A vs B)** is still a design decision the implementing model must not silently make. **Resolve it in Step 0 with the user; record the choice in this file before coding.**
+
+*Acceptance:* runtime choice recorded (A or B), with the reason, before Step 1.
+
+## 4. Step 1 — Verify environment for the chosen runtime
+
+- Option A: confirm `transformers` + the bitmamba `torch_model.py` import cleanly in `.venv`; load `bitmamba_255m.bin` (smaller, faster to validate) and run one fwd-pass on a sample `user_query`. Report model load time + a sample output.
+- Option B: build `bitmamba.cpp` (`cmake` + `make`); confirm the binary runs and accepts input. Report build commands + a sample run.
+- For BOTH: confirm the four `MambaContext` windows can be populated from the model's actual output (BitMamba is a sequence model — its hidden state / next-token context is the natural source for temporal-window context). If the model output doesn't map cleanly to the four windows, STOP and report the mapping gap rather than fabricating window contents.
+
+*Acceptance:* chosen runtime loads/runs a model and produces output that can populate at least one `MambaContext` window; evidence pasted.
+
+## 5. Step 2 — Implement `RealMambaService(MambaContextService)`
+
+New file: `real_mamba_service.py` (Kitbash_AI root, alongside `mock_mamba_service.py`). Subclass `MambaContextService`, implement `get_context(request) -> MambaContext`:
+
+- Lazily load the model once (not per-call) — guard the load; on load failure, **do not crash the orchestrator**; fall back to an empty `MambaContext` (matching the mock's safe behavior) and log a warning. The orchestrator must survive a missing/!broken Mamba model.
+- Map the model's context output into the four `MambaContext` windows + `active_topics`. Populate honestly — if a window has no real data, leave it empty (do NOT fill with mock-shaped placeholders).
+- Honor `windows` selector if the ABC/request supports it; otherwise populate all windows the model can fill.
+- **Never return None.**
+
+Keep it config-driven (NOT hardcoded to `B:\...`): model path / runtime flags come from a constructor arg or an env/config, defaulting to sensible values but overridable. This directly addresses the user's stated concern about not hardwiring local filesystem layout.
+
+*Acceptance:* `RealMambaService` constructed; `get_context()` on a sample request returns a non-None `MambaContext` with ≥1 window populated (for a real model) or empty (for a safe fallback) — never None.
+
+## 6. Step 3 — Write the contract test
+
+New file: `TEST-real_mamba_service.py`. Assert:
+
+- `RealMambaService` is a `MambaContextService` subclass; `get_context()` returns `MambaContext`, never None.
+- With a real model loaded: ≥1 window populated for a sample `user_query`; window contents are derived from model output (assert they are not the mock's constant-empty shape when a model is present).
+- **Graceful degradation:** construct with a deliberately broken/invalid model path → `get_context()` returns an empty-but-valid `MambaContext` (no exception escapes). This proves the orchestrator won't crash if BitMamba is unavailable.
+- Swap-in wiring smoke (optional): `create_query_orchestrator(mamba_service=RealMambaService(...))` builds and a `process_query()` still returns without crashing (the orchestrator already calls `get_context` at :440).
+
+*Acceptance:* test runs, all assertions pass, raw output pasted.
+
+## 7. Step 4 — Wire into the factory + update SOCKET_MAP
+
+- In `query_orchestrator_factory.py`, replace the `MockMambaService()` instantiation with `RealMambaService(...)` (config-driven path). Keep the mock import available for a fallback/tests, but the default production construction uses the real service.
+- Update `SOCKET_MAP.md` MambaContextService row: YELLOW (mock only) → GREEN (real BitMamba wired), citing this spec + the test. Note the runtime choice (A/B) and any degradation caveat.
+
+*Acceptance:* factory diff pasted; SOCKET_MAP excerpt pasted.
+
+## 8. Step 5 — Report honestly
+
+One paragraph: does the real Mamba now answer `get_context()` with populated windows, and does the orchestrator survive a missing model? If the model output couldn't map to the four windows, name that gap precisely. Do not round a partial mapping up to "Mamba works."
+
+## 9. Explicitly out of scope
+
+- Changing `MambaContext` / `MambaContextRequest` shapes (use them as-is; if they're wrong, that's a separate schema spec).
+- Changing `rule_based_triage.py` or the cascade (BitNet routing is a separate follow-up).
+- Building the Docker image for BitMamba — this spec makes the service config-driven so containerization can consume it later; the container itself is separate infra work.
+- Fixing the negative `mtr_confidence` / `trace_logged=False` findings from the Chat Milestone — separate follow-ups.
+- De-hardcoding `bitnet_engine.py`'s `B:\` paths — separate follow-up (referenced here only because both are "local-fs hardcoding" items; do not fix in this spec).
+
+## 10. Done-when
+
+`real_mamba_service.py` exists and implements `get_context()` returning a non-None `MambaContext` (populated when a real model loads, safely empty on failure); `TEST-real_mamba_service.py` passes with raw output pasted; factory wired to the real service (config-driven); SOCKET_MAP MambaContextService row flipped to GREEN with this spec cited; Step 5 honest verdict delivered.
+
+---
+
+## Grounding evidence (from 2026-07-11 investigation — do not re-derive blindly)
+
+- BitMamba framework: `B:\ai\llm\kitbash\bitmamba.cpp` (README: BitMamba2 255M/1B, AVX2 x86 C++ + PyTorch `scripts/fast_inference.py`; `DEVICE=cuda if available else cpu`).
+- Weights: `B:\ai\llm\kitbash\models\bitmamba\` (`bitmamba_1b.bin`, `bitmamba_255m.bin`, `bit_mamba_1b.msgpack`, `bitmamba_255m.msgpack`). `export_bin.py` converts `.msgpack`→`.bin`.
+- Repo has only `MockMambaService` (confirmed: `src/context/mock_mamba_service.py`; Kitbash_AI `mock_mamba_service.py`). No real impl.
+- Orchestrator call site: `query_orchestrator_posix.py:440` → `self.mamba_service.get_context(request)`.
+- Chat Milestone Phase B (3569281) confirmed factory wires mock; real swap deferred to "its own spec."
+- **Open risk to verify in Step 0:** the orchestrator `.venv` has torch 2.13.0+cpu but `transformers` was NOT in the KITBASH_PREREQUISITES import grep — Option A may need `pip install transformers` (or the bitmamba `torch_model.py` may avoid the `transformers` dep; read `scripts/torch_model.py` imports in Step 0).
