@@ -210,8 +210,8 @@ def create_query_orchestrator(
     
     # TriageAgent (routing)
     try:
-        triage_agent = RuleBasedTriageAgent(verbose=verbose)
-        logger.info(f"  ✓ RuleBasedTriageAgent initialized")
+        triage_agent = RuleBasedTriageAgent(verbose=verbose, enable_bitnet=enable_bitnet)
+        logger.info(f"  ✓ RuleBasedTriageAgent initialized (bitnet_routing={enable_bitnet})")
     except Exception as e:
         logger.error(f"  ✗ Failed to initialize TriageAgent: {e}")
         raise

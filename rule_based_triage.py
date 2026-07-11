@@ -49,15 +49,22 @@ class RuleBasedTriageAgent(TriageAgent):
     4. Default → ROUTINE (just decay)
     """
     
-    def __init__(self, verbose: bool = False):
+    def __init__(self, verbose: bool = False, enable_bitnet: bool = False):
         """
         Initialize rule-based triage agent.
         
         Args:
             verbose: Whether to log detailed reasoning
+            enable_bitnet: When True, insert BITNET into query cascades after
+                CARTRIDGE (before ESCALATE) so the live BitNet server participates
+                in learned inference. When False (default), cascades stay
+                GRAIN -> CARTRIDGE -> ESCALATE as in Phase 3B MVP. The orchestrator
+                tolerates a layer whose engine is absent, but gating here keeps the
+                routing honest: BITNET only appears when the engine is actually wired.
         """
         super().__init__()
         self.verbose = verbose
+        self.enable_bitnet = enable_bitnet
         self.query_count = 0
         self.background_count = 0
         self.current_turn = 0  # Standard attribute for metabolism tracking
@@ -109,6 +116,24 @@ class RuleBasedTriageAgent(TriageAgent):
         
         return decision
     
+    def _insert_bitnet(self, sequence):
+        """
+        Insert BITNET into a cascade immediately before ESCALATE, but only when
+        enable_bitnet is True. Safe to call unconditionally; returns the sequence
+        unchanged when BITNET is disabled or already present.
+        """
+        if not self.enable_bitnet:
+            return sequence
+        if "BITNET" in sequence:
+            return sequence
+        seq = list(sequence)
+        if "ESCALATE" in seq:
+            idx = seq.index("ESCALATE")
+            seq.insert(idx, "BITNET")
+        else:
+            seq.append("BITNET")
+        return seq
+
     def _contains_explicit_fact_reference(self, query: str) -> bool:
         """
         Check if query explicitly references a fact.
@@ -125,10 +150,11 @@ class RuleBasedTriageAgent(TriageAgent):
         → High confidence in GRAIN, escalate to cartridge if not found
         """
         return TriageDecision(
-            layer_sequence=["GRAIN", "CARTRIDGE", "ESCALATE"],
+            layer_sequence=self._insert_bitnet(["GRAIN", "CARTRIDGE", "ESCALATE"]),
             confidence_thresholds={
                 "GRAIN": 0.85,  # Lower bar since explicit reference
                 "CARTRIDGE": 0.70,
+                **({"BITNET": 0.75} if self.enable_bitnet else {}),
             },
             recommended_cartridges=[],
             use_mamba_context=False,
@@ -144,10 +170,11 @@ class RuleBasedTriageAgent(TriageAgent):
         → GRAIN first (fastest), then cartridge
         """
         return TriageDecision(
-            layer_sequence=["GRAIN", "CARTRIDGE", "ESCALATE"],
+            layer_sequence=self._insert_bitnet(["GRAIN", "CARTRIDGE", "ESCALATE"]),
             confidence_thresholds={
                 "GRAIN": 0.90,
                 "CARTRIDGE": 0.70,
+                **({"BITNET": 0.75} if self.enable_bitnet else {}),
             },
             recommended_cartridges=[],
             use_mamba_context=False,
@@ -163,10 +190,11 @@ class RuleBasedTriageAgent(TriageAgent):
         → GRAIN (precise) → CARTRIDGE (broader) → ESCALATE
         """
         return TriageDecision(
-            layer_sequence=["GRAIN", "CARTRIDGE", "ESCALATE"],
+            layer_sequence=self._insert_bitnet(["GRAIN", "CARTRIDGE", "ESCALATE"]),
             confidence_thresholds={
                 "GRAIN": 0.90,
                 "CARTRIDGE": 0.70,
+                **({"BITNET": 0.75} if self.enable_bitnet else {}),
             },
             recommended_cartridges=[],
             use_mamba_context=False,
@@ -183,14 +211,15 @@ class RuleBasedTriageAgent(TriageAgent):
         → Skip GRAIN (unlikely to have crystallized), go to CARTRIDGE then escalate
         """
         return TriageDecision(
-            layer_sequence=["CARTRIDGE", "ESCALATE"],
+            layer_sequence=self._insert_bitnet(["CARTRIDGE", "ESCALATE"]),
             confidence_thresholds={
                 "CARTRIDGE": 0.70,
+                **({"BITNET": 0.75} if self.enable_bitnet else {}),
             },
             recommended_cartridges=[],
             use_mamba_context=True,  # Use context for complex queries
             cache_result=True,
-            reasoning="Long query - skip GRAIN, focus on cartridge, then escalate to LLM"
+            reasoning="Long query - skip GRAIN, focus on cartridge, then escalate to LLM (BITNET wired when enabled)"
         )
     
     # ========================================================================
