@@ -13,6 +13,7 @@ Interface: HTTP POST to /completion endpoint
 """
 
 import time
+import os
 import logging
 import requests
 from typing import Optional, Dict, Any
@@ -47,7 +48,7 @@ class BitNetEngine(InferenceEngine):
     
     engine_name = "BITNET"
     
-    def __init__(self, server_url: str = "http://127.0.0.1:8080",
+    def __init__(self, server_url: Optional[str] = None,
                  timeout_seconds: int = 30,
                  max_tokens: int = 100,
                  temperature: float = 0.7):
@@ -55,7 +56,8 @@ class BitNetEngine(InferenceEngine):
         Initialize BitNet Engine.
         
         Args:
-            server_url: URL of BitNet HTTP server
+            server_url: URL of BitNet HTTP server. Defaults to the
+                KITBASH_BITNET_URL env var, then http://127.0.0.1:8080.
             timeout_seconds: Request timeout
             max_tokens: Maximum tokens to generate per query
             temperature: Sampling temperature (0.0-2.0)
@@ -65,7 +67,9 @@ class BitNetEngine(InferenceEngine):
         """
         super().__init__()
         
-        self.server_url = server_url.rstrip('/')
+        self.server_url = (server_url or os.environ.get(
+            "KITBASH_BITNET_URL", "http://127.0.0.1:8080"
+        )).rstrip('/')
         self.completion_endpoint = urljoin(self.server_url, '/completion')
         self.timeout_seconds = timeout_seconds
         self.max_tokens = max_tokens
@@ -372,11 +376,11 @@ if __name__ == "__main__":
     print("TO RUN WITH BITNET SERVER:")
     print("="*70)
     print("""
-1. Start BitNet server in separate terminal:
-   cd B:\\ai\\llm\\kitbash\\bitnet\\build\\bin
-   llama-server.exe --model ..\\..\\models\\BitNet-b1_58-3B\\<model>.gguf -ngl 20 -c 512
+1. Start BitNet server in separate terminal (model path is deployment-specific;
+   do NOT hardcode a local drive letter — set KITBASH_BITNET_URL to match):
+   llama-server.exe --model <path/to/model.gguf> -ngl 20 -c 512
 
-2. Run this script
+2. Run this script (optionally set KITBASH_BITNET_URL first)
 
 3. You should see BitNet responses instead of connection errors
 """)
