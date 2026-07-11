@@ -32,6 +32,10 @@ class MambaContextRequest:
     session_id: Optional[str] = None
     """Session identifier (for conversation history)"""
     
+    user_query: str = ""
+    """The user's current query, forwarded so the context service can
+    produce query-relevant context (e.g. BitMamba generation)."""
+    
     include_conversation_history: bool = False
     """Whether to include recent conversation messages"""
     

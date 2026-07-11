@@ -436,6 +436,7 @@ class QueryOrchestrator:
             request = MambaContextRequest(
                 user_id=context.get("user_id"),
                 session_id=context.get("session_id"),
+                user_query=user_query,
             )
             return self.mamba_service.get_context(request)
         except Exception as e:
