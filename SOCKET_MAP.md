@@ -44,7 +44,7 @@
 | Phantom tracker / crystallization | `advance_phantom_cycle`, crystallize-at-interval | **GREEN** | B1/B2 fixed inside LearningObserver (T3); TEST-learning_observer.py asserts single counter (B1) + single advance (B2), 7/7 PASS. T7 #6 asserts exactly one cycle-advance per query on the real path. 51-query cadence now the real cadence. |
 | Resonance weights | `record_pattern / reinforce_pattern / advance_turn` | **GREEN** | Single-owner rule honored (orchestrator owns; observer does not touch). Exercised: T7 #4 asserts `record_pattern` once per answered query; real run in T8. |
 | MTR state manager | `MTRStateCheckpoint.save/load/exists` | **GREEN** | F1 resolved: factory loads checkpoint (T5) AND seeds it into the observer (T8) so the counter resumes. TEST-factory_smoke.py 6/6 (T5) + T8 e2e asserts persist-on-close + resume-on-rebuild (time 19→27). |
-| L2 Working Theory service | `L2WorkingTheoryService` (read-only audit) | PLANNED→ | Initialized in donor only; canonical wiring lands with observer. Full service = Phase 5 blocker #3 (Mutation 2). |
+| L2 Working Theory service | `L2WorkingTheoryService` (read-only audit) | **GREEN (2026-07-11)** | Canonical wiring landed via `query_orchestrator_factory.py` — replaced hardcoded `l2_service=None` with real `L2WorkingTheoryService(dream_bucket_dir=..., grain_orchestrator=...)` (ported from donor `attic/query_orchestrator.py:280-284`). `TEST-mutation2_l2_wiring.py` verifies: factory produces non-None instance, observer receives it, `get_working_theory_snapshot()` returns real audit data, real `process_query()` runs without crash. **INVOCATION GAP (flagged, out of scope):** `LearningObserver.observe()` stores `self.l2_service` but does NOT yet call it, so a query does not currently produce L2 audit output from within observe(). Wiring complete; invocation belongs to Mutation 3 / Phase 5B (L2 enrichment). |
 
 ## 3. Sleep Plane (the consolidating path)
 
@@ -96,7 +96,7 @@ The bus is a **socket factory**: future components attach here rather than requi
 
 ## Phase 5 Critical Path (the cells that define "yak shaved")
 
-In dependency order: **Query entry (GREEN) → LearningObserver (GREEN) → MTR v6.1 (GREEN: TEST-MTR_v6_1_contract.py 10/10 on hardware) → stream format spec (YELLOW: docs/SPEC_STREAM_FORMAT.md written; GREEN on §6 DONE-WHEN) → RedisBlackboard wiring → grain registry format contract → Mutation 1 → L2 service (Mutation 2).** When every cell on this line is GREEN, refactoring is over and building resumes. Everything else on this map is backlog by definition — including things that are genuinely broken. That is the license to stop looking.
+In dependency order: **Query entry (GREEN) → LearningObserver (GREEN) → MTR v6.1 (GREEN: TEST-MTR_v6_1_contract.py 10/10 on hardware) → stream format spec (YELLOW: docs/SPEC_STREAM_FORMAT.md written; GREEN on §6 DONE-WHEN) → RedisBlackboard wiring → grain registry format contract → Mutation 1 → L2 service (Mutation 2 — GREEN 2026-07-11).** When every cell on this line is GREEN, refactoring is over and building resumes. Everything else on this map is backlog by definition — including things that are genuinely broken. That is the license to stop looking.
 
 ## Maintenance Rules
 

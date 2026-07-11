@@ -288,6 +288,18 @@ def create_query_orchestrator(
         learning_observer = None
         if mtr_engine is not None:
             try:
+                # Mutation 2 (L2WorkingTheoryService canonical wiring):
+                # port the donor instantiation (attic/query_orchestrator.py:280-284)
+                # so the observer receives a real, functioning instance instead of
+                # None. Read-only audit service; grain_orchestrator may be None if
+                # grain system disabled (service guards on None internally).
+                from l2_working_theory_service import L2WorkingTheoryService
+                l2_service = L2WorkingTheoryService(
+                    dream_bucket_dir=dream_bucket_dir,
+                    grain_orchestrator=grain_orchestrator,
+                )
+                logger.info("  ✓ L2WorkingTheoryService constructed (Mutation 2)")
+
                 from learning_observer import LearningObserver
                 learning_observer = LearningObserver(
                     mtr_engine=mtr_engine,
@@ -295,8 +307,7 @@ def create_query_orchestrator(
                     cartridge_engine=cartridge_engine_phase3e,
                     grain_router=grain_router,
                     mtr_grain_pipeline=mtr_grain_pipeline,
-                    l2_service=None,  # L2WorkingTheoryService is read-only audit; optional
-                    dream_bucket_writer=dream_bucket_writer,
+                    l2_service=l2_service,
                 )
                 logger.info("  ✓ LearningObserver constructed and wired")
             except Exception as e:
