@@ -32,6 +32,7 @@ from cartridge_engine import CartridgeEngine
 from bitnet_engine import BitNetEngine
 from rule_based_triage import RuleBasedTriageAgent
 from mock_mamba_service import MockMambaService
+from real_mamba_service import RealMambaService
 
 # Import existing Phase 3E components (unchanged)
 try:
@@ -66,6 +67,14 @@ def create_query_orchestrator(
     dream_bucket_dir: str = "data/subconscious/dream_bucket",
     enable_bitnet: bool = False,
     bitnet_url: str = "http://127.0.0.1:8080",
+    enable_mamba: bool = False,
+    mamba_host: str = "127.0.0.1",
+    mamba_port: int = 8731,
+    mamba_model_path: str = "B:/ai/llm/kitbash/models/bitmamba/bitmamba_255m.bin",
+    mamba_exe_path: str = "B:/ai/llm/kitbash/bitmamba.cpp/build/Release/bitmamba_server.exe",
+    mamba_cwd: str = "B:/ai/llm/kitbash/bitmamba.cpp",
+    mamba_max_tokens: int = 200,
+    mamba_autostart: bool = True,
     verbose: bool = False,
 ) -> Any:
     """
@@ -254,13 +263,32 @@ def create_query_orchestrator(
         logger.error("No inference engines available!")
         raise RuntimeError("Failed to create any inference engines")
     
-    # MambaContextService (MVP: no-op)
+    # MambaContextService — real BitMamba2 (Option B2) when enabled, mock otherwise.
+    # RealMambaService is a TCP client to bitmamba_server; it never raises to the
+    # orchestrator (graceful empty-context fallback). enable_mamba defaults False
+    # so existing callers are unaffected until they opt in.
     try:
-        mamba_service = MockMambaService()
-        logger.info(f"  ✓ MockMambaService initialized (Phase 4 placeholder)")
+        if enable_mamba:
+            mamba_service = RealMambaService(
+                host=mamba_host,
+                port=mamba_port,
+                model_path=mamba_model_path,
+                exe_path=mamba_exe_path,
+                cwd=mamba_cwd,
+                max_tokens=mamba_max_tokens,
+                enabled=True,
+                autostart=mamba_autostart,
+            )
+            logger.info(
+                f"  ✓ RealMambaService initialized (BitMamba2 @ {mamba_host}:{mamba_port}, "
+                f"autostart={mamba_autostart})"
+            )
+        else:
+            mamba_service = MockMambaService()
+            logger.info(f"  ✓ MockMambaService initialized (Mamba disabled)")
     except Exception as e:
-        logger.error(f"  ✗ Failed to initialize MambaContextService: {e}")
-        raise
+        logger.warning(f"  ⚠ RealMambaService unavailable, falling back to mock: {e}")
+        mamba_service = MockMambaService()
     
     # HeartbeatService (pause/resume background work)
     try:
