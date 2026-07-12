@@ -341,6 +341,11 @@ class QueryOrchestrator:
                     learning_report = self.learning_observer.observe(
                         query_id, user_query, context, result_summary
                     ).__dict__
+                    if learning_report.get("violation_error"):
+                        self.feed.log_error(
+                            query_id, "LEARNING_OBSERVER",
+                            f"violation emission failed: {learning_report['violation_error']}",
+                        )
                 except Exception as e:
                     learning_report = {"error": str(e)}
                     self.feed.log_error(query_id, "LEARNING_OBSERVER", str(e))

@@ -13,6 +13,7 @@ This is ad-hoc acceptance for T3 (NOT the permanent gate; that is T7).
 import sys
 import types
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -121,9 +122,9 @@ def check(name, ok, detail=""):
     print(f"[{'PASS' if ok else 'FAIL'}] {name}  {detail}")
 
 
-def make_observer(pipeline=None, dream=None, grain=None):
+def make_observer(pipeline=None, dream=None, grain=None, mtr=None):
     return LearningObserver(
-        mtr_engine=StubMTR(),
+        mtr_engine=mtr or StubMTR(),
         state_manager=StubStateManager(),
         cartridge_engine=StubCartridge(),
         grain_router=grain or StubGrainRouter(),
@@ -256,6 +257,115 @@ def test_miss_observed():
 
 
 # --------------------------------------------------------------------------- #
+# Fail-loud stubs (gate must trip: error_signal mean > 0.5)
+# --------------------------------------------------------------------------- #
+class StubMTRHighError:
+    """Mimics KitbashMTREngine.__call__ -> (logits, error_signal, new_state)
+    with error_signal mean > 0.5 so the dissonance gate (mtr_error > 0.5) trips."""
+    d_model = 64
+    d_state = 16
+
+    def __init__(self):
+        self.calls = 0
+
+    def __call__(self, token_ids, state=None, kappa=1.0):
+        self.calls += 1
+        err = _Meanable([0.6])  # error_signal mean 0.6 -> gate trips
+        return ([1, 2, 3], err, {"time": self.calls})
+
+
+class RaisingDreamBucket:
+    """append() raises ONLY for the violations log_type — exercises the
+    fail-loud exception path while leaving trace logging (a separate append)
+    able to run, matching the spec's 'trace path still ran' requirement."""
+    def __init__(self):
+        self.records = []
+
+    def append(self, log_type, record):
+        if log_type == "violations":
+            raise RuntimeError("simulated queue failure")
+        self.records.append((log_type, record))
+        return True
+
+
+class BackpressureDreamBucket:
+    """append() returns False — exercises the fail-loud backpressure path."""
+    def __init__(self):
+        self.records = []
+
+    def append(self, log_type, record):
+        return False
+
+
+class CapturingDreamBucket:
+    """append() records the emitted record so tests can inspect it."""
+    def __init__(self):
+        self.records = []
+
+    def append(self, log_type, record):
+        self.records.append((log_type, record))
+        return True
+
+
+# --------------------------------------------------------------------------- #
+# Fail-loud / determinism (SPEC_OBSERVER_FAIL_LOUD.md, Step 4)
+# --------------------------------------------------------------------------- #
+def test_fail_loud_exception():
+    """Writer.append raises -> violation_error set, report.error None,
+    trace path still ran, observe() does not raise."""
+    dream = RaisingDreamBucket()
+    obs = make_observer(dream=dream, mtr=StubMTRHighError())
+    rep = None
+    try:
+        rep = obs.observe("q1", "what is x?", Ctx(),
+                          {"answered": True, "engine_name": "CARTRIDGE",
+                           "confidence": 0.8, "fact_ids": {1}, "grain_ids": []})
+    except Exception as e:
+        check("Fail-loud on exception: observe() did NOT raise",
+              False, f"raised {type(e).__name__}: {e}")
+        return
+    ok = (rep.violation_error is not None
+          and rep.error is None
+          and rep.trace_logged is True
+          and not rep.violation_emitted)
+    check("Fail-loud on exception: violation_error set, error=None, trace ran, no raise",
+          ok, f"violation_error={rep.violation_error!r}, error={rep.error}, "
+              f"trace_logged={rep.trace_logged}, emitted={rep.violation_emitted}")
+
+
+def test_fail_loud_backpressure():
+    """Writer.append returns False -> violation_error mentions backpressure,
+    violation_emitted is False."""
+    dream = BackpressureDreamBucket()
+    obs = make_observer(dream=dream, mtr=StubMTRHighError())
+    rep = obs.observe("q1", "what is x?", Ctx(),
+                      {"answered": True, "engine_name": "CARTRIDGE",
+                       "confidence": 0.8, "fact_ids": {1}, "grain_ids": []})
+    ok = (rep.violation_error is not None
+          and "backpressure" in rep.violation_error
+          and rep.violation_emitted is False)
+    check("Fail-loud on backpressure: violation_error mentions backpressure, emitted False",
+          ok, f"violation_error={rep.violation_error!r}, emitted={rep.violation_emitted}")
+
+
+def test_determinism_fact_attribution():
+    """result_summary fact_ids={9,3,5} -> emitted record returned_fact_id == 3
+    (min()), deterministic across runs. violation_emitted True."""
+    dream = CapturingDreamBucket()
+    obs = make_observer(dream=dream, mtr=StubMTRHighError())
+    rep = obs.observe("q1", "what is x?", Ctx(),
+                      {"answered": True, "engine_name": "CARTRIDGE",
+                       "confidence": 0.8, "fact_ids": {9, 3, 5}, "grain_ids": []})
+    violations = [r for (lt, r) in dream.records if lt == "violations"]
+    ok = (len(violations) == 1
+          and violations[0].get("returned_fact_id") == 3
+          and rep.violation_emitted is True)
+    check("Determinism: returned_fact_id == min(fact_ids) == 3 (reproducible)",
+          ok, f"emitted_fact_id={violations[0].get('returned_fact_id') if violations else None}, "
+              f"violation_emitted={rep.violation_emitted}")
+
+
+# --------------------------------------------------------------------------- #
 def main():
     test_B1()
     test_B2()
@@ -264,6 +374,9 @@ def main():
     test_B5()
     test_B6()
     test_miss_observed()
+    test_fail_loud_exception()
+    test_fail_loud_backpressure()
+    test_determinism_fact_attribution()
     passed, total = summarize()
     print("=" * 60)
     print(f"T3 LearningObserver: {passed}/{total} PASS")

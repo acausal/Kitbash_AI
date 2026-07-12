@@ -45,6 +45,8 @@ class LearningReport:
     trace_logged: bool = False
     latency_ms: float = 0.0
     error: Optional[str] = None
+    violation_emitted: bool = False          # a violation record was queued this query
+    violation_error: Optional[str] = None    # emission attempted but failed (exception or backpressure)
 
 
 class LearningObserver:
@@ -171,17 +173,25 @@ class LearningObserver:
                     if mtr_error > 0.5 and self.dream_bucket_writer is not None:
                         try:
                             from dream_bucket import log_consistency_violation
-                            log_consistency_violation(
+                            # Determinism (finding 4): smallest fact_id is
+                            # reproducible across processes. result_summary
+                            # carries no primary/answering fact today; if it
+                            # ever does, prefer it over min() (leave as comment).
+                            queued = log_consistency_violation(
                                 writer=self.dream_bucket_writer,
                                 source_layer="mtr",
-                                returned_fact_id=next(iter(fact_ids)) if fact_ids else 0,
+                                returned_fact_id=min(fact_ids) if fact_ids else 0,
                                 returned_confidence=mtr_confidence,
                                 mtr_error_signal=mtr_error,
                                 dissonance_type="high_confidence_low_coherence",
                                 context={"recent_fact_ids": list(self._recent_facts)},
                             )
-                        except Exception:
-                            pass
+                            if queued:
+                                report.violation_emitted = True
+                            else:
+                                report.violation_error = "writer.append returned False (queue backpressure)"
+                        except Exception as e:
+                            report.violation_error = f"{type(e).__name__}: {e}"
 
             # --- PHASE 4: feedback logging (B1 owned elsewhere; here only writes) ---
             if fact_ids:
