@@ -117,6 +117,23 @@ class DreamBucketWriter:
             return True
         except:
             return False  # Queue full
+
+    def close(self, timeout: float = 5.0) -> None:
+        """Flush the write queue to disk and stop the background thread.
+
+        Enqueues the shutdown sentinel and joins the writer thread so queued
+        records are persisted before the process exits. Safe to call more than
+        once (a dead thread just returns immediately). Without this, the daemon
+        writer thread is killed on interpreter exit and queued records are lost.
+        """
+        t = getattr(self, "_writer_thread", None)
+        if t is None or not t.is_alive():
+            return
+        try:
+            self._write_queue.put((None, None))  # sentinel → _background_writer breaks
+            t.join(timeout=timeout)
+        except Exception:
+            pass
     
     def write_index(self, index_name: str, data: Dict[str, Any]) -> None:
         """

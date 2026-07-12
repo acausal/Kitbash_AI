@@ -408,6 +408,15 @@ class QueryOrchestrator:
                 self.learning_observer.save_state(session_id)
             except Exception as e:
                 logger.warning(f"Observer save on close failed: {e}")
+            # Flush the async dream-bucket trace queue so queued traces are
+            # persisted before the process exits (daemon writer thread would
+            # otherwise be killed with the interpreter, losing the records).
+            writer = getattr(self.learning_observer, "dream_bucket_writer", None)
+            if writer is not None and hasattr(writer, "close"):
+                try:
+                    writer.close()
+                except Exception as e:
+                    logger.warning(f"DreamBucket flush on close failed: {e}")
 
     def get_metrics(self) -> Dict[str, Any]:
         """Return session-level performance metrics."""

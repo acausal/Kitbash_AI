@@ -114,27 +114,34 @@ def main() -> int:
     log.info("orchestrator ready")
 
     # Read newline-delimited JSON requests from stdin until EOF.
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            req = json.loads(line)
-        except json.JSONDecodeError as e:
-            log.warning("bad stdin JSON: %s", e)
-            _emit_stdout({"type": "error", "message": f"bad request: {e}"})
-            continue
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                req = json.loads(line)
+            except json.JSONDecodeError as e:
+                log.warning("bad stdin JSON: %s", e)
+                _emit_stdout({"type": "error", "message": f"bad request: {e}"})
+                continue
 
-        user_query = req.get("query")
-        if not isinstance(user_query, str) or not user_query.strip():
-            _emit_stdout({"type": "error", "message": "missing 'query' string"})
-            continue
+            user_query = req.get("query")
+            if not isinstance(user_query, str) or not user_query.strip():
+                _emit_stdout({"type": "error", "message": "missing 'query' string"})
+                continue
 
+            try:
+                handle_query(orchestrator, user_query)
+            except Exception as e:
+                log.exception("query failed: %s", e)
+                _emit_stdout({"type": "error", "message": f"query failed: {e}"})
+    finally:
+        # Persist the async dream-bucket trace queue + MTR state before exit.
         try:
-            handle_query(orchestrator, user_query)
+            orchestrator.close()
         except Exception as e:
-            log.exception("query failed: %s", e)
-            _emit_stdout({"type": "error", "message": f"query failed: {e}"})
+            log.warning("orchestrator close failed: %s", e)
 
     log.info("stdin closed; kitbash_cli exiting")
     return 0

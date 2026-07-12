@@ -337,6 +337,7 @@ def create_query_orchestrator(
                     grain_router=grain_router,
                     mtr_grain_pipeline=mtr_grain_pipeline,
                     l2_service=l2_service,
+                    dream_bucket_writer=dream_bucket_writer,  # NEW: wire trace sink (was None → traces lost)
                 )
                 logger.info("  ✓ LearningObserver constructed and wired")
             except Exception as e:
