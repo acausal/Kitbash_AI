@@ -27,7 +27,7 @@ import hashlib
 import logging
 import time
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional
 
 from interfaces.triage_agent import TriageAgent, TriageRequest, TriageDecision
@@ -100,6 +100,28 @@ class _NoOpDiagnosticFeed:
 # ---------------------------------------------------------------------------
 # Orchestrator
 # ---------------------------------------------------------------------------
+
+def _serializable_mamba_context(mc) -> dict:
+    """JSON-safe projection of MambaContext for the query context dict.
+
+    The query context is a serializable-by-contract surface (T7 #8).
+    - hidden_state (bytes) is EXCLUDED: engine plumbing, not context
+      signal.
+    - conversation_history Message timestamps (datetime, forced non-None
+      by Message.__post_init__) are converted to ISO-8601 strings.
+    Everything else passes through asdict() untouched. This dict is the
+    Pattern B (routing-aware) entry point — rehydrate or read as needed.
+    """
+    if mc is None:
+        return {}
+    d = asdict(mc)
+    d.pop("hidden_state", None)
+    for m in d.get("conversation_history", []):
+        ts = m.get("timestamp")
+        if ts is not None and not isinstance(ts, str):
+            m["timestamp"] = ts.isoformat()
+    return d
+
 
 class QueryOrchestrator:
     """
@@ -195,7 +217,7 @@ class QueryOrchestrator:
 
         # PHASE 2: Context retrieval
         mamba_context = self._get_mamba_context(user_query, context)
-        context["mamba_context"] = mamba_context
+        context["mamba_context"] = _serializable_mamba_context(mamba_context)
 
         # Pattern A (consume Mamba downstream): prepend the BitMamba-generated
         # recent context to the ENGINE prompt only. Triage/routing/resonance/
