@@ -1,0 +1,210 @@
+2026-07-11 20:32:57,724 INFO kitbash_cli: kitbash_cli starting; building orchestrator...
+2026-07-11 20:32:57,724 INFO query_orchestrator_factory: Creating QueryOrchestrator with POSIX interfaces...
+2026-07-11 20:32:57,727 INFO cartridge_loader: Loading 38 cartridges from cartridges...
+2026-07-11 20:32:57,781 INFO cartridge_loader: ✓ Loaded 38 cartridges with 606 facts in 55.3ms
+2026-07-11 20:32:57,782 INFO query_orchestrator_factory:   ✓ CartridgeLoader: 606 facts (dream_bucket=data/subconscious/dream_bucket)
+2026-07-11 20:32:57,970 INFO query_orchestrator_factory:   ✓ MTREngine initialized
+✓ MTR state loaded from data\state\state.pt
+  Time: 142
+  Session: t8e2e
+  Timestamp: 2026-07-10T13:01:14.057900
+2026-07-11 20:32:57,975 INFO query_orchestrator_factory:   ✓ MTR state resumed from checkpoint
+2026-07-11 20:32:57,989 INFO query_orchestrator_factory:   ✓ StateManager initialized
+2026-07-11 20:32:57,991 INFO query_orchestrator_factory:   ✓ Grain system initialized (6 grains)
+2026-07-11 20:32:57,991 INFO query_orchestrator_factory:   ✓ ResonanceWeightService initialized
+2026-07-11 20:32:57,991 INFO query_orchestrator_factory:   ✓ RuleBasedTriageAgent initialized (bitnet_routing=True)
+2026-07-11 20:32:57,992 INFO grain_engine: ✓ Wrapped shared GrainRouter (6 grains)
+2026-07-11 20:32:57,992 INFO query_orchestrator_factory:   ✓ GrainEngine created (wraps shared GrainRouter)
+2026-07-11 20:32:57,992 INFO cartridge_engine: ✓ Wrapped shared CartridgeInferenceEngine (606 facts)
+2026-07-11 20:32:57,992 INFO query_orchestrator_factory:   ✓ CartridgeEngine created (wraps shared CartridgeInferenceEngine)
+2026-07-11 20:32:57,997 INFO bitnet_engine: ✓ BitNet server reachable at http://127.0.0.1:8080
+2026-07-11 20:32:57,997 INFO query_orchestrator_factory:   ✓ BitNetEngine created (server: http://127.0.0.1:8080)
+2026-07-11 20:32:57,997 INFO query_orchestrator_factory:   ✓ RealMambaService initialized (BitMamba2 @ 127.0.0.1:8731, autostart=True)
+2026-07-11 20:32:57,997 INFO query_orchestrator_factory:   ✓ HeartbeatService initialized
+2026-07-11 20:32:58,081 INFO query_orchestrator_factory:   ✓ L2WorkingTheoryService constructed (Mutation 2)
+2026-07-11 20:32:58,081 INFO query_orchestrator_factory:   ✓ LearningObserver constructed and wired
+2026-07-11 20:32:58,081 INFO query_orchestrator_factory:   ✓ QueryOrchestrator initialized with 3 engines
+2026-07-11 20:32:58,081 INFO query_orchestrator_factory: ✓ QueryOrchestrator fully initialized with POSIX interfaces
+2026-07-11 20:32:58,081 INFO kitbash_cli: orchestrator ready
+2026-07-11 20:33:25,221 INFO root: query=222c1021 engine=BITNET conf=0.750 latency_ms=27139.2 layers=2
+2026-07-11 20:33:25,221 INFO kitbash_cli: stdin closed; kitbash_cli exiting
+2026-07-11 20:33:28,278 INFO kitbash_cli: kitbash_cli starting; building orchestrator...
+2026-07-11 20:33:28,278 INFO query_orchestrator_factory: Creating QueryOrchestrator with POSIX interfaces...
+2026-07-11 20:33:28,281 INFO cartridge_loader: Loading 38 cartridges from cartridges...
+2026-07-11 20:33:28,336 INFO cartridge_loader: ✓ Loaded 38 cartridges with 606 facts in 55.6ms
+2026-07-11 20:33:28,336 INFO query_orchestrator_factory:   ✓ CartridgeLoader: 606 facts (dream_bucket=data/subconscious/dream_bucket)
+2026-07-11 20:33:28,539 INFO query_orchestrator_factory:   ✓ MTREngine initialized
+✓ MTR state loaded from data\state\state.pt
+  Time: 142
+  Session: t8e2e
+  Timestamp: 2026-07-10T13:01:14.057900
+2026-07-11 20:33:28,544 INFO query_orchestrator_factory:   ✓ MTR state resumed from checkpoint
+2026-07-11 20:33:28,544 INFO query_orchestrator_factory:   ✓ StateManager initialized
+2026-07-11 20:33:28,546 INFO query_orchestrator_factory:   ✓ Grain system initialized (6 grains)
+2026-07-11 20:33:28,546 INFO query_orchestrator_factory:   ✓ ResonanceWeightService initialized
+2026-07-11 20:33:28,546 INFO query_orchestrator_factory:   ✓ RuleBasedTriageAgent initialized (bitnet_routing=True)
+2026-07-11 20:33:28,546 INFO grain_engine: ✓ Wrapped shared GrainRouter (6 grains)
+2026-07-11 20:33:28,546 INFO query_orchestrator_factory:   ✓ GrainEngine created (wraps shared GrainRouter)
+2026-07-11 20:33:28,547 INFO cartridge_engine: ✓ Wrapped shared CartridgeInferenceEngine (606 facts)
+2026-07-11 20:33:28,547 INFO query_orchestrator_factory:   ✓ CartridgeEngine created (wraps shared CartridgeInferenceEngine)
+2026-07-11 20:33:28,553 INFO bitnet_engine: ✓ BitNet server reachable at http://127.0.0.1:8080
+2026-07-11 20:33:28,553 INFO query_orchestrator_factory:   ✓ BitNetEngine created (server: http://127.0.0.1:8080)
+2026-07-11 20:33:28,553 INFO query_orchestrator_factory:   ✓ RealMambaService initialized (BitMamba2 @ 127.0.0.1:8731, autostart=True)
+2026-07-11 20:33:28,553 INFO query_orchestrator_factory:   ✓ HeartbeatService initialized
+2026-07-11 20:33:28,639 INFO query_orchestrator_factory:   ✓ L2WorkingTheoryService constructed (Mutation 2)
+2026-07-11 20:33:28,639 INFO query_orchestrator_factory:   ✓ LearningObserver constructed and wired
+2026-07-11 20:33:28,639 INFO query_orchestrator_factory:   ✓ QueryOrchestrator initialized with 3 engines
+2026-07-11 20:33:28,639 INFO query_orchestrator_factory: ✓ QueryOrchestrator fully initialized with POSIX interfaces
+2026-07-11 20:33:28,639 INFO kitbash_cli: orchestrator ready
+2026-07-11 20:33:54,759 INFO root: query=653a0192 engine=BITNET conf=0.750 latency_ms=26118.6 layers=2
+2026-07-11 20:33:54,759 INFO kitbash_cli: stdin closed; kitbash_cli exiting
+2026-07-11 20:33:57,743 INFO kitbash_cli: kitbash_cli starting; building orchestrator...
+2026-07-11 20:33:57,743 INFO query_orchestrator_factory: Creating QueryOrchestrator with POSIX interfaces...
+2026-07-11 20:33:57,746 INFO cartridge_loader: Loading 38 cartridges from cartridges...
+2026-07-11 20:33:57,799 INFO cartridge_loader: ✓ Loaded 38 cartridges with 606 facts in 53.6ms
+2026-07-11 20:33:57,799 INFO query_orchestrator_factory:   ✓ CartridgeLoader: 606 facts (dream_bucket=data/subconscious/dream_bucket)
+2026-07-11 20:33:57,986 INFO query_orchestrator_factory:   ✓ MTREngine initialized
+✓ MTR state loaded from data\state\state.pt
+  Time: 142
+  Session: t8e2e
+  Timestamp: 2026-07-10T13:01:14.057900
+2026-07-11 20:33:57,990 INFO query_orchestrator_factory:   ✓ MTR state resumed from checkpoint
+2026-07-11 20:33:57,990 INFO query_orchestrator_factory:   ✓ StateManager initialized
+2026-07-11 20:33:57,992 INFO query_orchestrator_factory:   ✓ Grain system initialized (6 grains)
+2026-07-11 20:33:57,992 INFO query_orchestrator_factory:   ✓ ResonanceWeightService initialized
+2026-07-11 20:33:57,992 INFO query_orchestrator_factory:   ✓ RuleBasedTriageAgent initialized (bitnet_routing=True)
+2026-07-11 20:33:57,993 INFO grain_engine: ✓ Wrapped shared GrainRouter (6 grains)
+2026-07-11 20:33:57,993 INFO query_orchestrator_factory:   ✓ GrainEngine created (wraps shared GrainRouter)
+2026-07-11 20:33:57,993 INFO cartridge_engine: ✓ Wrapped shared CartridgeInferenceEngine (606 facts)
+2026-07-11 20:33:57,993 INFO query_orchestrator_factory:   ✓ CartridgeEngine created (wraps shared CartridgeInferenceEngine)
+2026-07-11 20:33:57,998 INFO bitnet_engine: ✓ BitNet server reachable at http://127.0.0.1:8080
+2026-07-11 20:33:57,998 INFO query_orchestrator_factory:   ✓ BitNetEngine created (server: http://127.0.0.1:8080)
+2026-07-11 20:33:57,998 INFO query_orchestrator_factory:   ✓ RealMambaService initialized (BitMamba2 @ 127.0.0.1:8731, autostart=True)
+2026-07-11 20:33:57,998 INFO query_orchestrator_factory:   ✓ HeartbeatService initialized
+2026-07-11 20:33:58,085 INFO query_orchestrator_factory:   ✓ L2WorkingTheoryService constructed (Mutation 2)
+2026-07-11 20:33:58,085 INFO query_orchestrator_factory:   ✓ LearningObserver constructed and wired
+2026-07-11 20:33:58,085 INFO query_orchestrator_factory:   ✓ QueryOrchestrator initialized with 3 engines
+2026-07-11 20:33:58,085 INFO query_orchestrator_factory: ✓ QueryOrchestrator fully initialized with POSIX interfaces
+2026-07-11 20:33:58,085 INFO kitbash_cli: orchestrator ready
+2026-07-11 20:34:24,380 INFO root: query=0e050860 engine=BITNET conf=0.750 latency_ms=26293.9 layers=2
+2026-07-11 20:34:24,380 INFO kitbash_cli: stdin closed; kitbash_cli exiting
+2026-07-11 20:34:27,403 INFO kitbash_cli: kitbash_cli starting; building orchestrator...
+2026-07-11 20:34:27,403 INFO query_orchestrator_factory: Creating QueryOrchestrator with POSIX interfaces...
+2026-07-11 20:34:27,406 INFO cartridge_loader: Loading 38 cartridges from cartridges...
+2026-07-11 20:34:27,472 INFO cartridge_loader: ✓ Loaded 38 cartridges with 606 facts in 66.1ms
+2026-07-11 20:34:27,472 INFO query_orchestrator_factory:   ✓ CartridgeLoader: 606 facts (dream_bucket=data/subconscious/dream_bucket)
+2026-07-11 20:34:27,666 INFO query_orchestrator_factory:   ✓ MTREngine initialized
+✓ MTR state loaded from data\state\state.pt
+  Time: 142
+  Session: t8e2e
+  Timestamp: 2026-07-10T13:01:14.057900
+2026-07-11 20:34:27,670 INFO query_orchestrator_factory:   ✓ MTR state resumed from checkpoint
+2026-07-11 20:34:27,671 INFO query_orchestrator_factory:   ✓ StateManager initialized
+2026-07-11 20:34:27,672 INFO query_orchestrator_factory:   ✓ Grain system initialized (6 grains)
+2026-07-11 20:34:27,672 INFO query_orchestrator_factory:   ✓ ResonanceWeightService initialized
+2026-07-11 20:34:27,672 INFO query_orchestrator_factory:   ✓ RuleBasedTriageAgent initialized (bitnet_routing=True)
+2026-07-11 20:34:27,673 INFO grain_engine: ✓ Wrapped shared GrainRouter (6 grains)
+2026-07-11 20:34:27,673 INFO query_orchestrator_factory:   ✓ GrainEngine created (wraps shared GrainRouter)
+2026-07-11 20:34:27,673 INFO cartridge_engine: ✓ Wrapped shared CartridgeInferenceEngine (606 facts)
+2026-07-11 20:34:27,673 INFO query_orchestrator_factory:   ✓ CartridgeEngine created (wraps shared CartridgeInferenceEngine)
+2026-07-11 20:34:27,678 INFO bitnet_engine: ✓ BitNet server reachable at http://127.0.0.1:8080
+2026-07-11 20:34:27,678 INFO query_orchestrator_factory:   ✓ BitNetEngine created (server: http://127.0.0.1:8080)
+2026-07-11 20:34:27,678 INFO query_orchestrator_factory:   ✓ RealMambaService initialized (BitMamba2 @ 127.0.0.1:8731, autostart=True)
+2026-07-11 20:34:27,678 INFO query_orchestrator_factory:   ✓ HeartbeatService initialized
+2026-07-11 20:34:27,766 INFO query_orchestrator_factory:   ✓ L2WorkingTheoryService constructed (Mutation 2)
+2026-07-11 20:34:27,766 INFO query_orchestrator_factory:   ✓ LearningObserver constructed and wired
+2026-07-11 20:34:27,766 INFO query_orchestrator_factory:   ✓ QueryOrchestrator initialized with 3 engines
+2026-07-11 20:34:27,766 INFO query_orchestrator_factory: ✓ QueryOrchestrator fully initialized with POSIX interfaces
+2026-07-11 20:34:27,766 INFO kitbash_cli: orchestrator ready
+2026-07-11 20:34:54,535 INFO root: query=6676f9b9 engine=BITNET conf=0.750 latency_ms=26768.5 layers=2
+2026-07-11 20:34:54,535 INFO kitbash_cli: stdin closed; kitbash_cli exiting
+2026-07-11 20:34:57,586 INFO kitbash_cli: kitbash_cli starting; building orchestrator...
+2026-07-11 20:34:57,586 INFO query_orchestrator_factory: Creating QueryOrchestrator with POSIX interfaces...
+2026-07-11 20:34:57,588 INFO cartridge_loader: Loading 38 cartridges from cartridges...
+2026-07-11 20:34:57,644 INFO cartridge_loader: ✓ Loaded 38 cartridges with 606 facts in 55.6ms
+2026-07-11 20:34:57,644 INFO query_orchestrator_factory:   ✓ CartridgeLoader: 606 facts (dream_bucket=data/subconscious/dream_bucket)
+2026-07-11 20:34:57,832 INFO query_orchestrator_factory:   ✓ MTREngine initialized
+✓ MTR state loaded from data\state\state.pt
+  Time: 142
+  Session: t8e2e
+  Timestamp: 2026-07-10T13:01:14.057900
+2026-07-11 20:34:57,838 INFO query_orchestrator_factory:   ✓ MTR state resumed from checkpoint
+2026-07-11 20:34:57,838 INFO query_orchestrator_factory:   ✓ StateManager initialized
+2026-07-11 20:34:57,840 INFO query_orchestrator_factory:   ✓ Grain system initialized (6 grains)
+2026-07-11 20:34:57,840 INFO query_orchestrator_factory:   ✓ ResonanceWeightService initialized
+2026-07-11 20:34:57,840 INFO query_orchestrator_factory:   ✓ RuleBasedTriageAgent initialized (bitnet_routing=True)
+2026-07-11 20:34:57,841 INFO grain_engine: ✓ Wrapped shared GrainRouter (6 grains)
+2026-07-11 20:34:57,841 INFO query_orchestrator_factory:   ✓ GrainEngine created (wraps shared GrainRouter)
+2026-07-11 20:34:57,841 INFO cartridge_engine: ✓ Wrapped shared CartridgeInferenceEngine (606 facts)
+2026-07-11 20:34:57,841 INFO query_orchestrator_factory:   ✓ CartridgeEngine created (wraps shared CartridgeInferenceEngine)
+2026-07-11 20:34:57,846 INFO bitnet_engine: ✓ BitNet server reachable at http://127.0.0.1:8080
+2026-07-11 20:34:57,846 INFO query_orchestrator_factory:   ✓ BitNetEngine created (server: http://127.0.0.1:8080)
+2026-07-11 20:34:57,846 INFO query_orchestrator_factory:   ✓ RealMambaService initialized (BitMamba2 @ 127.0.0.1:8731, autostart=True)
+2026-07-11 20:34:57,846 INFO query_orchestrator_factory:   ✓ HeartbeatService initialized
+2026-07-11 20:34:57,935 INFO query_orchestrator_factory:   ✓ L2WorkingTheoryService constructed (Mutation 2)
+2026-07-11 20:34:57,936 INFO query_orchestrator_factory:   ✓ LearningObserver constructed and wired
+2026-07-11 20:34:57,936 INFO query_orchestrator_factory:   ✓ QueryOrchestrator initialized with 3 engines
+2026-07-11 20:34:57,936 INFO query_orchestrator_factory: ✓ QueryOrchestrator fully initialized with POSIX interfaces
+2026-07-11 20:34:57,936 INFO kitbash_cli: orchestrator ready
+2026-07-11 20:35:24,093 INFO root: query=f52a6b57 engine=BITNET conf=0.750 latency_ms=26156.6 layers=2
+2026-07-11 20:35:24,093 INFO kitbash_cli: stdin closed; kitbash_cli exiting
+2026-07-11 20:35:27,061 INFO kitbash_cli: kitbash_cli starting; building orchestrator...
+2026-07-11 20:35:27,061 INFO query_orchestrator_factory: Creating QueryOrchestrator with POSIX interfaces...
+2026-07-11 20:35:27,064 INFO cartridge_loader: Loading 38 cartridges from cartridges...
+2026-07-11 20:35:27,118 INFO cartridge_loader: ✓ Loaded 38 cartridges with 606 facts in 54.5ms
+2026-07-11 20:35:27,118 INFO query_orchestrator_factory:   ✓ CartridgeLoader: 606 facts (dream_bucket=data/subconscious/dream_bucket)
+2026-07-11 20:35:27,307 INFO query_orchestrator_factory:   ✓ MTREngine initialized
+✓ MTR state loaded from data\state\state.pt
+  Time: 142
+  Session: t8e2e
+  Timestamp: 2026-07-10T13:01:14.057900
+2026-07-11 20:35:27,311 INFO query_orchestrator_factory:   ✓ MTR state resumed from checkpoint
+2026-07-11 20:35:27,311 INFO query_orchestrator_factory:   ✓ StateManager initialized
+2026-07-11 20:35:27,313 INFO query_orchestrator_factory:   ✓ Grain system initialized (6 grains)
+2026-07-11 20:35:27,313 INFO query_orchestrator_factory:   ✓ ResonanceWeightService initialized
+2026-07-11 20:35:27,313 INFO query_orchestrator_factory:   ✓ RuleBasedTriageAgent initialized (bitnet_routing=True)
+2026-07-11 20:35:27,314 INFO grain_engine: ✓ Wrapped shared GrainRouter (6 grains)
+2026-07-11 20:35:27,314 INFO query_orchestrator_factory:   ✓ GrainEngine created (wraps shared GrainRouter)
+2026-07-11 20:35:27,314 INFO cartridge_engine: ✓ Wrapped shared CartridgeInferenceEngine (606 facts)
+2026-07-11 20:35:27,314 INFO query_orchestrator_factory:   ✓ CartridgeEngine created (wraps shared CartridgeInferenceEngine)
+2026-07-11 20:35:27,319 INFO bitnet_engine: ✓ BitNet server reachable at http://127.0.0.1:8080
+2026-07-11 20:35:27,320 INFO query_orchestrator_factory:   ✓ BitNetEngine created (server: http://127.0.0.1:8080)
+2026-07-11 20:35:27,320 INFO query_orchestrator_factory:   ✓ RealMambaService initialized (BitMamba2 @ 127.0.0.1:8731, autostart=True)
+2026-07-11 20:35:27,320 INFO query_orchestrator_factory:   ✓ HeartbeatService initialized
+2026-07-11 20:35:27,409 INFO query_orchestrator_factory:   ✓ L2WorkingTheoryService constructed (Mutation 2)
+2026-07-11 20:35:27,409 INFO query_orchestrator_factory:   ✓ LearningObserver constructed and wired
+2026-07-11 20:35:27,409 INFO query_orchestrator_factory:   ✓ QueryOrchestrator initialized with 3 engines
+2026-07-11 20:35:27,409 INFO query_orchestrator_factory: ✓ QueryOrchestrator fully initialized with POSIX interfaces
+2026-07-11 20:35:27,409 INFO kitbash_cli: orchestrator ready
+2026-07-11 20:35:53,926 INFO root: query=f3e05bd0 engine=BITNET conf=0.750 latency_ms=26516.6 layers=2
+2026-07-11 20:35:53,926 INFO kitbash_cli: stdin closed; kitbash_cli exiting
+2026-07-11 20:35:56,964 INFO kitbash_cli: kitbash_cli starting; building orchestrator...
+2026-07-11 20:35:56,964 INFO query_orchestrator_factory: Creating QueryOrchestrator with POSIX interfaces...
+2026-07-11 20:35:56,966 INFO cartridge_loader: Loading 38 cartridges from cartridges...
+2026-07-11 20:35:57,025 INFO cartridge_loader: ✓ Loaded 38 cartridges with 606 facts in 59.3ms
+2026-07-11 20:35:57,025 INFO query_orchestrator_factory:   ✓ CartridgeLoader: 606 facts (dream_bucket=data/subconscious/dream_bucket)
+2026-07-11 20:35:57,215 INFO query_orchestrator_factory:   ✓ MTREngine initialized
+✓ MTR state loaded from data\state\state.pt
+  Time: 142
+  Session: t8e2e
+  Timestamp: 2026-07-10T13:01:14.057900
+2026-07-11 20:35:57,220 INFO query_orchestrator_factory:   ✓ MTR state resumed from checkpoint
+2026-07-11 20:35:57,220 INFO query_orchestrator_factory:   ✓ StateManager initialized
+2026-07-11 20:35:57,222 INFO query_orchestrator_factory:   ✓ Grain system initialized (6 grains)
+2026-07-11 20:35:57,222 INFO query_orchestrator_factory:   ✓ ResonanceWeightService initialized
+2026-07-11 20:35:57,222 INFO query_orchestrator_factory:   ✓ RuleBasedTriageAgent initialized (bitnet_routing=True)
+2026-07-11 20:35:57,223 INFO grain_engine: ✓ Wrapped shared GrainRouter (6 grains)
+2026-07-11 20:35:57,223 INFO query_orchestrator_factory:   ✓ GrainEngine created (wraps shared GrainRouter)
+2026-07-11 20:35:57,223 INFO cartridge_engine: ✓ Wrapped shared CartridgeInferenceEngine (606 facts)
+2026-07-11 20:35:57,223 INFO query_orchestrator_factory:   ✓ CartridgeEngine created (wraps shared CartridgeInferenceEngine)
+2026-07-11 20:35:57,228 INFO bitnet_engine: ✓ BitNet server reachable at http://127.0.0.1:8080
+2026-07-11 20:35:57,228 INFO query_orchestrator_factory:   ✓ BitNetEngine created (server: http://127.0.0.1:8080)
+2026-07-11 20:35:57,228 INFO query_orchestrator_factory:   ✓ RealMambaService initialized (BitMamba2 @ 127.0.0.1:8731, autostart=True)
+2026-07-11 20:35:57,229 INFO query_orchestrator_factory:   ✓ HeartbeatService initialized
+2026-07-11 20:35:57,315 INFO query_orchestrator_factory:   ✓ L2WorkingTheoryService constructed (Mutation 2)
+2026-07-11 20:35:57,315 INFO query_orchestrator_factory:   ✓ LearningObserver constructed and wired
+2026-07-11 20:35:57,315 INFO query_orchestrator_factory:   ✓ QueryOrchestrator initialized with 3 engines
+2026-07-11 20:35:57,315 INFO query_orchestrator_factory: ✓ QueryOrchestrator fully initialized with POSIX interfaces
+2026-07-11 20:35:57,315 INFO kitbash_cli: orchestrator ready
+2026-07-11 20:36:24,383 INFO root: query=da53716b engine=BITNET conf=0.750 latency_ms=27067.8 layers=2
+2026-07-11 20:36:24,383 INFO kitbash_cli: stdin closed; kitbash_cli exiting
