@@ -1,0 +1,33 @@
+2026-07-11 22:39:38,055 INFO kitbash_cli: kitbash_cli starting; building orchestrator...
+2026-07-11 22:39:38,055 INFO query_orchestrator_factory: Creating QueryOrchestrator with POSIX interfaces...
+2026-07-11 22:39:38,064 INFO cartridge_loader: Loading 38 cartridges from cartridges...
+2026-07-11 22:39:38,126 INFO cartridge_loader: ✓ Loaded 38 cartridges with 606 facts in 62.6ms
+2026-07-11 22:39:38,126 INFO query_orchestrator_factory:   ✓ CartridgeLoader: 606 facts (dream_bucket=data/subconscious/dream_bucket)
+2026-07-11 22:39:38,386 INFO query_orchestrator_factory:   ✓ MTREngine initialized
+✓ MTR state loaded from data\state\state.pt
+  Time: 142
+  Session: t8e2e
+  Timestamp: 2026-07-10T13:01:14.057900
+2026-07-11 22:39:38,391 INFO query_orchestrator_factory:   ✓ MTR state resumed from checkpoint
+2026-07-11 22:39:38,391 INFO query_orchestrator_factory:   ✓ StateManager initialized
+2026-07-11 22:39:38,392 INFO query_orchestrator_factory:   ✓ Grain system initialized (6 grains)
+2026-07-11 22:39:38,393 INFO query_orchestrator_factory:   ✓ ResonanceWeightService initialized
+2026-07-11 22:39:38,393 INFO query_orchestrator_factory:   ✓ RuleBasedTriageAgent initialized (bitnet_routing=True)
+2026-07-11 22:39:38,393 INFO grain_engine: ✓ Wrapped shared GrainRouter (6 grains)
+2026-07-11 22:39:38,393 INFO query_orchestrator_factory:   ✓ GrainEngine created (wraps shared GrainRouter)
+2026-07-11 22:39:38,393 INFO cartridge_engine: ✓ Wrapped shared CartridgeInferenceEngine (606 facts)
+2026-07-11 22:39:38,393 INFO query_orchestrator_factory:   ✓ CartridgeEngine created (wraps shared CartridgeInferenceEngine)
+2026-07-11 22:39:38,398 INFO bitnet_engine: ✓ BitNet server reachable at http://127.0.0.1:8080
+2026-07-11 22:39:38,398 INFO query_orchestrator_factory:   ✓ BitNetEngine created (server: http://127.0.0.1:8080, max_tokens=256)
+2026-07-11 22:39:38,399 INFO query_orchestrator_factory:   ✓ RealMambaService initialized (BitMamba2 @ 127.0.0.1:8731, autostart=True)
+2026-07-11 22:39:38,399 INFO query_orchestrator_factory:   ✓ HeartbeatService initialized
+2026-07-11 22:39:38,468 INFO query_orchestrator_factory:   ✓ L2WorkingTheoryService constructed (Mutation 2)
+2026-07-11 22:39:38,468 INFO query_orchestrator_factory:   ✓ LearningObserver constructed and wired
+2026-07-11 22:39:38,468 INFO query_orchestrator_factory:   ✓ QueryOrchestrator initialized with 3 engines
+2026-07-11 22:39:38,468 INFO query_orchestrator_factory: ✓ QueryOrchestrator fully initialized with POSIX interfaces
+2026-07-11 22:39:38,468 INFO kitbash_cli: orchestrator ready
+2026-07-11 22:39:40,526 WARNING real_mamba_service: Mamba server not reachable ([WinError 10061] No connection could be made because the target machine actively refused it); attempting autostart
+[server] loading model: B:/ai/llm/kitbash/models/bitmamba/bitmamba_255m.bin
+[server] model + tokenizer loaded; listening on 127.0.0.1:8731
+2026-07-11 22:40:34,430 INFO root: query=aa34cd84 engine=BITNET conf=0.750 latency_ms=55961.2 layers=1
+2026-07-11 22:40:34,432 INFO kitbash_cli: stdin closed; kitbash_cli exiting
