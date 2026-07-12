@@ -127,7 +127,61 @@ New file: `TEST-real_mamba_service.py`. Assert:
 
 One paragraph: does the real Mamba now answer `get_context()` with populated windows, and does the orchestrator survive a missing model? If the model output couldn't map to the four windows, name that gap precisely. Do not round a partial mapping up to "Mamba works."
 
-## 9. Explicitly out of scope
+## 11. Deferred roadmap: deeper Mamba context consumption (Pattern B / C)
+
+Pattern A (simple prepend of `context_1hour["generated"]` to the engine prompt)
+is implemented and verified in `query_orchestrator_posix.py`
+(see §line 199–209: `mamba_text` extraction + `augmented_query` construction;
+consumed at line ~244 via `_attempt_layer(layer_name, threshold, augmented_query, ...)`).
+The two richer consumption patterns below are **deferred** — they change *how*
+Mamba context shapes the answer, not just *that* it is present.
+
+### Pattern B — routing-aware Mamba context (DEFERRED)
+- **Idea:** let the fetched `context_1hour` influence **routing**, not just the
+  prompt text. E.g. when `active_topics` from BitMamba overlap the triage
+  reasoner's concept graph, bias the layer sequence / thresholds so a
+  context-relevant engine is favored; or feed Mamba context into the GrainRouter
+  recall ranking so cartridges matching recent context surface first.
+- **Entry points:**
+  - Triage input: `decision = self.triage_agent.triage(...)` (~line 201) — pass
+    `context["mamba_context"]` (or `mamba_text`/`active_topics`) into the triage
+    call so routing can see recent context.
+  - GrainRouter: `grain_router.search_grains(...)` (if used in the triage/cartridge
+    path) — augment the query with `active_topics` before ranking.
+  - Threshold selection: `decision.confidence_thresholds` (~line 226) — adjust per
+    layer based on Mamba topic overlap.
+- **Revisit trigger:** Pattern A proves the injection pipe; B is warranted once
+  we want Mamba to steer *which* engine answers, not only inform the prompt.
+  Tied to D2 — needs honest `context_1hour` content to be useful (it is, today);
+  the longer windows stay empty until stateful memory lands (D2).
+
+### Pattern C — L2 / deeper enrichment from Mamba context (DEFERRED)
+- **Idea:** enrich the engine `InferenceRequest.context` (or the `augmented_query`)
+  with **structured** Mamba outputs beyond raw text — e.g. attach
+  `active_topics`, `topic_shifts`, or (post-D2) the longer temporal windows into
+  the engine metadata so downstream engines/prompts can condition on structure,
+  not just a prepended blob. Could also write Mamba `active_topics` into the
+  `Resonance`/learning layer so repeated context reinforces routing.
+- **Entry points:**
+  - `InferenceRequest` build in `_attempt_layer()` (~line 483:
+    `InferenceRequest(user_query=augmented_query, context=context)`) — extend the
+    `context` dict (or add a field) carrying `mamba_context.active_topics` /
+    `topic_shifts`; engines that read `context` can then use it.
+  - Learning/Resonance: `self.resonance.record_pattern(...)` (~line 278) — feed
+    `active_topics` so context-relevant patterns reinforce.
+  - `context["mamba_context"]` is already on the context dict (line 197), so C is
+    largely *reading what is already fetched* and plumbing it deeper — lower risk
+    than B.
+- **Revisit trigger:** when an engine actually consumes structured context
+  (vs. prepended text), or when D2 stateful memory populates the longer windows
+  and we want them in the engine prompt.
+
+### Hard scope guards for B/C (carry from §9)
+- No changes to `MambaContext` / `MambaContextRequest` shapes (schema change =
+  separate spec).
+- Don't fabricate `context_1day/72hours/1week` content (D2) to feed B/C.
+- Both patterns stay behind the existing `enable_mamba` gate — if Mamba is off,
+  behavior is unchanged (same guarantee Pattern A holds).
 
 - Changing `MambaContext` / `MambaContextRequest` shapes (use them as-is; if they're wrong, that's a separate schema spec).
 - Changing `rule_based_triage.py` or the cascade (BitNet routing is a separate follow-up).
