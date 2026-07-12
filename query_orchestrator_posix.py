@@ -196,6 +196,18 @@ class QueryOrchestrator:
         mamba_context = self._get_mamba_context(user_query, context)
         context["mamba_context"] = mamba_context
 
+        # Pattern A (consume Mamba downstream): prepend the BitMamba-generated
+        # recent context to the ENGINE prompt only. Triage/routing/resonance/
+        # learning keep the raw query. Empty when Mamba is disabled or returns
+        # nothing, so behavior is unchanged in that case.
+        mamba_text = ""
+        if mamba_context is not None:
+            mamba_text = (mamba_context.context_1hour or {}).get("generated", "") or ""
+        augmented_query = (
+            f"[Recent context]\n{mamba_text}\n\n{user_query}"
+            if mamba_text else user_query
+        )
+
         # PHASE 3: Triage
         triage_start = time.perf_counter()
         decision = self._get_triage_decision(user_query, context, query_id)
@@ -228,7 +240,7 @@ class QueryOrchestrator:
                 )
 
                 attempt, response = self._attempt_layer(
-                    layer_name, threshold, user_query, context, decision, query_id
+                    layer_name, threshold, augmented_query, context, decision, query_id
                 )
                 layer_results.append(attempt)
                 self._record_layer_metric(layer_name, attempt)
