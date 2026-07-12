@@ -38,6 +38,11 @@ AXIOM_CONTRADICTION_THRESHOLD = 0.5
 # Existing violation-inclusion floor (sleep_recalibration_service.py:254): a
 # violation is even considered for recalibration only above this.
 VIOLATION_INCLUSION_FLOOR = 0.3
+# F2 edge-penalty (SPEC_F2_EDGE_TARGETING.md): mirrors the grain-side Step 2
+# formula (penalty = min(error_signal * RATE, CAP)); one constant pair shared
+# across the two symmetric recalibration paths so grains and edges stay aligned.
+EDGE_PENALTY_RATE = 0.15
+EDGE_PENALTY_CAP = 0.1
 
 
 class RecalibrationService:
@@ -235,39 +240,49 @@ class RecalibrationService:
                              violations: List[Dict[str, Any]]) -> Tuple[int, Dict[str, Any]]:
         """
         Apply feedback to edge weights ONLY for edges a violation actually
-        implicates.
+        implicates, resolved via the violation's ``context.recent_fact_ids``.
 
-        STOPGAP (SPEC_AXIOM_RECALIBRATION.md F2, Option 1): the previous
-        implementation averaged the penalty across all pending violations and
-        applied it to EVERY edge in procedural_edge_graph.json (gated only on
-        confidence_mutable, which defaults True) — a blanket penalty unrelated
-        to which edges were involved. That is a latent correctness bug.
+        History: the prior implementation applied a blanket penalty to EVERY
+        edge in procedural_edge_graph.json regardless of which edges a
+        violation involved. That was replaced by a guarded no-op (SPEC_F2_
+        EDGE_TARGETING.md) until the violation schema gained a targeting
+        field. Commit 0978672 landed that field (LearningObserver now emits
+        ``context={"recent_fact_ids": [...]}``); this method implements the
+        field->edge-key mapping.
 
-        Real edge targeting requires a violation record to name the edge(s) or
-        the fact-chain it involved. The current violation schema carries no such
-        field (keys: dissonance_type, mtr_error_signal, returned_confidence,
-        returned_fact_id, session_id, timestamp — none resolve to an edge key).
-        Per the spec, we do NOT invent a targeting heuristic. When no violation
-        can be targeted to a specific edge, we change NOTHING and report why.
+        Behavior contract (SPEC_F2_EDGE_TARGETING.md):
+          1. Targetable = violation has a non-empty
+             ``context.recent_fact_ids`` list. Others contribute nothing.
+          2. Graph loaded via ``_load_edge_graph()``; if absent/corrupt,
+             no-op with ``reason='no_edge_graph_on_disk'``. Never fabricate.
+          3. An edge is implicated iff its ``source_fact_id`` OR
+             ``target_fact_id`` is in the violation's recent_fact_ids.
+          4. Penalty (only on edges with ``confidence_mutable==True``):
+             ``penalty = min(mtr_error_signal * EDGE_PENALTY_RATE, EDGE_PENALTY_CAP)``;
+             capped per edge per cycle at EDGE_PENALTY_CAP; floor weight at 0.0
+             (non-destructive — edges are never deleted). The ``updates``
+             parameter is ignored for penalty math (penalties derive from
+             violations); it is retained for signature stability at the
+             ``run_recalibration_cycle`` call site.
+          5. Persisted via ``_save_edge_graph()`` (atomic tmp+replace).
 
         Returns:
-            (updated_count, status) where status explains the outcome.
+            (updated_count, status) — updated_count = number of DISTINCT edges
+            whose weight actually changed.
         """
-        # Fields that could target a specific edge / fact-chain. None of these
-        # exist in the current violation schema; if the schema later adds one
-        # (see SPEC_AXIOM_RECALIBRATION.md violation-schema-gap), real targeting
-        # becomes possible and this stopgap should be revisited.
-        EDGE_TARGET_FIELDS = ("edge_key", "edge_keys", "edge_id", "context",
-                              "recent_facts", "fact_chain", "involved_edges")
+        # 1. Partition: targetable = non-empty context.recent_fact_ids.
+        #    The schema is ratified (0978672); speculative field names are out.
+        def _fact_ids(v: Dict[str, Any]) -> List[int]:
+            ctx = v.get("context") or {}
+            rf = ctx.get("recent_fact_ids")
+            return rf if isinstance(rf, list) and rf else []
 
-        targetable = [v for v in violations
-                      if any(v.get(f) for f in EDGE_TARGET_FIELDS)]
+        targetable = [v for v in violations if _fact_ids(v)]
 
         if not targetable:
             status = {
                 'action': 'no-op',
                 'reason': 'no_edge_targeting_field_in_violations',
-                'missing_fields': list(EDGE_TARGET_FIELDS),
                 'violations_seen': len(violations),
                 'violations_targetable': 0,
                 'detail': ('Violation records carry no edge or fact-chain '
@@ -278,24 +293,74 @@ class RecalibrationService:
                   f"({len(violations)} violation(s) seen, 0 targetable)")
             return 0, status
 
-        # Reaching here means the violation schema gained a targeting field.
-        # Real per-edge targeting is out of scope for this stopgap (it needs a
-        # confirmed, sound mapping from the new field to edge keys) — stop and
-        # report rather than guess, exactly as the spec requires.
+        # 2. Load graph; never fabricate.
+        graph = self._load_edge_graph()
+        if graph is None:
+            status = {
+                'action': 'no-op',
+                'reason': 'no_edge_graph_on_disk',
+                'violations_seen': len(violations),
+                'violations_targetable': len(targetable),
+                'detail': ('procedural_edge_graph.json absent/corrupt; no edges '
+                           'to recalibrate. No edges changed.'),
+            }
+            print(f"[RecalibrationService] Edge recalibration skipped: {status['detail']}")
+            return 0, status
+
+        edges = graph.get("edges", {})
+        # 3+4. Resolve implicated edges and accumulate penalties.
+        penalties: Dict[str, float] = {}   # edge_key -> accumulated penalty
+        implicated = set()
+        for v in targetable:
+            fid = set(_fact_ids(v))
+            err = float(v.get("mtr_error_signal", 0.0))
+            per_violation = min(err * EDGE_PENALTY_RATE, EDGE_PENALTY_CAP)
+            for ek, e in edges.items():
+                if (e.get("source_fact_id") in fid) or (e.get("target_fact_id") in fid):
+                    if e.get("confidence_mutable", True):
+                        # cap total decrement per edge per cycle at EDGE_PENALTY_CAP
+                        penalties[ek] = min(penalties.get(ek, 0.0) + per_violation,
+                                            EDGE_PENALTY_CAP)
+                        implicated.add(ek)
+
+        # Apply, floor at 0.0, count DISTINCT edges whose weight changed.
+        updated = 0
+        for ek, e in edges.items():
+            if ek in penalties:
+                new_w = max(0.0, float(e.get("edge_weight", 0.0)) - penalties[ek])
+                if abs(new_w - float(e.get("edge_weight", 0.0))) > 1e-9:
+                    e["edge_weight"] = new_w
+                    updated += 1
+
+        # 5. Persist.
+        if not self._save_edge_graph(graph):
+            status = {
+                'action': 'failed',
+                'reason': 'edge_graph_save_failed',
+                'violations_seen': len(violations),
+                'violations_targetable': len(targetable),
+                'edges_implicated': len(implicated),
+                'edges_updated': updated,
+                'edges_skipped_immutable': len(implicated) - updated,
+                'detail': 'Edge graph failed to save; recalibration NOT applied.',
+            }
+            print(f"[RecalibrationService] Edge recalibration FAILED: {status['detail']}")
+            return updated, status
+
         status = {
-            'action': 'no-op',
-            'reason': 'targeting_field_present_but_mapping_unimplemented',
+            'action': 'updated',
+            'reason': 'edge_weights_recalibrated_targeted',
             'violations_seen': len(violations),
             'violations_targetable': len(targetable),
-            'detail': ('Violations now carry a potential targeting field, but a '
-                       'sound field->edge-key mapping is not implemented. '
-                       'Revisit SPEC_AXIOM_RECALIBRATION.md Step 1 before '
-                       'applying penalties. No edges changed.'),
+            'edges_implicated': len(implicated),
+            'edges_updated': updated,
+            'edges_skipped_immutable': 0,
         }
-        print(f"[RecalibrationService] Edge recalibration deferred: {status['detail']} "
+        print(f"[RecalibrationService] Edge recalibration applied: {updated} edge(s) "
+              f"updated of {len(implicated)} implicated "
               f"({len(targetable)}/{len(violations)} targetable)")
-        return 0, status
-    
+        return updated, status
+
     # ========================================================================
     # DREAM BUCKET I/O
     # ========================================================================
