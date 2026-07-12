@@ -351,17 +351,35 @@ def create_query_orchestrator(
             except Exception as e:
                 logger.warning(f"  ⚠ Could not seed observer MTR state: {e}")
 
+        # SPEC Phase 3B.3: wire Redis-backed diagnostic feed + coupling client.
+        # kitbash-redis (standalone Docker container, localhost:6379) is the
+        # canonical Redis. RedisDiagnosticFeed degrades to no-op if Redis is
+        # down, so the orchestrator still starts and answers (soft-fail).
+        diagnostic_feed = None
+        redis_client = None
+        try:
+            from redis_blackboard import RedisDiagnosticFeed
+            diagnostic_feed = RedisDiagnosticFeed()  # pings kitbash-redis; no-op if down
+            if diagnostic_feed._alive:
+                import redis
+                redis_client = diagnostic_feed.redis
+                logger.info("  ✓ RedisDiagnosticFeed active (kitbash-redis)")
+            else:
+                logger.warning("  ⚠ RedisDiagnosticFeed degraded to no-op (kitbash-redis down)")
+        except Exception as e:
+            logger.warning(f"  ⚠ Could not build RedisDiagnosticFeed: {e} (no-op feed)")
+
         orchestrator = POSIXQueryOrchestrator(
             triage_agent=triage_agent,
             engines=engines,
             mamba_service=mamba_service,
             resonance=resonance_service,
             heartbeat=heartbeat,
-            metabolism_scheduler=None,  # Phase 3B: no background scheduler yet
+            metabolism_scheduler=None,  # Phase3B: no background scheduler yet
             shannon=grain_orchestrator if enable_grain_system else None,
-            diagnostic_feed=None,  # Phase 3B: no Redis yet
-            redis_client=None,  # Phase 3B: no Redis yet
-            learning_observer=learning_observer,  # SPEC Step 3
+            diagnostic_feed=diagnostic_feed,  # RedisDiagnosticFeed or None -> no-op
+            redis_client=redis_client,  # shared kitbash-redis client (coupling) or None
+            learning_observer=learning_observer,  # SPEC Step3
         )
         
         logger.info(f"  ✓ QueryOrchestrator initialized with {len(engines)} engines")

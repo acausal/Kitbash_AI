@@ -86,6 +86,82 @@ def _unwrap(raw: Any, expected_name: str) -> Optional[Any]:
     return obj.get("data")
 
 
+class RedisDiagnosticFeed:
+    """
+    Redis-backed DiagnosticFeed (SPEC_STREAM_FORMAT §3 diagnostic_event).
+
+    Implements the exact DiagnosticFeed interface the orchestrator calls
+    (see _NoOpDiagnosticFeed in query_orchestrator_posix.py):
+        log_query_created, log_query_started, log_query_completed,
+        log_layer_hit, log_layer_miss, log_error, log_metric
+    Each event is wrapped as a diagnostic_event@1 envelope and RPUSHed to
+    kitbash:diagnostic:feed (a list, per the bus schema docstring).
+
+    GRACEFUL DEGRADE (per design decision 2026-07-12): if the Redis
+    client cannot be reached at construction, the feed logs a warning and
+    becomes a no-op instead of raising — so the orchestrator still starts
+    and answers when Redis is down. This is the intended soft-fail mode
+    (telemetry, not contract data).
+    """
+
+    KEY = "kitbash:diagnostic:feed"
+    TTL_SEC = 24 * 60 * 60  # matches queries:state transient window
+
+    def __init__(self, redis_client: Optional[Redis] = None,
+                 prefix: str = "kitbash:", producer: str = "orchestrator"):
+        self.prefix = prefix
+        self.producer = producer
+        self.key = f"{prefix}diagnostic:feed"
+        self._alive = False
+        try:
+            self.redis = redis_client or redis.Redis(
+                host="localhost", port=6379, db=0, decode_responses=True)
+            self.redis.ping()
+            self._alive = True
+            logger.info("RedisDiagnosticFeed connected (kitbash-redis)")
+        except Exception as e:
+            logger.warning(
+                f"RedisDiagnosticFeed UNAVAILABLE ({e}); degrading to no-op feed")
+
+    def _emit(self, event: str, **fields) -> None:
+        if not self._alive:
+            return
+        try:
+            payload = {"event": event, **fields}
+            self.redis.rpush(self.key, _wrap("diagnostic_event", self.producer, payload))
+            # best-effort TTL refresh (RPUSH creates the key if absent)
+            try:
+                self.redis.expire(self.key, self.TTL_SEC)
+            except Exception:
+                pass
+        except Exception as e:
+            logger.warning(f"RedisDiagnosticFeed write failed ({e}); dropping event")
+
+    # --- DiagnosticFeed interface (signatures match _NoOpDiagnosticFeed) ---
+    def log_query_created(self, query_id, user_query, *a, **kw):
+        self._emit("query_created", query_id=query_id, user_query=str(user_query)[:512])
+
+    def log_query_started(self, query_id, *a, **kw):
+        self._emit("query_started", query_id=query_id)
+
+    def log_query_completed(self, query_id, engine_name, confidence, latency, *a, **kw):
+        self._emit("query_completed", query_id=query_id, engine=engine_name,
+                   confidence=confidence, latency=latency)
+
+    def log_layer_hit(self, query_id, layer_name, confidence, *a, **kw):
+        self._emit("layer_hit", query_id=query_id, layer=layer_name, confidence=confidence)
+
+    def log_layer_miss(self, query_id, layer_name, confidence, threshold, *a, **kw):
+        self._emit("layer_miss", query_id=query_id, layer=layer_name,
+                   confidence=confidence, threshold=threshold)
+
+    def log_error(self, query_id, component, message, *a, **kw):
+        self._emit("error", query_id=query_id, component=component, message=str(message)[:1024])
+
+    def log_metric(self, name, value, *a, **kw):
+        self._emit("metric", name=name, value=value)
+
+
 class RedisBlackboard:
     """
     Redis-backed shared blackboard for Kitbash orchestration.
