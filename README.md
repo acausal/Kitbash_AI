@@ -43,8 +43,8 @@ Last updated: 2026-07-11. This is not a finished system — active development, 
 
 **Query / cascade plane — GREEN and externally reachable.**
 The chat path runs end to end and is verified:
-- Routing/triage, CARTRIDGE (crystallized knowledge), BITNET (BitNet ternary-net fallback), and MambaContextService (RealMambaService, Option B2 over a persistent `bitmamba_server` shim) are all wired and tested.
-- Both models run standalone and are integrated into the orchestrator; in normal traffic CARTRIDGE answers first (winner-take-all), BITNET fires when CARTRIDGE misses, and BitMamba context is **consumed live** — `context_1hour` is prepended to the engine prompt (`[Recent context]` block). The web POC shows which engine answered and a "BitMamba context injected" badge, so both models are visibly engaged.
+- Routing/triage, CARTRIDGE (crystallized knowledge), BITNET (BitNet ternary-net, now the primary learned-inference net — threshold tuned to 0.65, ordered before CARTRIDGE so it competes in normal traffic), and MambaContextService (RealMambaService, Option B2 over a persistent `bitmamba_server` shim) are all wired and tested.
+- Both models run standalone and are integrated into the orchestrator; BITNET is now evaluated first in normal traffic (threshold 0.65, ordered ahead of CARTRIDGE) and wins when confident, CARTRIDGE answers when BITNET doesn't clear its bar, and BitMamba context is **consumed live** — `context_1hour` is prepended to the engine prompt (`[Recent context]` block). The web POC shows which engine answered and a "BitMamba context injected" badge, so both models are visibly engaged.
 - GrainRouter.search_grains, LearningObserver, MTR engine + contract suite, Phantom/crystallization, Resonance, and L2 working-theory service are GREEN.
 
 **Two ways to drive it (both verified this session):**
