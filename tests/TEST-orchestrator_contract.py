@@ -45,6 +45,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from query_orchestrator_posix import QueryOrchestrator, LayerAttempt
 from interfaces.inference_engine import InferenceRequest, InferenceResponse
+from interfaces.mamba_context_service import MambaContext, Message
 
 
 ESCALATE = "ESCALATE"
@@ -199,11 +200,27 @@ def check(name, ok, detail=""):
     print(f"[{'PASS' if ok else 'FAIL'}] {name}  {detail}")
 
 
+def _stub_mamba_context() -> MambaContext:
+    # context_1hour DELIBERATELY EMPTY: Pattern A must inject nothing in
+    # this harness, so augmented_query == user_query and the other
+    # assertions see unchanged engine-visible text.
+    # hidden_state + conversation_history DELIBERATELY POPULATED: these
+    # are the two serialization-hostile fields (bytes; forced datetime).
+    # Test #8 must prove the orchestrator sanitizes them — not pass
+    # vacuously on an empty dataclass. If MambaContext ever gains a new
+    # field, populate it here so the contract can see it.
+    return MambaContext(
+        hidden_state=b"\x01",
+        conversation_history=[Message(role="user", content="harness msg")],
+        active_topics=["harness"],
+    )
+
+
 def build_orchestrator(triage, engines, heartbeat, resonance, observer, feed):
     orch = QueryOrchestrator(
         triage_agent=triage,
         engines=engines,
-        mamba_service=type("M", (), {"get_context": lambda *a, **k: {}})(),
+        mamba_service=type("M", (), {"get_context": lambda *a, **k: _stub_mamba_context()})(),
         resonance=resonance,
         heartbeat=heartbeat,
         diagnostic_feed=feed,
@@ -230,7 +247,7 @@ def build_orchestrator(triage, engines, heartbeat, resonance, observer, feed):
             self.feed.log_error(query_id, layer_name, str(e))
             return attempt, None
     orch._attempt_layer = _attempt_layer.__get__(orch, QueryOrchestrator)
-    orch._get_mamba_context = lambda *a, **k: {}
+    orch._get_mamba_context = lambda *a, **k: _stub_mamba_context()
     orch._get_triage_decision = lambda *a, **k: triage._d
     return orch
 
