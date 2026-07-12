@@ -43,13 +43,13 @@ class BitNetEngine(InferenceEngine):
     - Handles timeouts and connection failures gracefully
     
     Server Startup:
-        llama-server.exe --model <path/to/model.gguf> -ngl 20 -c 512
+        llama-server.exe --model <path/to/model.gguf> -ngl 20 -c 4096
     """
     
     engine_name = "BITNET"
     
     def __init__(self, server_url: Optional[str] = None,
-                 timeout_seconds: int = 30,
+                 timeout_seconds: int = 60,
                  max_tokens: int = 100,
                  temperature: float = 0.7):
         """

@@ -67,7 +67,7 @@ def create_query_orchestrator(
     dream_bucket_dir: str = "data/subconscious/dream_bucket",
     enable_bitnet: bool = False,
     bitnet_url: str = "http://127.0.0.1:8080",
-    bitnet_max_tokens: int = 160,
+    bitnet_max_tokens: int = 256,
     enable_mamba: bool = False,
     mamba_host: str = "127.0.0.1",
     mamba_port: int = 8731,
