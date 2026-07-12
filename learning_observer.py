@@ -125,6 +125,10 @@ class LearningObserver:
             tokens = self._simple_tokenize(user_query)
             fact_ids: Set[int] = set(result_summary.get("fact_ids", set()) or set())
             grain_ids: List[str] = list(result_summary.get("grain_ids", []) or [])
+            # B4-style recency window: append THIS query's facts for the
+            # violation-context chain (capped at 20 by the deque).
+            if fact_ids:
+                self._recent_facts.extend(fact_ids)
 
             # --- kappa from hat (epistemic rigidity) ---
             kappa = 1.0
@@ -161,6 +165,23 @@ class LearningObserver:
                     mtr_confidence = 1.0 - mtr_error
                     report.mtr_error = mtr_error
                     report.mtr_confidence = mtr_confidence
+                    # --- dissonance detection (moved here from mtr()) ---
+                    # Coherence dissonance = high MTR error signal (low model
+                    # self-confidence in its own reasoning). Gate: mtr_error > 0.5.
+                    if mtr_error > 0.5 and self.dream_bucket_writer is not None:
+                        try:
+                            from dream_bucket import log_consistency_violation
+                            log_consistency_violation(
+                                writer=self.dream_bucket_writer,
+                                source_layer="mtr",
+                                returned_fact_id=next(iter(fact_ids)) if fact_ids else 0,
+                                returned_confidence=mtr_confidence,
+                                mtr_error_signal=mtr_error,
+                                dissonance_type="high_confidence_low_coherence",
+                                context={"recent_fact_ids": list(self._recent_facts)},
+                            )
+                        except Exception:
+                            pass
 
             # --- PHASE 4: feedback logging (B1 owned elsewhere; here only writes) ---
             if fact_ids:

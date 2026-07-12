@@ -541,35 +541,10 @@ class KitbashMTREngine(nn.Module):
 
         return self.epistemic_router(mtr_output, copent_signal, kappa)
 
-    def log_consistency_violation(self, returned_fact_id: int,
-                                  returned_confidence: float,
-                                  error_signal: float,
-                                  mtr_state_time: int = 0,
-                                  context: Optional[Dict[str, any]] = None,
-                                  session_id: Optional[str] = None) -> None:
-        """
-        Log consistency violation to dream bucket.
-
-        When search returns high-confidence result but MTR error_signal is high,
-        that's a dissonance worth investigating.
-        """
-        if self.dream_bucket_writer is None:
-            return
-
-        # Log only if there's significant dissonance
-        if error_signal > 0.5 and returned_confidence > 0.8:
-            from dream_bucket import log_consistency_violation
-            log_consistency_violation(
-                self.dream_bucket_writer,
-                source_layer="mtr",
-                returned_fact_id=returned_fact_id,
-                returned_confidence=returned_confidence,
-                mtr_error_signal=error_signal,
-                mtr_state_time=mtr_state_time,
-                dissonance_type="high_confidence_low_coherence",
-                context=context,
-                session_id=session_id
-            )
+    # NOTE: violation emission moved to LearningObserver.observe() (2026-07-12).
+    # MTR_v6_1 no longer emits consistency violations directly; the
+    # observer owns post-answer learning (SPEC §3.1) and threads
+    # recent_fact_ids into the violation context. This method was deleted.
 
 
 # ============================================================================
