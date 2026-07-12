@@ -118,16 +118,21 @@ class RuleBasedTriageAgent(TriageAgent):
     
     def _insert_bitnet(self, sequence):
         """
-        Insert BITNET into a cascade immediately before ESCALATE, but only when
-        enable_bitnet is True. Safe to call unconditionally; returns the sequence
-        unchanged when BITNET is disabled or already present.
+        Insert BITNET into a cascade immediately before CARTRIDGE (ahead of the
+        crystallized-knowledge fallback) when enable_bitnet is True, so the
+        learned-inference net gets a real shot in normal traffic instead of only
+        firing when CARTRIDGE misses. Safe to call unconditionally; returns the
+        sequence unchanged when BITNET is disabled or already present.
         """
         if not self.enable_bitnet:
             return sequence
         if "BITNET" in sequence:
             return sequence
         seq = list(sequence)
-        if "ESCALATE" in seq:
+        if "CARTRIDGE" in seq:
+            idx = seq.index("CARTRIDGE")
+            seq.insert(idx, "BITNET")
+        elif "ESCALATE" in seq:
             idx = seq.index("ESCALATE")
             seq.insert(idx, "BITNET")
         else:
@@ -154,7 +159,7 @@ class RuleBasedTriageAgent(TriageAgent):
             confidence_thresholds={
                 "GRAIN": 0.85,  # Lower bar since explicit reference
                 "CARTRIDGE": 0.70,
-                **({"BITNET": 0.75} if self.enable_bitnet else {}),
+                **({"BITNET": 0.65} if self.enable_bitnet else {}),
             },
             recommended_cartridges=[],
             use_mamba_context=False,
@@ -174,7 +179,7 @@ class RuleBasedTriageAgent(TriageAgent):
             confidence_thresholds={
                 "GRAIN": 0.90,
                 "CARTRIDGE": 0.70,
-                **({"BITNET": 0.75} if self.enable_bitnet else {}),
+                **({"BITNET": 0.65} if self.enable_bitnet else {}),
             },
             recommended_cartridges=[],
             use_mamba_context=False,
@@ -194,7 +199,7 @@ class RuleBasedTriageAgent(TriageAgent):
             confidence_thresholds={
                 "GRAIN": 0.90,
                 "CARTRIDGE": 0.70,
-                **({"BITNET": 0.75} if self.enable_bitnet else {}),
+                **({"BITNET": 0.65} if self.enable_bitnet else {}),
             },
             recommended_cartridges=[],
             use_mamba_context=False,
@@ -214,7 +219,7 @@ class RuleBasedTriageAgent(TriageAgent):
             layer_sequence=self._insert_bitnet(["CARTRIDGE", "ESCALATE"]),
             confidence_thresholds={
                 "CARTRIDGE": 0.70,
-                **({"BITNET": 0.75} if self.enable_bitnet else {}),
+                **({"BITNET": 0.65} if self.enable_bitnet else {}),
             },
             recommended_cartridges=[],
             use_mamba_context=True,  # Use context for complex queries
