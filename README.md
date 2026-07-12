@@ -39,6 +39,8 @@ Most agent frameworks put the LLM in charge: it plans, calls tools, decides what
 
 Last updated: 2026-07-11. This is not a finished system — active development, not a stable release. Component status is tracked on `SOCKET_MAP.md` (per-interface contract map: GREEN = executed passing test suite, YELLOW/RED = wired but not fully verified). What follows is the honest high-level picture.
 
+**Current milestone:** a working chat front-end exists — `kitbash_cli.py` (stdio JSON) and `kitbash_web.py` (browser POC) — driven by the orchestrator with CARTRIDGE + BITNET + live BitMamba context. Both models are visibly engaged in the web UI. This is a proof-of-concept surface, not the final product.
+
 **Query / cascade plane — GREEN and externally reachable.**
 The chat path runs end to end and is verified:
 - Routing/triage, CARTRIDGE (crystallized knowledge), BITNET (BitNet ternary-net fallback), and MambaContextService (RealMambaService, Option B2 over a persistent `bitmamba_server` shim) are all wired and tested.
@@ -52,7 +54,7 @@ The chat path runs end to end and is verified:
 **Not yet done (separate workstreams, not blockers for chat):**
 - Sleep pipeline stages (consolidation, hypothesis generation, recalibration), MTR↔Grain bridge (RED — soft-fail patterns), Epistemic layer names (YELLOW), HatKappaMapper, Dream Bucket read, RedisBlackboard core (API built, not wired into canonical path), Coupling validator, Cartridge file format, MTR checkpoints, SQLite stores. These are the memory/consolidation and shared-state planes — intentionally out of scope for the current chat-POC milestone.
 
-**Tests** live in `tests/` (run `python tests/TEST-<name>.py` from the repo root). **Specs/docs** live in `docs/`. `SOCKET_MAP.md` and `STATUS_2026-07-10.md` remain at the repo root.
+**Tests** live in `tests/` (run `python tests/TEST-<name>.py` from the repo root). **Specs/docs** live in `docs/`. Web UI assets live in `static/`. The per-day work log lives in `status/`. `SOCKET_MAP.md` and `STATUS_2026-07-10.md` remain at the repo root.
 
 ## Influences
 
