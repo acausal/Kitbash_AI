@@ -66,6 +66,7 @@ class QueryResult:
     coupling_deltas: List[Dict[str, Any]] = field(default_factory=list)  # Phase 3B.3
     learning_report: Optional[dict] = None  # SPEC Step 3: LearningObserver output
     cartridge_facts: List[Dict[str, Any]] = field(default_factory=list)  # compat: winning fact
+    mamba_injected: bool = False  # Pattern A: BitMamba context_1hour was prepended to the engine prompt
 
 
 @dataclass
@@ -377,6 +378,7 @@ class QueryOrchestrator:
                 coupling_deltas=coupling_deltas,  # Phase 3B.3
                 learning_report=learning_report,  # SPEC Step 3
                 cartridge_facts=cartridge_facts,  # compat: winning fact provenance
+                mamba_injected=bool(mamba_text),  # Pattern A: context was prepended
             )
 
         finally:

@@ -84,6 +84,7 @@ def handle_query(orchestrator, user_query: str) -> None:
         "query_id": result.query_id,
         "engine": result.engine_name,
         "confidence": result.confidence,
+        "mamba_injected": getattr(result, "mamba_injected", False),
         "total_latency_ms": round(latency_ms, 1),
     })
     # Ops note on stderr (chat channel stays clean).
