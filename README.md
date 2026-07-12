@@ -47,6 +47,24 @@ The chat path runs end to end and is verified:
 - Both models run standalone and are integrated into the orchestrator; BITNET is now evaluated first in normal traffic (threshold 0.65, ordered ahead of CARTRIDGE) and wins when confident, CARTRIDGE answers when BITNET doesn't clear its bar, and BitMamba context is **consumed live** — `context_1hour` is prepended to the engine prompt (`[Recent context]` block). The web POC shows which engine answered and a "BitMamba context injected" badge, so both models are visibly engaged.
 - GrainRouter.search_grains, LearningObserver, MTR engine + contract suite, Phantom/crystallization, Resonance, and L2 working-theory service are GREEN.
 
+**Prerequisite — start the BitNet server:** the cascade's BITNET tier talks to a local
+`llama-server.exe` (llama.cpp) on `127.0.0.1:8080`. Launch it with the bundled script, which
+encodes the stable config (`-c 4096` context; CPU-only build, so `-ngl` is a no-op and BitNet
+uses ~0 VRAM):
+```bash
+bash scripts/start_bitnet.sh          # foreground; background it or run via a process manager
+```
+⚠️ **Machine-specific paths:** `scripts/start_bitnet.sh` currently hard-codes the maintainer's
+`B:\ai\llm\kitbash\...` layout for the binary and model. Override per-machine via env vars
+(no edit needed):
+```bash
+BITNET_BIN=/path/to/llama-server.exe \
+BITNET_MODEL=/path/to/model.gguf \
+BITNET_CTX=4096 bash scripts/start_bitnet.sh
+```
+(BitNet is optional — the CLI/web run without it via `KITBASH_ENABLE_BITNET`, falling back to
+CARTRIDGE.)
+
 **Two ways to drive it (both verified this session):**
 - `kitbash_cli.py` — stdio JSON bridge. stdin = `{"query":...}`, **stdout = chat-only JSON** (`answer_chunk` / `answer_done` / `error`), **stderr = internal ops/logs**. Env toggles: `KITBASH_ENABLE_BITNET`, `KITBASH_ENABLE_MAMBA`, `KITBASH_BITNET_URL`. Wire contract in `docs/CLI_PROTOCOL.md`.
 - `kitbash_web.py` — dead-simple POC web UI (stdlib `http.server`, no deps). `GET /` serves a chat page, `POST /query` streams the CLI's chat output to the browser, `GET /ops` exposes the internal operational stream. Run `python kitbash_web.py` → http://127.0.0.1:8777.
