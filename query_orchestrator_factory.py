@@ -67,6 +67,7 @@ def create_query_orchestrator(
     dream_bucket_dir: str = "data/subconscious/dream_bucket",
     enable_bitnet: bool = False,
     bitnet_url: str = "http://127.0.0.1:8080",
+    bitnet_max_tokens: int = 160,
     enable_mamba: bool = False,
     mamba_host: str = "127.0.0.1",
     mamba_port: int = 8731,
@@ -253,9 +254,9 @@ def create_query_orchestrator(
     try:
         # BitNet Engine (optional)
         if enable_bitnet:
-            bitnet_engine = BitNetEngine(server_url=bitnet_url)
+            bitnet_engine = BitNetEngine(server_url=bitnet_url, max_tokens=bitnet_max_tokens)
             engines["BITNET"] = bitnet_engine
-            logger.info(f"  ✓ BitNetEngine created (server: {bitnet_url})")
+            logger.info(f"  ✓ BitNetEngine created (server: {bitnet_url}, max_tokens={bitnet_max_tokens})")
     except Exception as e:
         logger.warning(f"  ⚠ BitNet initialization skipped: {e}")
     
