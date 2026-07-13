@@ -113,3 +113,26 @@ to grow the corpus the loop needs.
   containers (MambaContext in context, forced datetimes, sets in
   cartridge_index — three organs, one disease). Vaccine: any test crossing
   a persistence boundary crosses it **twice**.
+
+## Deferred tickets
+
+- **(4) Persistent orchestrator (webui).** DECLINED 2026-07-13. Instead of
+  spawn-per-query (`kitbash_web.py` → `kitbash_cli.py` subprocess per POST),
+  run one long-lived orchestrator process the webui talks to. Removes the
+  per-query build tax (~0.4s today, small) AND lets in-memory cascade / Mamba
+  context carry across queries (currently thrown away each turn). This is a
+  webui redesign, not a config flip — file as a ticket, do not start until
+  usage collection is underway or the user opts in. Priority: low (latency
+  win is minor vs inference; main value is cross-query session state).
+
+## Config note (2026-07-13, usage-mode launch tuning)
+
+- `bitnet_max_tokens`: **256 → 64** (factory default, client-side generation cap).
+- BitNet server threads: **`-t 4`** added (pinned to physical cores; was at
+  default = auto/HT=8 on this 4-core/8-thread box). `start_bitnet.sh` gains
+  `BITNET_THREADS` (default 4).
+- ops.log rotated → ops.log.1 (no truncate).
+- **Measured e2e latency after tuning: 23.7s/query** (build 0.4s + BITNET
+  generation 23.3s, answer ~316 chars) vs 47.8s pre-tune (~1038 chars). The
+  dominant cost remains BitNet 3B CPU inference; the per-query restart is
+  ~0.4s. Stage 5 still dry (loop not powered on).

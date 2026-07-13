@@ -18,6 +18,7 @@ BITNET_HOST="${BITNET_HOST:-127.0.0.1}"
 BITNET_PORT="${BITNET_PORT:-8080}"
 BITNET_CTX="${BITNET_CTX:-4096}"     # total context: prompt + generation
 BITNET_NGL="${BITNET_NGL:-0}"        # no-op on this CPU-only build; kept for clarity
+BITNET_THREADS="${BITNET_THREADS:-4}" # CPU-only: pin to PHYSICAL cores (4), not HT (8)
 
 BIN_DIR="$(dirname "$BITNET_BIN")"
 EXE_NAME="$(basename "$BITNET_BIN")"
@@ -45,5 +46,6 @@ exec env MSYS2_ARG_CONV_EXCL='*' "./$EXE_NAME" \
     --model "$BITNET_MODEL" \
     -c "$BITNET_CTX" \
     -ngl "$BITNET_NGL" \
+    -t "$BITNET_THREADS" \
     --host "$BITNET_HOST" \
     --port "$BITNET_PORT"
