@@ -76,6 +76,9 @@ class ProceduralEdgeExtractor:
             'stage': 'stage_1.5_intra_cartridge',
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'traces_read': 0,
+            'chains_parsed': 0,
+            'chains_skipped_bad_shape': 0,
+            'chains_by_type': defaultdict(int),
             'edges_created': 0,
             'edges_by_cartridge': defaultdict(int),
             'avg_edge_weight': 0.0,
@@ -116,15 +119,20 @@ class ProceduralEdgeExtractor:
             for trace in traces:
                 raw_chain = trace.get('chain')
                 if not isinstance(raw_chain, dict):
+                    report['chains_skipped_bad_shape'] += 1
                     continue
                 try:
                     chain = TraceChain.from_dict(raw_chain)
                 except (ValueError, TypeError):
+                    report['chains_skipped_bad_shape'] += 1
                     continue
+                # parsed successfully: count it and its type
+                report['chains_parsed'] += 1
+                report['chains_by_type'][chain.chain_type] += 1
                 cartridge = (trace.get('context') or {}).get('cartridge') or 'unknown'
 
                 for src, tgt in iter_cooccurrence_edges(chain, cartridge):
-                    edge_key = f"{src}→{tgt}"
+                    edge_key = f"{src}->{tgt}"
                     if edge_key not in edges['edges']:
                         edges['edges'][edge_key] = {
                             'source_fact_id': src,

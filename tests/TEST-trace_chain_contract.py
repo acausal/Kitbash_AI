@@ -75,6 +75,16 @@ check("5 order-independent (set-sourced fact_ids)", a == b == {(1, 3), (1, 9), (
       f"a={a} b={b}")
 
 
+# 6) malformed record (obsolete list-shaped chain) is REJECTED by the contract,
+#    so the extractor counts it as a skip rather than crashing or misparsing.
+bad_list_shape = False
+try:
+    TraceChain.from_dict([1, 2, 3])  # the old list-of-steps shape -> must raise
+except (ValueError, TypeError):
+    bad_list_shape = True
+check("6 malformed list-shaped chain rejected (counted as skip)", bad_list_shape)
+
+
 failed = [r for r in results if not r[1]]
 print()
 if failed:
