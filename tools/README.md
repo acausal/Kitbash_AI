@@ -78,7 +78,27 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Scope:** `.json` → text from `content`/`text`/`body`/`message`/`data` fields (joined with `\n---\n`).
 **Code:** `json_extractor/` · **Usage:** `python -m tools.json_extractor input.json [-o out.md]`
 
-> PyPI-dependent extractors (`docx_extractor`, `rtf_extractor`, `odt_extractor`, `epub_extractor`) are NOT yet built — `python-docx`/`striprtf`/`odfpy`/`ebooklib` are not installed. See `SPEC-document_extractors.md`.
+### docx_extractor
+**Status:** Implemented (Document Format Extractors; `python-docx`)
+**Scope:** `.docx` → text (paragraphs as lines; tables as `| col | col |` rows).
+**Code:** `docx_extractor/` · **Usage:** `python -m tools.docx_extractor input.docx [-o out.md]`
+
+### rtf_extractor
+**Status:** Implemented (`striprtf`)
+**Scope:** `.rtf` → text (control words / embedded objects stripped).
+**Code:** `rtf_extractor/` · **Usage:** `python -m tools.rtf_extractor input.rtf [-o out.md]`
+
+### odt_extractor
+**Status:** Implemented (`odfpy`)
+**Scope:** `.odt` → text (paragraphs via `odf.teletype.extractText`).
+**Code:** `odt_extractor/` · **Usage:** `python -m tools.odt_extractor input.odt [-o out.md]`
+
+### epub_extractor
+**Status:** Implemented (`ebooklib` + stdlib HTMLParser)
+**Scope:** `.epub` → text (per-chapter HTML stripped; chapters joined with `\n--- CHAPTER ---\n`).
+**Code:** `epub_extractor/` · **Usage:** `python -m tools.epub_extractor input.epub [-o out.md]`
+
+> All 8 format extractors now build on the shared contract in `SPEC-document_extractors.md`. PyPI deps (`python-docx`/`striprtf`/`odfpy`/`ebooklib`) are installed in `.venv`.
 
 ## Adding a New Tool
 
