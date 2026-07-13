@@ -1,0 +1,84 @@
+# Tools: Isolation-First Experimental Development
+
+This directory contains Kitbash accessories—tools, skill systems, preprocessors, and utilities—that are developed *independently* of the core pipeline during exploration and data collection phases. Tools graduate to integration only after their contracts are stable and tested in isolation.
+
+## Isolation Contract
+
+### Allowed Imports
+- `data_structures.py` (shared type definitions; read-only)
+- Standard library and pip dependencies
+- Each other (within tools/)
+- External libraries (spaCy, Tracery, etc.)
+
+### Forbidden Imports
+- `orchestrator.py`, `query_orchestrator.py`, `query_orchestrator_*.py`
+- `sleep_*` modules (sleep_orchestrator.py, sleep_consolidator.py, etc.)
+- `heartbeat_service.py`, `redis_*.py`, `redis_coupling.py`
+- `bitnet_engine.py`, `cartridge_engine.py`, `grain_engine.py`
+- `mtr_*.py`, `MTR_*.py`
+- Any module that touches the Redis bus or triggers pipeline orchestration
+
+**Rationale:** Kitbash core is deterministic and symbol-driven. Tools explore stateful, probabilistic, or multi-stage processing without risking hidden dependencies or side effects.
+
+### What These Tools Can Do
+- Parse, transform, or validate input data
+- Emit structured output (JSON, CSV, Dream Bucket–shaped objects, etc.)
+- Run as standalone CLI or library imports
+- Log via `structured_logger.py` (if needed for tracing)
+- Read/write from disk or optional Redis connections (but not the coordinated blackboard bus)
+- Fail gracefully with clear error messages
+
+### What These Tools Cannot Do
+- Call into Kitbash query, sleep, or routing logic
+- Assume real-time coordination with the main pipeline
+- Mutate shared state or depend on heartbeat timing
+- Publish to the Redis work queue or state bus
+
+## Current Projects
+
+### Deterministic Companion System
+**Status:** Exploratory spec phase  
+**Scope:** Input sieve (spaCy/Lark) + output linting + Tracery phatic fill  
+**Intended output:** Cleaned, validated text for downstream chat or logging  
+**Integration target:** Post-1.0; will become a pre-processing stage before query orchestrator
+
+### Document Preprocessing Pipeline
+**Status:** Exploratory spec phase  
+**Scope:** Ingest structured documents (PDF, markdown, JSON); emit Dream Bucket–shaped violation/fact objects  
+**Intended output:** Cold-storage indexed cartridge material ready for sleep pipeline  
+**Integration target:** Post-1.0; becomes part of the sleep input layer
+
+## Adding a New Tool
+
+1. Create a subdirectory: `tools/<tool_name>/`
+2. Include a `README.md` (one paragraph: what it does, who calls it, why it exists)
+3. Include a `SPEC-<tool_name>.md` if the tool is complex (processing stages, contracts, error handling)
+4. Import only what's allowed (see Allowed Imports above)
+5. If it needs config, use environment variables or a local JSON file; no shared Kitbash config injection
+6. Fail loud: raise exceptions clearly, don't silently degrade
+
+## Integration Pathway (Post-1.0)
+
+When a tool is ready to integrate:
+
+1. **Contract review:** Does its output shape match what Kitbash needs? (Dream Bucket entry? Cartridge material? Sieve output?)
+2. **Dependency audit:** Does it introduce any forbidden imports?
+3. **Merge:** Move to top-level module (e.g., `companion.py`, `preprocessor.py`)
+4. **Wiring:** Add to appropriate orchestrator entry point (query or sleep)
+5. **Test coverage:** E2E tests in main test suite
+
+Until then, tools live here—safe, autonomous, and free to experiment.
+
+## Hermes Development Guidelines
+
+When building tools in this directory:
+- **Assume isolation.** You cannot reach into Kitbash core.
+- **Specs first.** Write the SPEC before code; include I/O contracts and error cases.
+- **Fail gracefully.** Provide clear error messages and recovery paths.
+- **Log structured data.** Use `structured_logger.py` if you need operational visibility.
+- **Test in isolation.** Your test suite should not require Kitbash to be running.
+- **Document non-goals.** State clearly what the tool does *not* do; defer scope creep to POST_MVP_ROADMAP.md.
+
+## Questions?
+
+If a tool needs something from Kitbash core (a type, a utility function, a constant), ask first. We may extract it to `data_structures.py` or `__init__.py`. Don't work around the boundary—make the boundary explicit.
