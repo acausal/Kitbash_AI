@@ -65,6 +65,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Integration target:** Stage 1 → feeds Stage 2 or downstream storage.
 **Spec:** `SPEC-document_dispatcher.md` · **Code:** `document_dispatcher/` · **Usage:** `python -m tools.document_dispatcher input.pdf [-o out.md] [--normalize]`
 
+### tokenizer
+**Status:** Implemented (input sieve / preprocessing; spaCy)
+**Scope:** Generic English tokenization (v1) via spaCy `en_core_web_sm`. Optional lemmatization + stop-word removal. Returns `Token` objects (text, lemma, POS, is_stop/is_punct/is_space, idx, doc_idx). Slang/abbrev/spelling/multilang deferred to v2+.
+**Intended output:** `Token` list (library) or JSON `{tokens, token_count, stop_word_count}` (CLI).
+**Integration target:** feeds input-sieve query handling + document preprocessing.
+**Spec:** `SPEC-tokenizer_v1.md` · **Code:** `tokenizer/` · **Usage:** `python -m tools.tokenizer input.txt [--lemma] [--remove-stop]`
+(Requires `spacy` + `en_core_web_sm`; in the Kitbash `.venv` prefix invocations with `PYTHONPATH= ` to avoid the leaked agent-venv shadowing pydantic.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
