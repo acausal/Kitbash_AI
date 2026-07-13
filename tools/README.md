@@ -100,6 +100,13 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 
 > All 8 format extractors now build on the shared contract in `SPEC-document_extractors.md`. PyPI deps (`python-docx`/`striprtf`/`odfpy`/`ebooklib`) are installed in `.venv`.
 
+### stage2_normalization
+**Status:** Implemented (Stage 2 of Document Preprocessing Pipeline)
+**Scope:** Whitespace normalization (line-ending + blank-collapse max 2 + trim) and exact-match duplicate-line removal (first occurrence kept; blank lines excluded from dedup so paragraph spacing survives).
+**Intended output:** Cleaned text for downstream normalization / Dream Bucket shaping.
+**Integration target:** Post-1.0; consumes Stage 1 (dispatcher/extractor) output.
+**Spec:** `SPEC-stage2_normalization.md` · **Code:** `stage2_normalization/` · **Usage:** `python -m tools.stage2_normalization input.txt [-o cleaned.txt]`
+
 ## Adding a New Tool
 
 1. Create a subdirectory: `tools/<tool_name>/`
