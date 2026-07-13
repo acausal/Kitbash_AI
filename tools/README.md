@@ -81,6 +81,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-negation_detector_v1.md` · **Code:** `negation_detector/` · **Usage:** `python -m tools.negation_detector input.txt [--window N]`
 (Reuses `spacy` + `en_core_web_sm`; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### ner
+**Status:** Implemented (input sieve / preprocessing; spaCy)
+**Scope:** Named entity recognition via spaCy `en_core_web_sm` default types (PERSON, ORG, GPE, DATE, MONEY, ...). Optional label filtering. Returns `Entity` objects (text, label, start, end, doc_idx). Fine-tuning / custom types / entity linking / relationships / confidence deferred to v2+.
+**Intended output:** `Entity` list (library) or JSON `{entities, entity_count, label_counts}` (CLI).
+**Integration target:** input-sieve query handling + document preprocessing.
+**Spec:** `SPEC-ner_v1.md` · **Code:** `ner/` · **Usage:** `python -m tools.ner input.txt [--labels PERSON,ORG] [--output out.json]`
+(Reuses `spacy` + `en_core_web_sm`; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
