@@ -3,10 +3,11 @@ kitbash_web.py — dead-simple POC web UI for the Kitbash query orchestrator.
 
 NOT the final product. This just makes the stdio CLI feel real in a browser:
   - GET  /         -> static/index.html (chat box + live answer + OPS pane)
-  - POST /query    -> spawns kitbash_cli.py, streams its STDOUT (chat JSON,
-                      newline-delimited) to the browser as chunked HTTP, so the
-                      answer renders progressively. CLI STDERR is teed to ops.log
-                      (internal operational stream, not on the chat channel).
+  - POST /query    -> spawns kitbash_cli.py, collects its STDOUT (chat JSON,
+                      newline-delimited) and returns it as a single buffered
+                      Content-Length response (no progressive/chunked streaming).
+                      CLI STDERR is teed to ops.log (internal operational stream,
+                      not on the chat channel).
   - GET  /ops      -> tail of ops.log (the "internal streams" debug pane)
 
 Stdlib only (http.server). One CLI subprocess per POST (per-request session).
