@@ -48,6 +48,15 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Intended output:** Cold-storage indexed cartridge material ready for sleep pipeline  
 **Integration target:** Post-1.0; becomes part of the sleep input layer
 
+## Current Tools
+
+### pdf_to_markdown
+**Status:** Implemented (Stage 1 of Document Preprocessing Pipeline)
+**Scope:** Single-PDF text extraction via `pypdf`; flat, whitespace-normalized output with `--- PAGE N ---` markers. No structure inference.
+**Intended output:** Cleaned text file (`.md`) for later normalization / Dream Bucket shaping.
+**Integration target:** Post-1.0; feeds the sleep input layer.
+**Spec:** `SPEC-pdf_to_markdown.md` · **Code:** `pdf_to_markdown/` · **Usage:** `python -m tools.pdf_to_markdown input.pdf [-o out.md]`
+
 ## Adding a New Tool
 
 1. Create a subdirectory: `tools/<tool_name>/`
