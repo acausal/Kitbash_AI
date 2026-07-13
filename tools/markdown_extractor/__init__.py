@@ -38,8 +38,8 @@ def convert_markdown_to_markdown(input_path: str, output_path: str) -> None:
     text = raw.replace("\r\n", "\n").replace("\r", "\n")
     lines = [ln.rstrip() for ln in text.split("\n")]
     out = "\n".join(lines)
-    while "\n\n\n\n" in out:
-        out = out.replace("\n\n\n\n", "\n\n\n")
+    while "\n\n\n" in out:
+        out = out.replace("\n\n\n", "\n\n")
     out = out.strip() + "\n" if out.strip() else ""
     # empty file allowed
     _write(out, input_path, output_path)

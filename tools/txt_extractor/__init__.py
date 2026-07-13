@@ -42,8 +42,8 @@ def _normalize(text: str) -> str:
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     lines = [ln.rstrip() for ln in text.split("\n")]
     out = "\n".join(lines)
-    while "\n\n\n\n" in out:  # collapse 3+ blank lines -> 2
-        out = out.replace("\n\n\n\n", "\n\n\n")
+    while "\n\n\n" in out:  # collapse 3+ blank lines -> 2
+        out = out.replace("\n\n\n", "\n\n")
     return out.strip() + "\n" if out.strip() else ""
 
 
