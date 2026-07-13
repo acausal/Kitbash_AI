@@ -20,6 +20,7 @@ Run:  .venv\\Scripts\\activate && python TEST-orchestrator_e2e.py
 import sys
 import os
 import logging
+from pathlib import Path
 
 logging.basicConfig(level=logging.WARNING)
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
