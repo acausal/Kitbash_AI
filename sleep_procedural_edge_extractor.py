@@ -245,42 +245,66 @@ class ProceduralEdgeExtractor:
     def _load_edge_graph(self) -> Optional[Dict[str, Any]]:
         """
         Load existing procedural_edge_graph index.
-        
+
+        Normalizes cartridge_index values back to sets on load so downstream
+        code can use `.add()` (round-trip symmetry with _save_edge_graph, which
+        serializes them as sorted lists). Fixes the second-run crash at
+        cartridge_index[cart].add(...) when a previously-saved graph is reloaded.
+
         Returns:
             Edge graph dict or None if not found
         """
         if not self.edge_index_file.exists():
             return None
-        
+
         try:
             with open(self.edge_index_file, 'r') as f:
-                return json.load(f)
+                data = json.load(f)
+            # cartridge_index values: lists on disk -> sets in memory
+            ci = data.get('cartridge_index')
+            if isinstance(ci, dict):
+                data['cartridge_index'] = {
+                    k: set(v) for k, v in ci.items()
+                }
+            return data
         except Exception as e:
             print(f"[ProceduralEdgeExtractor] Error loading edge graph: {e}")
             return None
-    
+
     def _save_edge_graph(self, edges: Dict[str, Any]) -> bool:
         """
         Save procedural_edge_graph index to disk.
-        
+
+        Serializes cartridge_index values as sorted lists (JSON-safe), matching
+        the set form used in memory (round-trip symmetry with _load_edge_graph).
+        Fixes the save crash ('set' is not JSON serializable).
+
         Args:
             edges: Edge graph dict
-        
+
         Returns:
             True if successful
         """
         self.indices_dir.mkdir(parents=True, exist_ok=True)
-        
+
+        # Serialize a copy so the in-memory graph keeps its sets.
+        serializable = dict(edges)
+        ci = edges.get('cartridge_index')
+        if isinstance(ci, dict):
+            serializable['cartridge_index'] = {
+                k: sorted(v) for k, v in ci.items()
+            }
+
         try:
             # Write to temp file first, then atomic rename
             temp_file = self.edge_index_file.with_suffix('.tmp')
-            
+
             with open(temp_file, 'w') as f:
-                json.dump(edges, f, indent=2)
-            
+                json.dump(serializable, f, indent=2)
+
             temp_file.replace(self.edge_index_file)
             return True
-        
+
         except Exception as e:
             print(f"[ProceduralEdgeExtractor] Error saving edge graph: {e}")
             return False
