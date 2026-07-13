@@ -34,6 +34,8 @@ from collections import defaultdict
 from datetime import datetime, timezone
 import statistics
 
+from interfaces.trace_chain import TraceChain, iter_cooccurrence_edges
+
 
 class ProceduralEdgeExtractor:
     """
@@ -105,47 +107,30 @@ class ProceduralEdgeExtractor:
                 self._save_edge_graph(edges)
                 return report
             
-            # Extract intra-cartridge edges
+            # Extract intra-cartridge edges via the canonical chain contract
+            # (SPEC_TRACE_CHAIN_CONTRACT): pairwise co-occurrence over set(fact_ids),
+            # canonical a<b, order-independent. No consecutive-pair semantics.
             edges_created = 0
             edge_weights = []
-            
+
             for trace in traces:
-                chain = trace.get('chain', [])
-                chain_context = trace.get('context', {})
-                cartridge_hint = chain_context.get('cartridge')
-                
-                if not chain or len(chain) < 2:
+                raw_chain = trace.get('chain')
+                if not isinstance(raw_chain, dict):
                     continue
-                
-                # Build edges from consecutive facts in chain
-                for i in range(len(chain) - 1):
-                    current_step = chain[i]
-                    next_step = chain[i + 1]
-                    
-                    # Extract fact IDs
-                    current_fact = current_step.get('fact_id')
-                    next_fact = next_step.get('fact_id')
-                    
-                    if not current_fact or not next_fact:
-                        continue
-                    
-                    # Infer cartridge (same cartridge if no explicit cartridge change)
-                    current_cartridge = current_step.get('cartridge', cartridge_hint or 'unknown')
-                    next_cartridge = next_step.get('cartridge', cartridge_hint or 'unknown')
-                    
-                    # Only create intra-cartridge edges in this stage
-                    if current_cartridge != next_cartridge:
-                        continue
-                    
-                    # Create or update edge
-                    edge_key = f"{current_fact}→{next_fact}"
-                    
+                try:
+                    chain = TraceChain.from_dict(raw_chain)
+                except (ValueError, TypeError):
+                    continue
+                cartridge = (trace.get('context') or {}).get('cartridge') or 'unknown'
+
+                for src, tgt in iter_cooccurrence_edges(chain, cartridge):
+                    edge_key = f"{src}→{tgt}"
                     if edge_key not in edges['edges']:
                         edges['edges'][edge_key] = {
-                            'source_fact_id': current_fact,
-                            'target_fact_id': next_fact,
-                            'source_cartridge': current_cartridge,
-                            'target_cartridge': next_cartridge,
+                            'source_fact_id': src,
+                            'target_fact_id': tgt,
+                            'source_cartridge': cartridge,
+                            'target_cartridge': cartridge,
                             'edge_type': 'intra_cartridge',
                             'edge_weight': 0.5,
                             'traversal_count': 0,
@@ -154,25 +139,20 @@ class ProceduralEdgeExtractor:
                             'last_traversed': datetime.now(timezone.utc).isoformat(),
                         }
                         edges_created += 1
-                    
-                    # Update traversal stats
+
                     edge = edges['edges'][edge_key]
                     edge['traversal_count'] += 1
                     edge['last_traversed'] = datetime.now(timezone.utc).isoformat()
-                    
-                    # Update weight based on traversal frequency (simple sigmoid)
                     traversals = edge['traversal_count']
                     edge['edge_weight'] = min(0.95, 0.5 + (0.4 * (traversals / (traversals + 10))))
                     edge_weights.append(edge['edge_weight'])
-                    
-                    # Track cartridge membership
-                    if current_cartridge not in edges['cartridge_index']:
-                        edges['cartridge_index'][current_cartridge] = set()
-                    edges['cartridge_index'][current_cartridge].add(current_fact)
-                    edges['cartridge_index'][current_cartridge].add(next_fact)
-                    
-                    report['edges_by_cartridge'][current_cartridge] += 1
-            
+
+                    if cartridge not in edges['cartridge_index']:
+                        edges['cartridge_index'][cartridge] = set()
+                    edges['cartridge_index'][cartridge].add(src)
+                    edges['cartridge_index'][cartridge].add(tgt)
+                    report['edges_by_cartridge'][cartridge] += 1
+
             # Update metadata
             edges['metadata']['intra_cartridge_edges'] = sum(
                 1 for e in edges['edges'].values() if e['edge_type'] == 'intra_cartridge'
@@ -208,6 +188,11 @@ class ProceduralEdgeExtractor:
         Returns:
             Report dict with extraction statistics
         """
+        # REMOVED FROM SCOPE (SPEC_TRACE_CHAIN_CONTRACT): cross-query / cross-cartridge
+        # edges depend on deterministic fact_ids ordering and multi-query sessions, neither
+        # of which holds today. Deferred ticket: "cross-query/session edges — resume when
+        # fact_ids ordering is deterministic and corpus has multi-query sessions."
+        # Kept as a no-op stub so callers (run_stage_2_5) stay wired but produce nothing.
         report = {
             'stage': 'stage_2.5_cross_cartridge',
             'timestamp': datetime.now(timezone.utc).isoformat(),
@@ -216,106 +201,9 @@ class ProceduralEdgeExtractor:
             'edges_by_pair': defaultdict(int),
             'avg_edge_weight': 0.0,
             'error': None,
+            'status': 'no-op: cross-query edges removed from scope (deferred)',
         }
-        
-        # Load existing edge graph
-        edges = self._load_edge_graph()
-        if edges is None:
-            # Nothing to cross-reference yet
-            report['edges_created'] = 0
-            return report
-        
-        try:
-            # Read traces again to find cross-cartridge transitions
-            traces = self._read_traces()
-            report['traces_read'] = len(traces)
-            
-            edges_created = 0
-            edge_weights = []
-            
-            for trace in traces:
-                chain = trace.get('chain', [])
-                
-                if not chain or len(chain) < 2:
-                    continue
-                
-                # Find cross-cartridge transitions
-                for i in range(len(chain) - 1):
-                    current_step = chain[i]
-                    next_step = chain[i + 1]
-                    
-                    current_fact = current_step.get('fact_id')
-                    next_fact = next_step.get('fact_id')
-                    
-                    if not current_fact or not next_fact:
-                        continue
-                    
-                    current_cartridge = current_step.get('cartridge')
-                    next_cartridge = next_step.get('cartridge')
-                    
-                    # Skip if no cartridge info or same cartridge
-                    if not current_cartridge or not next_cartridge or current_cartridge == next_cartridge:
-                        continue
-                    
-                    # Create cross-cartridge edge
-                    edge_key = f"{current_fact}→{next_fact}"
-                    
-                    if edge_key not in edges['edges']:
-                        edges['edges'][edge_key] = {
-                            'source_fact_id': current_fact,
-                            'target_fact_id': next_fact,
-                            'source_cartridge': current_cartridge,
-                            'target_cartridge': next_cartridge,
-                            'edge_type': 'cross_cartridge',
-                            'edge_weight': 0.6,  # Slightly higher baseline for cross-cart
-                            'traversal_count': 0,
-                            'confidence_mutable': True,
-                            'first_traversed': datetime.now(timezone.utc).isoformat(),
-                            'last_traversed': datetime.now(timezone.utc).isoformat(),
-                        }
-                        edges_created += 1
-                    else:
-                        # Update existing edge type if it was intra but is now cross
-                        edge = edges['edges'][edge_key]
-                        if edge['edge_type'] == 'intra_cartridge':
-                            edge['edge_type'] = 'cross_cartridge'
-                    
-                    # Update traversal stats
-                    edge = edges['edges'][edge_key]
-                    edge['traversal_count'] += 1
-                    edge['last_traversed'] = datetime.now(timezone.utc).isoformat()
-                    
-                    # Weight update for cross-cartridge edges
-                    traversals = edge['traversal_count']
-                    edge['edge_weight'] = min(0.95, 0.6 + (0.3 * (traversals / (traversals + 5))))
-                    edge_weights.append(edge['edge_weight'])
-                    
-                    # Track cartridge pair
-                    pair_key = f"{current_cartridge}→{next_cartridge}"
-                    report['edges_by_pair'][pair_key] += 1
-            
-            # Update metadata
-            edges['metadata']['cross_cartridge_edges'] = sum(
-                1 for e in edges['edges'].values() if e['edge_type'] == 'cross_cartridge'
-            )
-            edges['metadata']['total_edges'] = len(edges['edges'])
-            edges['metadata']['stages_applied'].append('2.5')
-            edges['metadata']['last_updated'] = datetime.now(timezone.utc).isoformat()
-            
-            if edge_weights:
-                report['avg_edge_weight'] = statistics.mean(edge_weights)
-            
-            report['edges_created'] = edges_created
-            
-            # Save updated edge graph
-            self._save_edge_graph(edges)
-            
-        except Exception as e:
-            report['error'] = str(e)
-            return report
-        
         return report
-    
     # ========================================================================
     # HELPER METHODS
     # ========================================================================

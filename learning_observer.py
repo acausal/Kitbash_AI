@@ -29,6 +29,8 @@ from collections import deque
 from datetime import datetime
 from pathlib import Path
 
+from interfaces.trace_chain import TraceChain
+
 # Torch is optional here: the observer only touches torch objects that are
 # injected (mtr_engine, mtr_state). The contract tests use stub objects.
 try:
@@ -309,13 +311,13 @@ class LearningObserver:
         # B6: serialize hat as string, never the raw object.
         hat_str = str(hat) if hat is not None else None
         # B4: per-query chain = ONLY this query's items (no unbounded history).
-        chain = {
-            "query_id": query_id,
-            "chain_type": "intra_query",
-            "fact_ids": sorted(fact_ids),
-            "grain_ids": list(grain_ids),
-            "confidence": confidence,
-        }
+        chain = TraceChain(
+            query_id=query_id,
+            chain_type="intra_query",
+            fact_ids=sorted(fact_ids),
+            grain_ids=list(grain_ids),
+            confidence=confidence,
+        ).to_dict()
         record = {
             # B3: correct attribute (project_context, not project).
             "project_context": project_context,
