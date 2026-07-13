@@ -73,6 +73,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-tokenizer_v1.md` · **Code:** `tokenizer/` · **Usage:** `python -m tools.tokenizer input.txt [--lemma] [--remove-stop]`
 (Requires `spacy` + `en_core_web_sm`; in the Kitbash `.venv` prefix invocations with `PYTHONPATH= ` to avoid the leaked agent-venv shadowing pydantic.)
 
+### negation_detector
+**Status:** Implemented (input sieve / preprocessing; spaCy)
+**Scope:** Detects negation markers (`not`, `no`, `never`, `neither`, `nor`, + split contractions via lemma `not`) and flags tokens within a distance `window` (default 5) as `is_negated`. v1: hardcoded list + fixed window; scope analysis / multi-word / double-negatives deferred to v2+.
+**Intended output:** `Token` list with `is_negated` (library) or JSON `{tokens, token_count, negated_count, negation_markers}` (CLI).
+**Integration target:** chains after tokenizer / feeds input-sieve + document preprocessing.
+**Spec:** `SPEC-negation_detector_v1.md` · **Code:** `negation_detector/` · **Usage:** `python -m tools.negation_detector input.txt [--window N]`
+(Reuses `spacy` + `en_core_web_sm`; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
