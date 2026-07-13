@@ -24,6 +24,10 @@ __pycache__/
 /grains/*.json
 /phantom_tracker.json
 
+# Runtime operation logs (e.g. ops.log, ops.log.1) — internal operational
+# stream, never meant to be committed.
+*.log
+
 # Virtual envs
 .venv/
 venv/
