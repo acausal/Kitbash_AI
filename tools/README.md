@@ -55,7 +55,30 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Scope:** Single-PDF text extraction via `pypdf`; flat, whitespace-normalized output with `--- PAGE N ---` markers. No structure inference.
 **Intended output:** Cleaned text file (`.md`) for later normalization / Dream Bucket shaping.
 **Integration target:** Post-1.0; feeds the sleep input layer.
-**Spec:** `SPEC-pdf_to_markdown.md` · **Code:** `pdf_to_markdown/` · **Usage:** `python -m tools.pdf_to_markdown input.pdf [-o out.md]`
+**Spec:** `SPEC-pdf_to_markdown.md` · **Code:** `pdf_to_mark_down/` · **Usage:** `python -m tools.pdf_to_mark_down input.pdf [-o out.md]`
+(Naming note: this tool pre-dates `SPEC-document_extractors.md`; the master SPEC standard is `<format>_extractor/` + `convert_<format>_to_markdown`. The 4 below follow that standard; pdf_to_markdown is grandfathered.)
+
+### txt_extractor
+**Status:** Implemented (Document Format Extractors, stdlib)
+**Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
+**Code:** `txt_extractor/` · **Usage:** `python -m tools.txt_extractor input.txt [-o out.md]`
+
+### markdown_extractor
+**Status:** Implemented (stdlib)
+**Scope:** `.md`/`.markdown` → pass-through normalization (preserves MD syntax; collapses blank lines).
+**Code:** `markdown_extractor/` · **Usage:** `python -m tools.markdown_extractor input.md [-o out.md]`
+
+### html_extractor
+**Status:** Implemented (stdlib `html.parser`)
+**Scope:** `.html`/`.htm` → text (skips `script`/`style`/`meta`/`head`; decodes entities).
+**Code:** `html_extractor/` · **Usage:** `python -m tools.html_extractor input.html [-o out.md]`
+
+### json_extractor
+**Status:** Implemented (stdlib `json`)
+**Scope:** `.json` → text from `content`/`text`/`body`/`message`/`data` fields (joined with `\n---\n`).
+**Code:** `json_extractor/` · **Usage:** `python -m tools.json_extractor input.json [-o out.md]`
+
+> PyPI-dependent extractors (`docx_extractor`, `rtf_extractor`, `odt_extractor`, `epub_extractor`) are NOT yet built — `python-docx`/`striprtf`/`odfpy`/`ebooklib` are not installed. See `SPEC-document_extractors.md`.
 
 ## Adding a New Tool
 
