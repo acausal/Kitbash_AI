@@ -55,8 +55,15 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Scope:** Single-PDF text extraction via `pypdf`; flat, whitespace-normalized output with `--- PAGE N ---` markers. No structure inference.
 **Intended output:** Cleaned text file (`.md`) for later normalization / Dream Bucket shaping.
 **Integration target:** Post-1.0; feeds the sleep input layer.
-**Spec:** `SPEC-pdf_to_markdown.md` · **Code:** `pdf_to_mark_down/` · **Usage:** `python -m tools.pdf_to_mark_down input.pdf [-o out.md]`
+**Spec:** `SPEC-pdf_to_markdown.md` · **Code:** `pdf_to_mark_down/` · **Usage:** `python -m tools.pdf_to_markdown input.pdf [-o out.md]`
 (Naming note: this tool pre-dates `SPEC-document_extractors.md`; the master SPEC standard is `<format>_extractor/` + `convert_<format>_to_markdown`. The 4 below follow that standard; pdf_to_markdown is grandfathered.)
+
+### document_dispatcher
+**Status:** Implemented (primary ingestion entry point; Stage 1)
+**Scope:** Detects format from extension, routes to the matching extractor (the 8 `<format>_extractor` tools + grandfathered `pdf_to_markdown`), writes extracted text. Thin routing layer only. Optional `--normalize` flag chains Stage 2 (`stage2_normalization`) on the extracted output.
+**Intended output:** Extracted text file (`.md`); normalized if `--normalize` passed.
+**Integration target:** Stage 1 → feeds Stage 2 or downstream storage.
+**Spec:** `SPEC-document_dispatcher.md` · **Code:** `document_dispatcher/` · **Usage:** `python -m tools.document_dispatcher input.pdf [-o out.md] [--normalize]`
 
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)

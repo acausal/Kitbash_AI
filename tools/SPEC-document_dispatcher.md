@@ -12,6 +12,7 @@ Single entry point for document ingestion: accept any file, detect format, route
 - Pass through CLI arguments (`--output`, `-o`) to the extractor
 - Delegate all text extraction to format-specific modules
 - Fail loud if format is unrecognized
+- Optionally chain Stage 2 normalization (`tools.stage2_normalization`) via an opt-in flag (see below)
 
 ### Non-Goals
 - Extracting text itself (that's the extractors' job)
@@ -54,6 +55,7 @@ For now, **rely on extension only**. Content sniffing is a v2 enhancement.
 python -m tools.document_dispatcher input.pdf
 python -m tools.document_dispatcher input.pdf --output output.md
 python -m tools.document_dispatcher input.anything -o output.txt
+python -m tools.document_dispatcher input.md --normalize      # also run Stage 2
 ```
 
 **Behavior:**
@@ -62,6 +64,10 @@ python -m tools.document_dispatcher input.anything -o output.txt
 - Route to appropriate extractor (e.g., `txt_extractor.convert_txt_to_markdown()`)
 - Pass through `--output` / `-o` to the extractor
 - If `--output` not specified, extractor writes to `<input_basename>.md` (default behavior)
+- `--normalize` (optional, **default OFF**): after extraction, run Stage 2
+  (`tools.stage2_normalization.normalize_text`) on the extracted text and
+  overwrite the output with the normalized version. When omitted, raw extractor
+  output is preserved unchanged.
 - Exit code 0 on success
 - Exit code 1 on failure (with stderr message)
 - Print summary to stdout: `Detected <format>. Converted <input> → <output> (<N> chars)`
@@ -76,17 +82,20 @@ extract_document("input.html")  # writes to input.md
 
 **Signature:**
 ```python
-def extract_document(input_path: str, output_path: str | None = None) -> str
+def extract_document(input_path: str, output_path: str | None = None,
+                     normalize: bool = False) -> str
     """
     Detect format and extract text via appropriate extractor.
-    
+
     Args:
         input_path: Path to input document
         output_path: Path to write output (if None, defaults to input_basename.md)
-    
+        normalize: If True, run Stage 2 normalization (whitespace + exact-dup
+            dedup) on the extracted text before writing. Default False.
+
     Returns:
         Path to the output file that was written
-    
+
     Raises:
         FileNotFoundError: Input file does not exist
         ValueError: Extension not recognized or extension/format mismatch
@@ -181,33 +190,40 @@ def detect_format(input_path: str) -> str:
 ### Routing Logic
 ```python
 from tools.document_dispatcher.format_registry import resolve_extractor
+from tools.stage2_normalization import normalize_text
 
-def extract_document(input_path: str, output_path: str | None = None) -> str:
+def extract_document(input_path: str, output_path: str | None = None,
+                     normalize: bool = False) -> str:
     """
     1. Detect format from extension
     2. Resolve the extractor module/function via format_registry
        (handles formats like pdf whose package name diverges from the
        default tools.<format>_extractor convention)
     3. Call the extractor (input_path, output_path)
-    4. Return the output path
+    4. Optionally run Stage 2 (normalize_text) on the written file and rewrite it
+    5. Return the output path
     """
     if not Path(input_path).exists():
         raise FileNotFoundError(f"Input file not found: {input_path}")
-    
+
     format_name = detect_format(input_path)
     output_path = output_path or f"{Path(input_path).stem}.md"
-    
+
     module_path, func_name = resolve_extractor(format_name)
     try:
         extractor_module = __import__(module_path, fromlist=[func_name])
         convert_func = getattr(extractor_module, func_name)
     except (ImportError, AttributeError) as e:
         raise RuntimeError(f"Extractor module not found for format '{format_name}': {e}")
-    
+
     # Delegate to extractor. Some extractors return the extracted text;
     # others (e.g. pdf_to_markdown) return None and write directly to disk.
     convert_func(input_path, output_path)
-    
+
+    if normalize:
+        cleaned = normalize_text(Path(output_path).read_text(encoding="utf-8"))
+        Path(output_path).write_text(cleaned, encoding="utf-8")
+
     # Return output path for convenience
     return output_path
 ```
@@ -242,6 +258,10 @@ logger.error(event_type="dispatch_failed", data={"source": input_path, "error": 
 4. **Extension/format mismatch:** Feed `.txt` file that's actually JSON → log warning, attempt extraction (let extractor decide if it fails)
 5. **Output directory doesn't exist:** Create parent dirs or fail gracefully with `IOError`
 6. **Permission denied:** Attempt to write to read-only dir → verify `IOError`
+7. **Mixed line endings:** Input with `\r\n` and `\n` → verify all normalized to `\n`
+8. **Unknown extension (verify against 9 formats):** Feed `.xyz` → verify `ValueError("Unknown format: xyz...")`
+9. **`--normalize` off (default):** Run on a doc with duplicate/blank-heavy text → raw extractor output written unchanged (no Stage 2 applied)
+10. **`--normalize` on:** Run same doc with `--normalize` → output equals `normalize_text(raw_output)` (whitespace collapsed, exact dups removed)
 
 ### Acceptance Criteria
 - CLI works for all 9 formats (PDF + 8 others)
@@ -249,6 +269,7 @@ logger.error(event_type="dispatch_failed", data={"source": input_path, "error": 
 - Format detection is case-insensitive (`input.PDF` → `pdf_to_markdown`)
 - Error messages are clear (e.g., "Unknown format: xyz. Currently Supported: pdf, txt, md, html, json, docx, rtf, odt, epub")
 - Dispatches correctly to each extractor
+- `--normalize` flag OFF by default; when ON, output is Stage-2-normalized
 - Pasted terminal output demonstrating all test cases
 
 ## Done When
