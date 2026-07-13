@@ -30,6 +30,7 @@ from datetime import datetime
 from pathlib import Path
 
 from interfaces.trace_chain import TraceChain
+from signal_transforms import bounded_error, gate_trips
 
 # Torch is optional here: the observer only touches torch objects that are
 # injected (mtr_engine, mtr_state). The contract tests use stub objects.
@@ -171,8 +172,10 @@ class LearningObserver:
                     report.mtr_confidence = mtr_confidence
                     # --- dissonance detection (moved here from mtr()) ---
                     # Coherence dissonance = high MTR error signal (low model
-                    # self-confidence in its own reasoning). Gate: mtr_error > 0.5.
-                    if mtr_error > 0.5 and self.dream_bucket_writer is not None:
+                    # self-confidence in its own reasoning). SPEC_BOUNDED_SIGNAL_CONSUMPTION:
+                    # gate reads the bounded transform; the record still writes RAW
+                    # mtr_error / mtr_confidence (non-destructive).
+                    if gate_trips(mtr_error) and self.dream_bucket_writer is not None:
                         try:
                             from dream_bucket import log_consistency_violation
                             # Determinism (finding 4): smallest fact_id is

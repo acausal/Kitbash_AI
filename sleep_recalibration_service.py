@@ -26,6 +26,7 @@ from collections import defaultdict
 from datetime import datetime, timezone
 
 from dream_bucket import log_hypothesis
+from signal_transforms import bounded_error
 
 # AXIOM_CONTRADICTION_THRESHOLD (SPEC_AXIOM_RECALIBRATION.md §2.2 / §4 Step 2):
 # an axiom grain is only FLAGGED (never silently decremented) when the MTR error
@@ -147,7 +148,9 @@ class RecalibrationService:
                 continue
 
             # Calculate penalty (confidence mismatch) — observation decrement magnitude
-            penalty = min(error_signal * 0.15, 0.1)  # Cap at 0.1 per violation
+            # SPEC_BOUNDED_SIGNAL_CONSUMPTION: decision consumes the bounded transform;
+            # the violation record itself still stores RAW mtr_error_signal.
+            penalty = min(bounded_error(error_signal) * EDGE_PENALTY_RATE, EDGE_PENALTY_CAP)  # Cap at 0.1 per violation
 
             if returned_id not in facts:
                 facts[returned_id] = (error_signal, penalty)
@@ -314,7 +317,8 @@ class RecalibrationService:
         for v in targetable:
             fid = set(_fact_ids(v))
             err = float(v.get("mtr_error_signal", 0.0))
-            per_violation = min(err * EDGE_PENALTY_RATE, EDGE_PENALTY_CAP)
+            # SPEC_BOUNDED_SIGNAL_CONSUMPTION: decision consumes the bounded transform.
+            per_violation = min(bounded_error(err) * EDGE_PENALTY_RATE, EDGE_PENALTY_CAP)
             for ek, e in edges.items():
                 if (e.get("source_fact_id") in fid) or (e.get("target_fact_id") in fid):
                     if e.get("confidence_mutable", True):
