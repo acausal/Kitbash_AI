@@ -49,12 +49,16 @@ def _spawn_cli():
 
 
 class Handler(BaseHTTPRequestHandler):
-    def _send_chunk(self, data: bytes):
-        # Manual HTTP chunked framing so the browser streams progressively.
-        self.wfile.write(b"%X\r\n" % len(data))
-        self.wfile.write(data)
-        self.wfile.write(b"\r\n")
-        self.wfile.flush()
+    def _send_body(self, data: bytes):
+        # Buffered single write (no manual chunked framing). Robust against
+        # client disconnects and Python 3.14 http.server chunked-encoding
+        # quirks (the old manual chunk writer raised ConnectionResetError
+        # mid-stream, so the client received a 0-byte body).
+        try:
+            self.wfile.write(data)
+            self.wfile.flush()
+        except (ConnectionResetError, BrokenPipeError, OSError):
+            pass  # client already gone; nothing to do
 
     def do_GET(self):
         if self.path == "/" or self.path.startswith("/?"):
@@ -63,6 +67,13 @@ class Handler(BaseHTTPRequestHandler):
             self._serve_ops()
         else:
             self.send_error(404)
+
+    def _reply(self, out: bytes):
+        self.send_response(200)
+        self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+        self.send_header("Content-Length", str(len(out)))
+        self.end_headers()
+        self._send_body(out)
 
     def do_POST(self):
         if self.path != "/query":
@@ -76,41 +87,35 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             user_query = ""
 
-        self.send_response(200)
-        self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
-        self.send_header("Cache-Control", "no-cache")
-        self.send_header("Transfer-Encoding", "chunked")
-        self.end_headers()
-
         if not user_query.strip():
-            self._send_chunk(b'{"type":"error","message":"missing query"}\n')
-            self._send_chunk(b"")
+            self._reply(b'{"type":"error","message":"missing query"}\n')
             return
 
         try:
             proc, stderr_fh = _spawn_cli()
         except Exception as e:
-            self._send_chunk(b'{"type":"error","message":"cli spawn failed: %s"}\n' % str(e).encode())
-            self._send_chunk(b"")
+            self._reply(b'{"type":"error","message":"cli spawn failed: %s"}\n' % str(e).encode())
             return
 
+        buf = []
         try:
             # Send the request to the CLI's stdin, then close it (EOF -> CLI exits).
             proc.stdin.write(json.dumps({"query": user_query}) + "\n")
             proc.stdin.close()
-            # Stream stdout (chat JSON) line-by-line to the browser.
+            # Collect stdout (chat JSON) lines, send as one buffered response.
             for line in proc.stdout:
-                self._send_chunk(line.encode("utf-8", "replace"))
+                buf.append(line.encode("utf-8", "replace"))
             proc.stdout.close()
             proc.wait()
         except Exception as e:
-            self._send_chunk(b'{"type":"error","message":"stream error: %s"}\n' % str(e).encode())
+            buf.append(b'{"type":"error","message":"stream error: %s"}\n' % str(e).encode())
         finally:
             stderr_fh.close()
             # Terminate defensively.
             if proc.poll() is None:
                 proc.kill()
-            self._send_chunk(b"")  # end chunked stream
+
+        self._reply(b"".join(buf))
 
     def _serve_file(self, path, content_type):
         try:
