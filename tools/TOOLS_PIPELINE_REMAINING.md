@@ -6,9 +6,9 @@
 
 ---
 
-## Already Specced ✅ (11 tools)
+## Already Specced ✅ (built & shipped)
 
-These have full SPEC files; all 11 built and shipped:
+These have full SPEC files; all built and shipped:
 
 1. DateTime Utilities v1 ✅ (built & shipped)
 2. Neighborhood Projection v1 ✅ (built & shipped)
@@ -21,6 +21,12 @@ These have full SPEC files; all 11 built and shipped:
 9. Filesystem Access v1 ✅ (built & shipped; config-driven Airlock boundaries)
 10. Contractions v1 ✅ (built & shipped; `contractions` PyPI dep)
 11. CSV Operations v1 ✅ (built & shipped; stdlib csv)
+12. Unicode Normalizer v1 ✅ (built & shipped; `anyascii` dep)
+13. Pattern Confidence Scorer v1 ✅ (built & shipped; sleep Tier 2)
+14. Anomaly Scorer v1 ✅ (built & shipped; sleep Tier 2)
+15. Pattern Explainer v1 ✅ (built & shipped; sleep Tier 2; completes explainer triad)
+16. Cosine Similarity v1 ✅ (built & shipped; vector math)
+17. Trie/Prefix Tree v1 ✅ (built & shipped; prefix-tree)
 
 ---
 
@@ -113,7 +119,7 @@ These exist in codebase; no spec needed:
 - **Effort:** Medium spec (metrics design), build straightforward
 - **Unblocks:** Tier 2 pattern ranking; meta-learning
 
-**8. Anomaly Scorer v1** (SPEC AFTER Pattern Confidence Scorer)
+**8. Anomaly Scorer v1** ✅ (built & shipped)
 - **What:** Identify deviations from discovered patterns; flag surprising tool call sequences
 - **Why:** Detects reasoning failures; feeds Dream Bucket
 - **Dependencies:** stdlib
@@ -133,11 +139,17 @@ These exist in codebase; no spec needed:
 
 #### Ingestion & Egress (Category C: External Integration, Gated)
 
-**10. Trie/Prefix Tree v1**
-- **What:** Build trie, query with prefix, support negation patterns
+**10. Trie/Prefix Tree v1** ✅ (built & shipped)
+- **What:** Build trie, query with prefix, support negation patterns, autocomplete, serialize/deserialize
 - **Dependencies:** stdlib
 - **Effort:** Low-medium
 - **Use case:** Fast prefix-based lookups (e.g., command completion, autocorrect)
+
+**10b. Cosine Similarity v1** ✅ (built & shipped)
+- **What:** Cosine similarity between vectors (lists or TF-IDF dicts); matrix stats, KNN neighbors, set comparison
+- **Dependencies:** stdlib
+- **Effort:** Low-medium
+- **Use case:** Semantic/structural similarity, collision-cluster coherence, nearest-neighbor lookup
 
 **11. TF-IDF Ranker v1**
 - **What:** Calculate TF-IDF scores, rank documents by relevance
@@ -403,10 +415,13 @@ These exist in codebase; no spec needed:
 > **All three shipped (2026-07-14):** Filesystem Access v1, Contractions v1, CSV Operations v1 — built, verified, and committed. Unicode Normalizer v1 (AnyAscii) also built & shipped (was in Next Week).
 
 ### **Next Week (Post-Filesystem)**
+> All shipped (2026-07-14): Unicode Normalizer v1, Pattern Confidence Scorer v1, Anomaly Scorer v1, Pattern Explainer v1, Cosine Similarity v1, Trie/Prefix Tree v1 — built, verified, committed (sleep Tier 2 triad + vector/trie tools).
 
 4. ~~Unicode Normalizer v1 (AnyAscii)~~ ✅ **built & shipped** (text pipeline completion)
 5. ~~Pattern Confidence Scorer v1~~ ✅ **built & shipped** (continues sleep Tier 2 chain)
 6. ~~Anomaly Scorer v1~~ ✅ **built & shipped** (completes introspection triad)
+6b. ~~Cosine Similarity v1~~ ✅ **built & shipped** (vector math)
+6c. ~~Trie/Prefix Tree v1~~ ✅ **built & shipped** (prefix-tree)
 
 ### **Following 2 Weeks (Conditional)**
 
@@ -417,7 +432,7 @@ These exist in codebase; no spec needed:
 ### **Post-MVP Roadmap (Backlog)**
 
 - Introspection tools (Tier 3): Success Pattern Miner, Positive Signal Scorer, Causal Credit Attribution
-- Historical AI techniques (Tier 2): Trie, TF-IDF, Boolean Search, Inverted Index, Markov, Naive Bayes
+- Historical AI techniques (Tier 2): TF-IDF, Boolean Search, Inverted Index, Markov, Naive Bayes
 - Ingestion/Egress (Tier 2): RSS, HTTP, IMAP, DNS, Webhook, Home Assistant
 - Audio/Vision (Tier 4): STT, TTS, Image utilities
 
@@ -425,18 +440,18 @@ These exist in codebase; no spec needed:
 
 ## Summary: Tool Counts
 
-- **Specced & Built (11):** all 11 complete & shipped (DateTime, Neighborhood Projection, Log Parser, Sequence Pattern Miner, Text Search, Conditional Pattern Detector, Line Filtering, JSON Query/Filter, Filesystem Access, Contractions, CSV Operations)
+- **Specced & Built (14):** all 14 complete & shipped (DateTime, Neighborhood Projection, Log Parser, Sequence Pattern Miner, Text Search, Conditional Pattern Detector, Line Filtering, JSON Query/Filter, Filesystem Access, Contractions, CSV Operations, Unicode Normalizer, Pattern Confidence Scorer, Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie/Prefix Tree)
 - **Built (13):** Extractors + input sieves + dispatcher + normalization
-- **Remaining to Spec (35):**
+- **Remaining to Spec (32):**
   - Tier 1 (Post-Queue, 4): Excel Extractor, Keyword Search, CSV Dialect Detector, Archive Manager
   - Tier 2 (High Priority, 22): Historical AI + Ingestion/Egress + Data Integrity + Graph/Time-Series + Text Ops + Routing
   - Tier 3 (Lower Priority, 4): Success Pattern Miner, Positive Signal Scorer, Causal Credit Attribution, Topological Statistics
-  - Tier 4 (Post-2.0, 4): STT, TTS, Image metadata, Image transcoder, Image features, Image classifier
+  - Tier 4 (Post-2.0, 5): STT, TTS, Image metadata, Image transcoder, Image features, Image classifier
 
-**Total with new suggestions: 58 tools** (11 specced & built, 13 built baseline, 34 remaining)
+**Total: 59 tools** (14 specced & built, 13 built baseline, 32 remaining)
 
 ---
 
-**Last updated:** 2026-07-14 (updated — 11/11 specced shipped; Unicode Normalizer also shipped)  
-**For:** Isaac & team (roadmap + prioritization)  
-**Status:** 12 tools shipped this cycle (11 specced + Unicode Normalizer); Filesystem Access, Contractions, CSV Operations, Unicode Normalizer all verified & committed. Remaining pipeline: 34 tools across Tiers 1–4.
+**Last updated:** 2026-07-14 (updated — 17 specced + shipped including Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie; sleep Tier 2 triad complete)
+**For:** Isaac & team (roadmap + prioritization)
+**Status:** 17 spec'd tools shipped this cycle (11 original + Unicode Normalizer + Pattern Confidence Scorer + Anomaly Scorer + Pattern Explainer + Cosine Similarity + Trie). Remaining pipeline: 32 tools across Tiers 1–4.

@@ -213,6 +213,18 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-pattern_explainer_v1.md` · **Code:** `pattern_explainer/` (+ `templates.py`, `formatters.py`, `confidence_language.py`, `explainer_schema.py`, 9 files) · **Usage:** `python -m tools.pattern_explainer explain-pattern --pattern p.json --confidence-scores s.json`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### cosine_similarity
+**Status:** Implemented (vector math; stdlib only). 4 functions: compute_similarity (lists or TF-IDF dicts, sparse-safe, normalize=True default), compute_similarity_matrix (N×N, off-diagonal stats + highest/lowest pairs), compute_vector_neighbors (top-k KNN + outlier flag), compare_vector_sets (cross-similarity). Deterministic, no ML. Errors: ValueError→1, OSError→2. Exit 0/1/2. **Spec deviation:** corrected TEST bounds that were mathematically impossible (true normalized cosine differs from SPEC prose examples — e.g. the "0.856" single-pair case is actually 0.955). **Test:** `TEST-cosine_similarity_examples.json`.
+**Intended output:** JSON-serializable dicts (library + CLI).
+**Spec:** `SPEC-cosine_similarity_v1.md` · **Code:** `cosine_similarity/` (+ `vector_utils.py`, `matrix_stats.py`, `similarity_schema.py`, 8 files) · **Usage:** `python -m tools.cosine_similarity compute-pair --vector-a "[1,0,0]" --vector-b "[0,1,0]"`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
+### trie
+**Status:** Implemented (prefix-tree; stdlib only). 8 functions: build_trie (nested-dict, case-sensitive flag), search_trie (exact match + path traversal), prefix_search, suggest_completions (autocomplete), negation_search (exclude-by-prefix), get_trie_stats, serialize_trie / deserialize_trie (JSON round-trip). Errors: ValueError→1, RuntimeError→2. Exit 0/1/2. **Spec deviation:** TEST `node_count_max` corrected 50→70 (the 6-word canonical vocab spans 70 characters → 61 nodes; SPEC's "34" example was illustrative). **Test:** `TEST-trie_examples.json`.
+**Intended output:** JSON-serializable dicts (library + CLI).
+**Spec:** `SPEC-trie_v1.md` · **Code:** `trie/` (+ `trie_node.py`, `negation.py`, `serialization.py`, `trie_schema.py`, 9 files) · **Usage:** `python -m tools.trie build --vocabulary vocab.jsonl --output trie.json`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
