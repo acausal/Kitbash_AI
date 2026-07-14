@@ -183,6 +183,12 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-contractions_v1.md` · **Code:** `contractions/` (6 files) · **Usage:** `echo "I don't think I'll go." | python -m tools.contractions expand_contractions`
 (Requires the `contractions` dep; invoke via Kitbash `.venv` with `PYTHONPATH= `.)
 
+### csv_operations
+**Status:** Implemented (foundational data plumbing; stdlib only). 6 functions: parse_csv (Sniffer dialect detect + BOM strip + headerless→col_N keys + NULL-token norm), filter_rows (== != > < >= <= regex; numeric ops with string fallback), select_columns (keep/exclude, order-preserving), sort_rows (stable; numeric validates), unique_values (counts sorted by count desc), csv_stats (type inference text/numeric + min/max + samples). Errors: ValueError→1, FileNotFoundError→2, IOError/RuntimeError→3. Exit 0/1/2/3.
+**Intended output:** JSON-serializable dicts (library + CLI).
+**Spec:** `SPEC-csv_operations_v1.md` · **Code:** `csv_operations/` (+ `csv_parser.py`, `filters.py`, 8 files) · **Usage:** `echo "name,age\nAlice,30" | python -m tools.csv_operations parse_csv`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
