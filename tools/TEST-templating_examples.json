@@ -1,0 +1,88 @@
+{
+  "test_cases": [
+    {
+      "name": "simple_substitution",
+      "function": "template_render",
+      "input": {"template": "Hello $name", "variables": {"name": "Alice"}},
+      "expected_output": {"status": "success", "result": "Hello Alice"}
+    },
+    {
+      "name": "multiple_variables",
+      "function": "template_render",
+      "input": {"template": "$greeting, $name! Welcome to $place.", "variables": {"greeting": "Hi", "name": "Bob", "place": "Kitbash"}},
+      "expected_output": {"status": "success", "result": "Hi, Bob! Welcome to Kitbash."}
+    },
+    {
+      "name": "braces",
+      "function": "template_render",
+      "input": {"template": "The ${item} costs $price", "variables": {"item": "book", "price": 19.99}},
+      "expected_output": {"status": "success", "result": "The book costs 19.99"}
+    },
+    {
+      "name": "escaping",
+      "function": "template_render",
+      "input": {"template": "Price: $$100", "variables": {}},
+      "expected_output": {"status": "success", "result": "Price: $100"}
+    },
+    {
+      "name": "repeat_variable",
+      "function": "template_render",
+      "input": {"template": "$x + $x = ${x}$x", "variables": {"x": 5}},
+      "expected_output": {"status": "success", "result": "5 + 5 = 55"}
+    },
+    {
+      "name": "no_variables",
+      "function": "template_render",
+      "input": {"template": "Static text", "variables": {}},
+      "expected_output": {"status": "success", "result": "Static text"}
+    },
+    {
+      "name": "empty_template",
+      "function": "template_render",
+      "input": {"template": "", "variables": {}},
+      "expected_output": {"status": "success", "result": ""}
+    },
+    {
+      "name": "missing_variable",
+      "function": "template_render",
+      "input": {"template": "Hello $name", "variables": {}},
+      "expected_output": {"status": "error", "reason_includes": "Missing required variable", "missing_variables_includes": "name"}
+    },
+    {
+      "name": "number_variable",
+      "function": "template_render",
+      "input": {"template": "Confidence: ${confidence}%", "variables": {"confidence": 92}},
+      "expected_output": {"status": "success", "result": "Confidence: 92%"}
+    },
+    {
+      "name": "invalid_syntax",
+      "function": "template_render",
+      "input": {"template": "Price: ${incomplete", "variables": {"incomplete": 10}},
+      "expected_output": {"status": "error", "reason_includes": "Invalid template syntax"}
+    },
+    {
+      "name": "json_variable",
+      "function": "template_render",
+      "input": {"template": "Data: $data", "variables": {"data": {"x": 1, "y": 2}}},
+      "expected_output": {"status": "success", "result": "Data: {\"x\": 1, \"y\": 2}"}
+    },
+    {
+      "name": "lenient_mode_keeps_missing",
+      "function": "template_render",
+      "input": {"template": "Hello $name, $unused", "variables": {"name": "Alice"}, "mode": "lenient"},
+      "expected_output": {"status": "success", "result_includes": "Hello Alice", "result_includes2": "$unused"}
+    },
+    {
+      "name": "cli_roundtrip",
+      "function": "cli",
+      "input": {"template": "Hello $name", "variables": "{\"name\": \"Alice\"}"},
+      "expected_output": {"status": "success", "result": "Hello Alice", "cli_rc": 0}
+    },
+    {
+      "name": "cli_error_rc",
+      "function": "cli",
+      "input": {"template": "Hello $name", "variables": "{}"},
+      "expected_output": {"cli_rc": 1, "status": "error"}
+    }
+  ]
+}

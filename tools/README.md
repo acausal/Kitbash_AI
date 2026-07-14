@@ -237,6 +237,9 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 ### unit_conversion
 **Status:** Implemented (units; stdlib only). `convert_units(value, from_unit, to_unit, precision=2)` across 6 categories (temperature, distance, weight, volume, time, area) with full-name + alias support (C/F/K, km/m, kg/lb, …). Temperature absolute (C↔F↔K); others factor-to-base. Unknown unit returns `did you mean?` hint; incompatible category errors; all returned as dicts, never raised. **Spec:** `SPEC-unit_conversion_v1.md` · **Test:** `TEST-unit_conversion_examples.json` · **Code:** `unit_conversion/` · **Usage:** `python -m tools.unit_conversion convert 100 celsius fahrenheit`. (Pure stdlib; `PYTHONPATH= ` prefix.)
 
+### templating
+**Status:** Implemented (string interpolation; stdlib only). `template_render(template, variables, mode="strict")` wraps `string.Template`: strict (default) errors on missing variable, lenient leaves `$placeholder` intact; `$$` → literal `$`; values serialized via `str()`/JSON. `extract_variables(template)` for logging. Errors → `{"status":"error",...}`, never raised. **Spec:** `SPEC-templating_v1.md` · **Test:** `TEST-templating_examples.json` · **Code:** `templating/` · **Usage:** `python -m tools.templating render "Hello $name" '{"name":"Alice"}'`. (Pure stdlib; `PYTHONPATH= ` prefix.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).

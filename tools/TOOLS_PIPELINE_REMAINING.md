@@ -30,6 +30,7 @@ These have full SPEC files; all built and shipped:
 18. Episode Annotation Tool v1 ✅ (built & shipped; CWL episode boundaries, isolation-safe)
 19. Math Evaluation v1 ✅ (built & shipped; safe ast arithmetic)
 20. Unit Conversion v1 ✅ (built & shipped; 6 categories, aliases)
+21. Templating v1 ✅ (built & shipped; string.Template substitution)
 
 ---
 
@@ -443,18 +444,18 @@ These exist in codebase; no spec needed:
 
 ## Summary: Tool Counts
 
-- **Specced & Built (20):** all 20 complete & shipped (DateTime, Neighborhood Projection, Log Parser, Sequence Pattern Miner, Text Search, Conditional Pattern Detector, Line Filtering, JSON Query/Filter, Filesystem Access, Contractions, CSV Operations, Unicode Normalizer, Pattern Confidence Scorer, Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie/Prefix Tree, Episode Annotation Tool, Math Evaluation, Unit Conversion)
+- **Specced & Built (21):** all 21 complete & shipped (DateTime, Neighborhood Projection, Log Parser, Sequence Pattern Miner, Text Search, Conditional Pattern Detector, Line Filtering, JSON Query/Filter, Filesystem Access, Contractions, CSV Operations, Unicode Normalizer, Pattern Confidence Scorer, Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie/Prefix Tree, Episode Annotation Tool, Math Evaluation, Unit Conversion, Templating)
 - **Built (13):** Extractors + input sieves + dispatcher + normalization
-- **Remaining to Spec (30):**
+- **Remaining to Spec (29):**
   - Tier 1 (Post-Queue, 4): Excel Extractor, Keyword Search, CSV Dialect Detector, Archive Manager
-  - Tier 2 (High Priority, 20): TF-IDF Ranker, Boolean Search, Inverted Index, Markov, Naive Bayes, Frequency Analysis, RSS, HTTP, IMAP, DNS, Webhook, Home Assistant, Version Control, Data Validation, DAG Resolver, Edge Weight Mutation, Time Series, Text Set Ops, Content Hasher, Text Canonicalizer, String Distance, Templating, Diff/Patch, Duplicate Detection, Hypergraph Traversal
+  - Tier 2 (High Priority, 19): TF-IDF Ranker, Boolean Search, Inverted Index, Markov, Naive Bayes, Frequency Analysis, RSS, HTTP, IMAP, DNS, Webhook, Home Assistant, Version Control, Data Validation, DAG Resolver, Edge Weight Mutation, Time Series, Text Set Ops, Content Hasher, Text Canonicalizer, String Distance, Diff/Patch, Duplicate Detection, Hypergraph Traversal
   - Tier 3 (Lower Priority, 4): Success Pattern Miner, Positive Signal Scorer, Causal Credit Attribution, Topological Statistics
   - Tier 4 (Post-2.0, 5): STT, TTS, Image metadata, Image transcoder, Image features, Image classifier
 
-**Total: 63 tools** (20 specced & built, 13 built baseline, 30 remaining)
+**Total: 63 tools** (21 specced & built, 13 built baseline, 29 remaining)
 
 ---
 
-**Last updated:** 2026-07-14 (updated — 20 specced + shipped including Math Evaluation, Unit Conversion)
+**Last updated:** 2026-07-14 (updated — 21 specced + shipped including Templating)
 **For:** Isaac & team (roadmap + prioritization)
-**Status:** 20 spec'd tools shipped this cycle. Remaining pipeline: 30 tools across Tiers 1–4.
+**Status:** 21 spec'd tools shipped this cycle. Remaining pipeline: 29 tools across Tiers 1–4.
