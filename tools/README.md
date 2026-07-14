@@ -243,6 +243,9 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 ### diff_patch
 **Status:** Implemented (unified diff generate/apply; stdlib only). `diff_generate(text_a, text_b, context_lines=3)` uses `difflib.unified_diff`; `diff_apply(text, patch)` parses hunks and applies with 1-line fuzz tolerance. Binary (null-byte) input errors; mismatched context → `{"status":"error","reason":"Patch does not apply cleanly:..."}`. Errors returned as dicts, never raised. **Spec:** `SPEC-diff_patch_v1.md` · **Test:** `TEST-diff_patch_examples.json` · **Code:** `diff_patch/` · **Usage:** `python -m tools.diff_patch generate a.txt b.txt --context 1`. (Pure stdlib; `PYTHONPATH= ` prefix.)
 
+### edge_weight_mutation
+**Status:** Implemented (procedural edge-graph deltas; stdlib only). `edge_mutate(graph, edge_id, delta, reason=None)` + `edge_mutate_batch(graph, mutations, atomic=True)`. Delta ∈ `[-1,1]`; weight clamped to `[0,1]` (rounded 6dp). Unknown edge / invalid delta → error. Batch atomic (default) rolls back on any failure; non-atomic skips failures. In-place graph mutation; CLI writes graph back to file. Errors returned as dicts, never raised. **Spec:** `SPEC-edge_weight_mutation_v1.md` · **Test:** `TEST-edge_weight_mutation_examples.json` · **Code:** `edge_weight_mutation/` · **Usage:** `python -m tools.edge_weight_mutation mutate graph.json a->b -0.15 --reason violation_observed`. (Pure stdlib; `PYTHONPATH= ` prefix.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).

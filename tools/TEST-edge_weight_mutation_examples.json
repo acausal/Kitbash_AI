@@ -1,0 +1,15 @@
+{
+  "test_cases": [
+    {"name":"single_decrease","function":"edge_mutate","input":{"edge_graph":{"edges":{"a->b":{"weight":0.7}},"nodes":{}},"edge_id":"a->b","delta":-0.2},"expected_output":{"status":"success","new_weight":0.5}},
+    {"name":"single_increase","function":"edge_mutate","input":{"edge_graph":{"edges":{"a->b":{"weight":0.6}},"nodes":{}},"edge_id":"a->b","delta":0.3},"expected_output":{"status":"success","new_weight":0.9}},
+    {"name":"clamp_upper","function":"edge_mutate","input":{"edge_graph":{"edges":{"a->b":{"weight":0.9}},"nodes":{}},"edge_id":"a->b","delta":0.5},"expected_output":{"status":"success","new_weight":1.0}},
+    {"name":"clamp_lower","function":"edge_mutate","input":{"edge_graph":{"edges":{"a->b":{"weight":0.1}},"nodes":{}},"edge_id":"a->b","delta":-0.3},"expected_output":{"status":"success","new_weight":0.0}},
+    {"name":"edge_not_found","function":"edge_mutate","input":{"edge_graph":{"edges":{},"nodes":{}},"edge_id":"x->y","delta":-0.1},"expected_output":{"status":"error","reason_includes":"not found"}},
+    {"name":"invalid_delta","function":"edge_mutate","input":{"edge_graph":{"edges":{"a->b":{"weight":0.5}},"nodes":{}},"edge_id":"a->b","delta":1.5},"expected_output":{"status":"error","reason_includes":"Invalid delta"}},
+    {"name":"batch_atomic_success","function":"edge_mutate_batch","input":{"edge_graph":{"edges":{"a->b":{"weight":0.5},"c->d":{"weight":0.6}},"nodes":{}},"mutations":[{"edge_id":"a->b","delta":-0.1},{"edge_id":"c->d","delta":0.2}],"atomic":true},"expected_output":{"status":"success","mutations_applied":2,"mutations_failed":0}},
+    {"name":"batch_atomic_rollback","function":"edge_mutate_batch","input":{"edge_graph":{"edges":{"a->b":{"weight":0.5}},"nodes":{}},"mutations":[{"edge_id":"a->b","delta":-0.1},{"edge_id":"x->y","delta":0.2}],"atomic":true},"expected_output":{"status":"error","atomic":true,"failed_at":1}},
+    {"name":"batch_non_atomic_partial","function":"edge_mutate_batch","input":{"edge_graph":{"edges":{"a->b":{"weight":0.5}},"nodes":{}},"mutations":[{"edge_id":"a->b","delta":-0.1},{"edge_id":"x->y","delta":0.2}],"atomic":false},"expected_output":{"status":"success","mutations_applied":1,"mutations_failed":1}},
+    {"name":"cli_mutate","function":"cli_mutate","input":{"edge_id":"a->b","delta":-0.2},"expected_output":{"status":"success","new_weight":0.5,"cli_rc":0}},
+    {"name":"cli_mutate_error","function":"cli_mutate","input":{"edge_id":"x->y","delta":-0.1},"expected_output":{"cli_rc":1,"status":"error"}}
+  ]
+}
