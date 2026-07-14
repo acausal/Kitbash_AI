@@ -246,6 +246,9 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 ### edge_weight_mutation
 **Status:** Implemented (procedural edge-graph deltas; stdlib only). `edge_mutate(graph, edge_id, delta, reason=None)` + `edge_mutate_batch(graph, mutations, atomic=True)`. Delta ∈ `[-1,1]`; weight clamped to `[0,1]` (rounded 6dp). Unknown edge / invalid delta → error. Batch atomic (default) rolls back on any failure; non-atomic skips failures. In-place graph mutation; CLI writes graph back to file. Errors returned as dicts, never raised. **Spec:** `SPEC-edge_weight_mutation_v1.md` · **Test:** `TEST-edge_weight_mutation_examples.json` · **Code:** `edge_weight_mutation/` · **Usage:** `python -m tools.edge_weight_mutation mutate graph.json a->b -0.15 --reason violation_observed`. (Pure stdlib; `PYTHONPATH= ` prefix.)
 
+### timeseries_windowed_operations
+**Status:** Implemented (windowed aggregation; stdlib only). `timeseries_aggregate(data, window_size, window_type="fixed", operation="mean", start_time=None, end_time=None)` over fixed (non-overlapping) or sliding windows. Operations: mean, sum, median, min, max, count, variance, entropy (Shannon). ISO UTC only; data must be sorted ascending (else error); empty windows emit `value: null`. Errors returned as dicts, never raised. **Spec:** `SPEC-timeseries_windowed_operations_v1.md` · **Test:** `TEST-timeseries_windowed_operations_examples.json` · **Code:** `timeseries_windowed_operations/` · **Usage:** `python -m tools.timeseries_windowed_operations aggregate data.json --window-size 3600 --operation mean`. (Pure stdlib; `PYTHONPATH= ` prefix.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
