@@ -121,6 +121,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-neighborhood_projection_v1.md` · **Code:** `neighborhood_projection/` · **Usage:** `echo '{"edge_graph":{...},"seed_nodes":["fact_123"]}' | python -m tools.neighborhood_projection project_neighborhood`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### log_parser
+**Status:** Implemented (trace plumbing; stdlib only)
+**Scope:** 6 functions — parse_jsonl_traces (report + normalized traces), parse_json_trace, normalize_trace (required-field validation + defaults + step inference), filter_traces (AND semantics: time/session/chain_type/length/element_type/cartridge), aggregate_chains (unique sequence frequency), extract_chain_steps (consecutive transitions for n-grams). Prefixed sequence form "<type>_<id>". Lenient parse / strict validation.
+**Intended output:** JSON-serializable dicts (library + CLI); CLI reads JSON/JSONL from stdin or --input, writes stdout or --output; --filter/--aggregate chaining. Exit 0/1/2/3.
+**Integration target:** prepares traces for Sequence Pattern Miner → Conditional Pattern Detector chain.
+**Spec:** `SPEC-log_parser_v1.md` · **Code:** `log_parser/` · **Usage:** `cat traces.jsonl | python -m tools.log_parser parse_jsonl_traces`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
