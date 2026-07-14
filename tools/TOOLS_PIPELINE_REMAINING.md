@@ -34,6 +34,7 @@ These have full SPEC files; all built and shipped:
 22. Diff/Patch v1 ✅ (built & shipped; unified diff generate/apply)
 23. Edge Weight Mutation v1 ✅ (built & shipped; procedural edge-graph deltas)
 24. Time Series Windowed Operations v1 ✅ (built & shipped; fixed/sliding aggregation)
+25. RSS Fetcher v1 ✅ (built & shipped; RSS 2.0 / Atom 1.0 ingestion)
 
 ---
 
@@ -447,18 +448,18 @@ These exist in codebase; no spec needed:
 
 ## Summary: Tool Counts
 
-- **Specced & Built (24):** all 24 complete & shipped (DateTime, Neighborhood Projection, Log Parser, Sequence Pattern Miner, Text Search, Conditional Pattern Detector, Line Filtering, JSON Query/Filter, Filesystem Access, Contractions, CSV Operations, Unicode Normalizer, Pattern Confidence Scorer, Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie/Prefix Tree, Episode Annotation Tool, Math Evaluation, Unit Conversion, Templating, Diff/Patch, Edge Weight Mutation, Time Series Windowed Operations)
+- **Specced & Built (25):** all 25 complete & shipped (DateTime, Neighborhood Projection, Log Parser, Sequence Pattern Miner, Text Search, Conditional Pattern Detector, Line Filtering, JSON Query/Filter, Filesystem Access, Contractions, CSV Operations, Unicode Normalizer, Pattern Confidence Scorer, Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie/Prefix Tree, Episode Annotation Tool, Math Evaluation, Unit Conversion, Templating, Diff/Patch, Edge Weight Mutation, Time Series Windowed Operations, RSS Fetcher)
 - **Built (13):** Extractors + input sieves + dispatcher + normalization
-- **Remaining to Spec (26):**
+- **Remaining to Spec (25):**
   - Tier 1 (Post-Queue, 4): Excel Extractor, Keyword Search, CSV Dialect Detector, Archive Manager
-  - Tier 2 (High Priority, 16): TF-IDF Ranker, Boolean Search, Inverted Index, Markov, Naive Bayes, Frequency Analysis, RSS, HTTP, IMAP, DNS, Webhook, Home Assistant, Version Control, Data Validation, DAG Resolver, Text Set Ops, Content Hasher, Text Canonicalizer, String Distance, Duplicate Detection, Hypergraph Traversal
+  - Tier 2 (High Priority, 15): TF-IDF Ranker, Boolean Search, Inverted Index, Markov, Naive Bayes, Frequency Analysis, HTTP, IMAP, DNS, Webhook, Home Assistant, Version Control, Data Validation, DAG Resolver, Text Set Ops, Content Hasher, Text Canonicalizer, String Distance, Duplicate Detection, Hypergraph Traversal
   - Tier 3 (Lower Priority, 4): Success Pattern Miner, Positive Signal Scorer, Causal Credit Attribution, Topological Statistics
   - Tier 4 (Post-2.0, 5): STT, TTS, Image metadata, Image transcoder, Image features, Image classifier
 
-**Total: 63 tools** (24 specced & built, 13 built baseline, 26 remaining)
+**Total: 63 tools** (25 specced & built, 13 built baseline, 25 remaining)
 
 ---
 
-**Last updated:** 2026-07-14 (updated — 24 specced + shipped including Time Series Windowed Operations; all 4 recently-added specs built)
+**Last updated:** 2026-07-14 (updated — 25 specced + shipped including RSS Fetcher; all 4 recently-added specs + RSS built)
 **For:** Isaac & team (roadmap + prioritization)
-**Status:** 24 spec'd tools shipped this cycle. Remaining pipeline: 26 tools across Tiers 1–4.
+**Status:** 25 spec'd tools shipped this cycle. Remaining pipeline: 25 tools across Tiers 1–4.

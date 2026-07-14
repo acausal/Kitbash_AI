@@ -1,0 +1,14 @@
+{
+  "samples": {
+    "rss_xml": "<?xml version=\"1.0\"?><rss version=\"2.0\"><channel><title>Example Feed</title><description>Sample</description><link>https://example.com</link><language>en</language><item><title>Article One</title><link>https://example.com/1</link><description>Summary one</description><pubDate>Tue, 14 Jul 2026 10:30:00 GMT</pubDate><author>author@example.com</author><category>tech</category><category>news</category><guid>https://example.com/1</guid></item><item><title>Article Two</title><link>https://example.com/2</link><description>Summary two</description><pubDate>2026-07-14T08:15:00Z</pubDate><guid>https://example.com/2</guid></item></channel></rss>",
+    "atom_xml": "<?xml version=\"1.0\"?><feed xmlns=\"http://www.w3.org/2005/Atom\"><title>Atom Feed</title><subtitle>An atom feed</subtitle><link href=\"https://example.org\"/><entry><id>https://example.org/1</id><title>Atom Entry</title><link href=\"https://example.org/1\"/><summary>Atom summary</summary><updated>2026-07-14T09:00:00Z</updated><author><name>Jane</name></author><category term=\"science\"/></entry></feed>"
+  },
+  "test_cases": [
+    {"name":"parse_rss","function":"parse_feed_xml","input":{"xml":"__rss_xml__"},"expected_output":{"feed_type":"rss_2.0","title":"Example Feed","entries_count":2,"first_title":"Article One","first_link":"https://example.com/1","first_categories_len":2,"first_pub_date_not_null":true}},
+    {"name":"parse_atom","function":"parse_feed_xml","input":{"xml":"__atom_xml__"},"expected_output":{"feed_type":"atom_1.0","title":"Atom Feed","entries_count":1,"first_title":"Atom Entry","first_link":"https://example.org/1","first_author":"Jane","first_categories_len":1}},
+    {"name":"fetch_success","function":"fetch_feeds","input":{"urls":["http://x/rss"],"transport":"success_rss"},"expected_output":{"feeds_requested":1,"feeds_fetched":1,"feeds_failed":0,"total_entries":2}},
+    {"name":"fetch_404","function":"fetch_feeds","input":{"urls":["http://x/dead"],"transport":"http404"},"expected_output":{"feeds_requested":1,"feeds_fetched":0,"feeds_failed":1,"errors_len":1}},
+    {"name":"fetch_parse_error","function":"fetch_feeds","input":{"urls":["http://x/bad"],"transport":"garbage"},"expected_output":{"feeds_requested":1,"feeds_fetched":0,"feeds_failed":1}},
+    {"name":"fetch_mixed","function":"fetch_feeds","input":{"urls":["http://x/rss","http://x/dead"],"transport":"mixed_first_ok_second_404"},"expected_output":{"feeds_requested":2,"feeds_fetched":1,"feeds_failed":1,"total_entries":2}}
+  ]
+}
