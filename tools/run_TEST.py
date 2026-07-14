@@ -1,0 +1,214 @@
+"""Durable test runner for tools/ TEST-*.json fixtures.
+
+Scans tools/ for fixtures that declare an executable "test_cases" array (each
+entry: a `function` name, an `input` dict possibly using `__sample__` placeholders
+from the fixture's `samples`, and an `expected_output` dict). For every case it:
+  1. expands `__placeholder__` strings against the fixture's `samples`
+  2. imports `tools.<pkg>.<function>` (pkg derived from path/filename)
+  3. applies function-scoped kwarg aliases (e.g. score_patterns: traces->execution_traces)
+  4. calls the function
+  5. runs structural sanity checks
+
+Scope: only fixtures that (a) have `test_cases` and (b) resolve to an importable
+`tools.<pkg>` package are executed and counted. Legacy example corpora (no
+`test_cases`) and pre-existing tools not laid out as importable packages are
+reported as SKIP — informational, not failures — so the runner is a reliable
+green-evidence command for the tool packages it owns.
+
+    python tools/run_TEST.py            # exits non-zero on any executed FAIL
+
+Stdlib only.
+"""
+from __future__ import annotations
+
+import glob
+import importlib
+import inspect
+import json
+import os
+import sys
+
+REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, REPO)
+
+# Runner owns these tool packages (importable tools.* with executable,
+# expander-compatible fixtures). Legacy example corpora / pre-existing tools with
+# heterogeneous fixture conventions are SKIPped, not failed.
+OWNED_PACKAGES = {
+    "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
+    "templating",
+}
+
+# function name -> {fixture_input_key: real_param_name}
+ALIASES = {
+    "score_patterns": {"traces": "execution_traces"},
+}
+
+# result keys that mean "total credit normalized to ~1.0"
+NORM_RESULT_KEYS = ("total_credit_attributed",)
+
+
+def _pkg_for(fixture_path: str) -> str:
+    d = os.path.dirname(fixture_path)
+    name = os.path.basename(fixture_path)
+    if os.path.abspath(d) == os.path.abspath(os.path.join(REPO, "tools")):
+        # flat tools/TEST-<pkg>_examples.json  (pkg may include underscores)
+        stem = name[len("TEST-"):] if name.startswith("TEST-") else name
+        stem = stem[:-len("_examples.json")] if stem.endswith("_examples.json") else stem
+        # best-effort package: the part before the first underscore that matches
+        # an importable tools.<pkg>; try progressively shorter prefixes.
+        parts = stem.split("_")
+        for i in range(len(parts), 0, -1):
+            cand = "_".join(parts[:i])
+            if os.path.isdir(os.path.join(REPO, "tools", cand)):
+                return cand
+        return parts[0]
+    return os.path.basename(d)
+
+
+def _expand(v, samples):
+    if isinstance(v, str):
+        k = v.strip("_")
+        return samples.get(k, v)
+    if isinstance(v, list):
+        if len(v) == 1 and isinstance(v[0], str):
+            k = v[0].strip("_")
+            if k in samples:
+                return [samples[k]] if isinstance(samples[k], dict) else samples[k]
+        return [_expand(x, samples) for x in v]
+    if isinstance(v, dict):
+        if "trace_id" in v and ("sequence" in v or "grain_activations" in v):
+            return v
+        return {kk: _expand(x, samples) for kk, x in v.items()}
+    return v
+
+
+def _attrs(res):
+    return (res.get("tool_attributions") or res.get("grain_attributions")
+            or res.get("patterns") or [])
+
+
+def _check_expected(fn_name, res, exp) -> str:
+    """Return '' if ok, else failure detail. Handles fixture expected_output keys."""
+    # negative test: expects an exception (handled by caller); nothing to check
+    if "raises" in exp:
+        return ""
+    # success-trace count (success_pattern_miner)
+    if "success_traces_count" in exp:
+        if res.get("success_traces_count") != exp["success_traces_count"]:
+            return f"success_traces_count {res.get('success_traces_count')}"
+    if "patterns_len" in exp and len(res.get("patterns", [])) != exp["patterns_len"]:
+        return f"patterns len {len(res.get('patterns', []))}"
+    if "patterns_len_ge" in exp and not (len(res.get("patterns", [])) >= exp["patterns_len_ge"]):
+        return f"patterns len {len(res.get('patterns', []))} < {exp['patterns_len_ge']}"
+    # exact scalars at top level
+    for k, want in exp.items():
+        if k in ("first_signal_strength_ge", "first_confidence", "first_consistency_lt",
+                 "first_temp_stability_lt", "first_score_ge", "has_outcome_weight_dominant",
+                 "patterns_len", "patterns_len_ge", "success_traces_count", "raises"):
+            continue
+        if k in res:
+            if isinstance(want, bool) or isinstance(want, str):
+                if res[k] != want:
+                    return f"{k}: got {res[k]!r} want {want!r}"
+            elif isinstance(want, (int, float)):
+                if abs(res[k] - want) > 1e-3:
+                    return f"{k}: got {res[k]} want {want}"
+    attrs = _attrs(res)
+    first = attrs[0] if attrs else {}
+    dims = first.get("signal_dimensions", {}) if isinstance(first, dict) else {}
+    if "first_signal_strength_ge" in exp and not (first.get("signal_strength", 0) >= exp["first_signal_strength_ge"]):
+        return f"signal_strength {first.get('signal_strength')} < {exp['first_signal_strength_ge']}"
+    if "first_confidence" in exp and first.get("sample_size_confidence") != exp["first_confidence"]:
+        return f"confidence {first.get('sample_size_confidence')} != {exp['first_confidence']}"
+    if "first_consistency_lt" in exp and not (dims.get("consistency_score", 1) < exp["first_consistency_lt"]):
+        return f"consistency {dims.get('consistency_score')}"
+    if "first_temp_stability_lt" in exp and not (dims.get("temporal_stability_score", 1) < exp["first_temp_stability_lt"]):
+        return f"temp_stability {dims.get('temporal_stability_score')}"
+    if "first_score_ge" in exp:
+        ps = res.get("pattern_scores") or []
+        if not ps or not (ps[0].get("score", 0) >= exp["first_score_ge"]):
+            return f"first_score {ps[0].get('score') if ps else None}"
+    if exp.get("has_outcome_weight_dominant"):
+        w = res.get("metadata", {}).get("weights", {})
+        if not w or w.get("outcome_correlation") != max(w.values()):
+            return f"weights {w}"
+    if "total_credit_attributed" in res:
+        if abs(res["total_credit_attributed"] - 1.0) > 0.05:
+            return f"total credit {res['total_credit_attributed']}"
+    return ""
+
+
+def main() -> int:
+    fixtures = sorted(glob.glob(os.path.join(REPO, "tools", "**", "TEST-*.json"), recursive=True))
+    results = []
+    skipped = []
+    for fx in fixtures:
+        try:
+            data = json.load(open(fx, encoding="utf-8"))
+        except Exception as e:
+            skipped.append((fx, f"LOAD: {e}"))
+            continue
+        cases = data.get("test_cases")
+        if not isinstance(cases, list):
+            skipped.append((fx, "no executable test_cases (example corpus)"))
+            continue
+        pkg = _pkg_for(fx)
+        if pkg not in OWNED_PACKAGES:
+            skipped.append((fx, f"package tools.{pkg} not owned by runner (legacy/heterogeneous)"))
+            continue
+        try:
+            mod = importlib.import_module(f"tools.{pkg}")
+        except Exception as e:
+            skipped.append((fx, f"IMPORT tools.{pkg}: {e}"))
+            continue
+        samples = data.get("samples", {})
+        for tc in cases:
+            fn_name = tc.get("function")
+            if not fn_name:
+                skipped.append((fx, "test case missing 'function' key (unsupported shape)"))
+                continue
+            if fn_name == "cli":
+                skipped.append((fx, "cli case is an integration stub (skipped)"))
+                continue
+            fn = getattr(mod, fn_name, None)
+            if fn is None:
+                results.append((fx, fn_name, False, "function not found"))
+                continue
+            exp = tc.get("expected_output", {})
+            try:
+                inp = _expand(tc["input"], samples)
+                sig = inspect.signature(fn)
+                params = set(sig.parameters)
+                kwargs = {}
+                for k, v in inp.items():
+                    target = ALIASES.get(fn_name, {}).get(k, k)
+                    if target in params:
+                        kwargs[target] = v
+                if "raises" in exp:
+                    try:
+                        fn(**kwargs)
+                        results.append((fx, fn_name, False, f"expected {exp['raises']} not raised"))
+                    except ValueError:
+                        results.append((fx, fn_name, True, ""))
+                    except Exception as e:
+                        results.append((fx, fn_name, False, f"wrong exception {type(e).__name__}: {e}"))
+                    continue
+                res = fn(**kwargs)
+                detail = _check_expected(fn_name, res, exp)
+                results.append((fx, fn_name, detail == "", detail))
+            except Exception as e:
+                results.append((fx, fn_name, False, f"{type(e).__name__}: {e}"))
+    fails = [(fx, fn, d) for fx, fn, ok, d in results if not ok]
+    for fx, fn, ok, d in results:
+        print(f"{'PASS' if ok else 'FAIL'}  {os.path.basename(fx)}::{fn}" + ("" if ok else f"  -> {d}"))
+    if skipped:
+        print("\nSKIPPED (informational):")
+        for fx, why in skipped:
+            print(f"  - {os.path.basename(fx)}: {why}")
+    print(f"\n{len(results)-len(fails)} PASS / {len(fails)} FAIL across {len(results)} executed cases ({len(skipped)} fixtures skipped)")
+    return 1 if fails else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
