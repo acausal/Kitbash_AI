@@ -145,6 +145,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-text_search_v1.md` · **Code:** `text_search/` · **Usage:** `echo "..." | python -m tools.text_search search_text --pattern "photo"`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### line_filtering
+**Status:** Implemented (data plumbing; stdlib only)
+**Scope:** 7 functions — sort_lines (asc/desc, case-insensitive), deduplicate_lines (preserve-order via dict.fromkeys, optional sort), count_line_frequency (Counter + percent, freq/lexicographic sort, distribution stats), filter_by_frequency (keep all occurrences in [min,max] range), unique_lines (appear-exactly-once), head_tail_lines (n, tail), reverse_lines. No whitespace trim by default (preserve as-is).
+**Intended output:** JSON-serializable dicts (library + CLI); CLI reads raw text from stdin, writes stdout. Exit 0/1/2.
+**Integration target:** pairs with text_search in text-processing chains.
+**Spec:** `SPEC-line_filtering_v1.md` · **Code:** `line_filtering/` · **Usage:** `echo -e "a\nb\nc" | python -m tools.line_filtering sort_lines`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
