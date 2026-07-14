@@ -201,6 +201,12 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-pattern_confidence_scorer_v1.md` · **Code:** `pattern_confidence_scorer/` (+ `metrics.py`, `pattern_matching.py`, `scorer_schema.py`, 8 files) · **Usage:** `python -m tools.pattern_confidence_scorer score-traces --patterns p.json --traces t.jsonl`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### anomaly_scorer
+**Status:** Implemented (Tier 2 introspection triad; stdlib only). 5 functions: detect_false_positive_rate_anomalies (FP-rate spikes/drops vs baseline, ratio>2 or z>3), detect_confidence_degradation (violation-rate climb + increasing trend), detect_emerging_collisions (new/accelerating pairs), detect_violation_trend_shifts (reversal/acceleration), score_anomaly_severity (recency boost). Severity = monotonic magnitude curve (2–3×→0.4, >10×→0.95) + modifiers; recency factor `1+(w-1)e^-age·0.1`. Errors: ValueError→1, OSError/RuntimeError→2. Exit 0/1/2. **Spec note:** SPEC's numeric examples are illustrative (deviation uses `(obs-base)/base`; severity points/bounds are guides); TEST `severity_min/max` bounds respected. **Test:** `TEST-anomaly_scorer_examples.json`.
+**Intended output:** JSON-serializable dicts (library + CLI).
+**Spec:** `SPEC-anomaly_scorer_v1.md` · **Code:** `anomaly_scorer/` (+ `baselines.py`, `severity_calculator.py`, `cause_suggester.py`, `anomaly_schema.py`, 8 files) · **Usage:** `python -m tools.anomaly_scorer detect-fp-spikes --grain-stats g.json --historical-baseline b.json`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).

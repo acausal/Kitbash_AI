@@ -1,0 +1,299 @@
+# TEST-anomaly_scorer_examples.json
+# Test cases for Anomaly Scorer v1
+# Validates anomaly detection, severity scoring, and cause suggestion
+
+{
+  "test_cases": [
+    {
+      "name": "simple_fp_rate_spike",
+      "description": "Grain false positive rate spikes 3x above baseline",
+      "function": "detect_false_positive_rate_anomalies",
+      "input": {
+        "grain_stats": {
+          "grain_42": {
+            "fp_count": 12,
+            "fp_rate": 0.30,
+            "total_uses": 40,
+            "most_confused_with": [137, 89],
+            "window": "2026-07-14T10:00:00Z to 2026-07-14T14:00:00Z"
+          }
+        },
+        "historical_baseline": {
+          "grain_42": {
+            "mean_fp_rate": 0.10,
+            "std_fp_rate": 0.02,
+            "n_observations": 50,
+            "period": "last_7_days"
+          }
+        }
+      },
+      "expected_output": {
+        "anomaly_type": "sudden_increase_false_positives",
+        "baseline_rate": 0.10,
+        "observed_rate": 0.30,
+        "deviation_magnitude": 3.0,
+        "severity_min": 0.55,
+        "severity_max": 0.70
+      }
+    },
+    {
+      "name": "high_magnitude_spike",
+      "description": "Grain FP rate spikes 5.17x (real-world example)",
+      "function": "detect_false_positive_rate_anomalies",
+      "input": {
+        "grain_stats": {
+          "grain_42": {
+            "fp_count": 12,
+            "fp_rate": 0.31,
+            "total_uses": 40,
+            "window": "2026-07-14T10:00:00Z to 2026-07-14T14:00:00Z"
+          }
+        },
+        "historical_baseline": {
+          "grain_42": {
+            "mean_fp_rate": 0.06,
+            "std_fp_rate": 0.02,
+            "n_observations": 100,
+            "period": "last_7_days"
+          }
+        }
+      },
+      "expected_output": {
+        "anomaly_type": "sudden_increase_false_positives",
+        "baseline_rate": 0.06,
+        "observed_rate": 0.31,
+        "deviation_magnitude": 5.17,
+        "severity_min": 0.70,
+        "severity_max": 0.85,
+        "suggested_causes_include": [
+          "search_weight_shift",
+          "query_pattern_change",
+          "grain_confusion_emergence"
+        ]
+      }
+    },
+    {
+      "name": "stable_grain",
+      "description": "Grain FP rate unchanged from baseline (no anomaly)",
+      "function": "detect_false_positive_rate_anomalies",
+      "input": {
+        "grain_stats": {
+          "grain_100": {
+            "fp_count": 2,
+            "fp_rate": 0.04,
+            "total_uses": 50,
+            "window": "2026-07-14T10:00:00Z to 2026-07-14T14:00:00Z"
+          }
+        },
+        "historical_baseline": {
+          "grain_100": {
+            "mean_fp_rate": 0.04,
+            "std_fp_rate": 0.01,
+            "n_observations": 60,
+            "period": "last_7_days"
+          }
+        }
+      },
+      "expected_output": {
+        "anomaly_type": "none",
+        "baseline_rate": 0.04,
+        "observed_rate": 0.04,
+        "deviation_magnitude": 0.0,
+        "severity": 0.0
+      }
+    },
+    {
+      "name": "confidence_degradation_with_increasing_trend",
+      "description": "Fact violation rate climbs steadily, 3.75x baseline",
+      "function": "detect_confidence_degradation",
+      "input": {
+        "violation_timeline": {
+          "fact_42": {
+            "total_violations": 23,
+            "violation_rate": 0.15,
+            "timeline": [
+              {"timestamp": "2026-07-14T10:00:00Z", "dissonance": 0.05},
+              {"timestamp": "2026-07-14T12:00:00Z", "dissonance": 0.08},
+              {"timestamp": "2026-07-14T14:00:00Z", "dissonance": 0.15}
+            ]
+          }
+        },
+        "historical_baseline": {
+          "fact_42": {
+            "mean_violation_rate": 0.04,
+            "std_violation_rate": 0.02,
+            "n_observations": 100,
+            "period": "last_7_days",
+            "reliability_label": "high"
+          }
+        }
+      },
+      "expected_output": {
+        "anomaly_type": "confidence_degradation",
+        "baseline_violation_rate": 0.04,
+        "observed_violation_rate": 0.15,
+        "violation_trend": "increasing",
+        "trend_slope_expected": 0.05,
+        "severity_min": 0.60,
+        "severity_max": 0.75,
+        "possible_causes_include": [
+          "query_ambiguity_increase",
+          "knowledge_base_drift",
+          "context_confusion"
+        ]
+      }
+    },
+    {
+      "name": "emerging_collision_below_threshold",
+      "description": "New collision pair (42, 200) with count=2, threshold=5",
+      "function": "detect_emerging_collisions",
+      "input": {
+        "collision_index": {
+          "(42, 200)": {
+            "collision_count": 2,
+            "query_patterns": ["photosynthesis"],
+            "avg_confidence_on_collision": 0.75,
+            "first_observed": "2026-07-14T12:00:00Z",
+            "last_observed": "2026-07-14T14:00:00Z"
+          }
+        },
+        "historical_collisions": {},
+        "emergence_threshold": 5
+      },
+      "expected_output": {
+        "anomaly_type": "collision_emergence",
+        "collision_pair": [42, 200],
+        "collision_count": 2,
+        "emergence_confidence_min": 0.40,
+        "emergence_confidence_max": 0.60,
+        "severity_min": 0.30,
+        "severity_max": 0.50,
+        "recommendation_includes": "Monitor collision_42_200 for rapid growth"
+      }
+    },
+    {
+      "name": "established_collision_stable",
+      "description": "Established collision (42, 137) with long history (no anomaly)",
+      "function": "detect_emerging_collisions",
+      "input": {
+        "collision_index": {
+          "(42, 137)": {
+            "collision_count": 47,
+            "query_patterns": ["photosynthesis", "plant energy"],
+            "avg_confidence_on_collision": 0.83,
+            "first_observed": "2026-02-10T08:00:00Z",
+            "last_observed": "2026-07-14T14:00:00Z"
+          }
+        },
+        "historical_collisions": {
+          "(42, 137)": {
+            "total_all_time": 47,
+            "baseline_rate_per_day": 2.1,
+            "established_since": "2026-02-10T08:00:00Z"
+          }
+        }
+      },
+      "expected_output": {
+        "anomaly_type": "none",
+        "collision_pair": [42, 137],
+        "note": "Established collision pair; no emergence anomaly"
+      }
+    },
+    {
+      "name": "violation_trend_reversal",
+      "description": "Violation trend reverses from stable to increasing (35x slope acceleration)",
+      "function": "detect_violation_trend_shifts",
+      "input": {
+        "violation_timeline": {
+          "fact_42": {
+            "timeline": [
+              {"timestamp": "2026-07-13T10:00:00Z", "dissonance": 0.05},
+              {"timestamp": "2026-07-13T14:00:00Z", "dissonance": 0.05},
+              {"timestamp": "2026-07-13T18:00:00Z", "dissonance": 0.04},
+              {"timestamp": "2026-07-14T10:00:00Z", "dissonance": 0.07},
+              {"timestamp": "2026-07-14T12:00:00Z", "dissonance": 0.15},
+              {"timestamp": "2026-07-14T14:00:00Z", "dissonance": 0.35}
+            ]
+          }
+        },
+        "historical_trend": {
+          "fact_42": {
+            "mean_daily_violations": 1.2,
+            "trend_direction": "stable",
+            "last_7_day_slope": 0.01,
+            "last_update": "2026-07-13T23:00:00Z"
+          }
+        }
+      },
+      "expected_output": {
+        "anomaly_type": "trend_shift",
+        "previous_trend": "stable",
+        "current_trend": "increasing",
+        "slope_previous": 0.01,
+        "slope_current_min": 0.30,
+        "slope_current_max": 0.40,
+        "slope_change_ratio_min": 30.0,
+        "severity_min": 0.65,
+        "severity_max": 0.80,
+        "trend_reversal": true,
+        "possible_causes_include": [
+          "systematic_knowledge_base_change",
+          "query_distribution_shift",
+          "coherence_degradation"
+        ]
+      }
+    },
+    {
+      "name": "recency_weight_boost",
+      "description": "Anomaly severity re-scored with recency weight (recent anomaly boosted)",
+      "function": "score_anomaly_severity",
+      "input": {
+        "anomaly_data": {
+          "anomaly_id": "anom_grain_42_spike",
+          "severity": 0.78,
+          "timestamp": "2026-07-14T14:00:00Z"
+        },
+        "reference_time": "2026-07-14T14:30:00Z",
+        "recency_weight": 1.5
+      },
+      "expected_output": {
+        "original_severity": 0.78,
+        "age_hours": 0.5,
+        "recency_factor_min": 1.03,
+        "recency_factor_max": 1.08,
+        "adjusted_severity_min": 0.80,
+        "adjusted_severity_max": 0.84
+      }
+    },
+    {
+      "name": "low_sample_size_warning",
+      "description": "Anomaly detected but with low sample size (n=2, < threshold 5)",
+      "function": "detect_false_positive_rate_anomalies",
+      "input": {
+        "grain_stats": {
+          "grain_50": {
+            "fp_count": 1,
+            "fp_rate": 0.20,
+            "total_uses": 5,
+            "window": "2026-07-14T14:00:00Z to 2026-07-14T14:30:00Z"
+          }
+        },
+        "historical_baseline": {
+          "grain_50": {
+            "mean_fp_rate": 0.05,
+            "std_fp_rate": 0.02,
+            "n_observations": 50,
+            "period": "last_7_days"
+          }
+        }
+      },
+      "expected_output": {
+        "anomaly_type": "sudden_increase_false_positives",
+        "severity_min": 0.50,
+        "severity_max": 0.65,
+        "confidence_flag": "low_sample_size",
+        "sample_size_note_includes": "small sample, recommend collecting more data"
+      }
+    }
+  ]
+}

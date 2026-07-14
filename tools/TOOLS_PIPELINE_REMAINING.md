@@ -406,7 +406,7 @@ These exist in codebase; no spec needed:
 
 4. ~~Unicode Normalizer v1 (AnyAscii)~~ ✅ **built & shipped** (text pipeline completion)
 5. ~~Pattern Confidence Scorer v1~~ ✅ **built & shipped** (continues sleep Tier 2 chain)
-6. **Anomaly Scorer v1** — Completes introspection triad
+6. ~~Anomaly Scorer v1~~ ✅ **built & shipped** (completes introspection triad)
 
 ### **Following 2 Weeks (Conditional)**
 
