@@ -137,6 +137,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-sequence_pattern_miner_v1.md` · **Code:** `sequence_pattern_miner/` · **Usage:** `echo '{"traces":[...]}' | python -m tools.sequence_pattern_miner extract_ngrams --n 2`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### text_search
+**Status:** Implemented (data plumbing; stdlib only)
+**Scope:** 5 functions — search_text / search_lines (per-line regex, 1-indexed, context_before/after, inverse), search_and_extract (capture groups group_0..n), count_matches (counts + match_density), replace_matches (backreferences, count_limit, change log). Flags: case_insensitive (re.IGNORECASE), multiline (re.DOTALL), verbose (re.VERBOSE). Thin stdlib `re` wrapper.
+**Intended output:** JSON-serializable dicts (library + CLI); CLI reads raw text from stdin, flags via argparse, writes stdout. Exit 0/1/2.
+**Integration target:** foundational search over logs, cartridge text, traces, any indexed content.
+**Spec:** `SPEC-text_search_v1.md` · **Code:** `text_search/` · **Usage:** `echo "..." | python -m tools.text_search search_text --pattern "photo"`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
