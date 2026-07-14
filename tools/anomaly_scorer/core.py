@@ -49,7 +49,7 @@ def detect_false_positive_rate_anomalies(grain_stats: dict, historical_baseline:
         mag = B.deviation_magnitude(observed, baseline)
         z = B.z_score(observed, baseline, std)
         window = gs.get("window", "")
-        low_sample = total_uses > 0 and total_uses < 5
+        low_sample = total_uses > 0 and total_uses <= 5
         # flag: sudden increase (mag>2) or sudden decrease (mag < -0.5 i.e. <0.5x)
         if mag > MAGNITUDE_THRESHOLD or z > Z_THRESHOLD:
             atype = "sudden_increase_false_positives"
