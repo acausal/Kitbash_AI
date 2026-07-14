@@ -1,0 +1,18 @@
+{
+  "samples": {
+    "trace_tool": {"trace_id":"tr_1","sequence":["tokenizer","negation_detector","svo_extractor"],"outcome":"success","error_signal":0.05,"timestamp":"2026-07-14T10:30:00Z"},
+    "trace_grain": {"trace_id":"tr_2","grain_activations":[42,137,89],"outcome":"success","error_signal":0.08,"timestamp":"2026-07-14T11:00:00Z"},
+    "trace_mixed": {"trace_id":"tr_3","sequence":["tokenizer","negation_detector","svo_extractor"],"grain_activations":[42,137],"outcome":"success","error_signal":0.04,"timestamp":"2026-07-14T12:00:00Z"},
+    "trace_fail": {"trace_id":"tr_4","sequence":["tokenizer","svo_extractor"],"outcome":"failure","error_signal":0.9,"timestamp":"2026-07-14T12:30:00Z"}
+  },
+  "test_cases": [
+    {"name":"simple_tool_sequence","function":"mine_success_tool_sequences","input":{"traces":["__trace_tool__","__trace_tool__","__trace_tool__","__trace_fail__"],"min_frequency":2,"success_threshold":0.2},"expected_output":{"success_traces_count":3,"patterns_len_ge":1,"first_pattern_seq":["negation_detector","svo_extractor"],"first_pattern_type":"success_sequence"}},
+    {"name":"grain_pattern","function":"mine_success_grain_patterns","input":{"traces":["__trace_grain__","__trace_grain__","__trace_grain__"],"min_frequency":2,"success_threshold":0.2},"expected_output":{"success_traces_count":3,"patterns_len_ge":1,"first_pattern_type":"success_grain_activation"}},
+    {"name":"mixed_pattern","function":"mine_mixed_success_patterns","input":{"traces":["__trace_mixed__","__trace_mixed__","__trace_mixed__"],"min_frequency":2,"success_threshold":0.2},"expected_output":{"success_traces_count":3,"patterns_len_ge":1,"first_pattern_type":"success_mixed","first_has_grain_sequence":true}},
+    {"name":"success_filter_drops_failure","function":"mine_success_tool_sequences","input":{"traces":["__trace_fail__"],"min_frequency":1,"success_threshold":0.2},"expected_output":{"success_traces_count":0,"patterns_len":0}},
+    {"name":"low_frequency_filtered","function":"mine_success_tool_sequences","input":{"traces":["__trace_tool__","__trace_tool__","__trace_fail__"],"min_frequency":3,"success_threshold":0.2},"expected_output":{"success_traces_count":2,"patterns_len":0}},
+    {"name":"error_signal_success","function":"mine_success_tool_sequences","input":{"traces":[{"trace_id":"t","sequence":["tokenizer","negation_detector"],"outcome":"unknown","error_signal":0.1,"timestamp":"2026-07-14T10:00:00Z"}],"min_frequency":1,"success_threshold":0.2},"expected_output":{"success_traces_count":1,"patterns_len_ge":1}},
+    {"name":"empty_input","function":"mine_success_tool_sequences","input":{"traces":[],"min_frequency":1,"success_threshold":0.2},"expected_output":{"success_traces_count":0,"patterns_len":0}},
+    {"name":"missing_field_ValueError","function":"mine_success_tool_sequences","input":{"traces":[{"trace_id":"t","sequence":["a"]}],"min_frequency":1,"success_threshold":0.2},"expected_output":{"raises":"ValueError"}}
+  ]
+}
