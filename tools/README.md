@@ -177,6 +177,12 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-filesystem_access_v1.md` · **Code:** `filesystem_access/` (+ `path_validator.py`, `config_loader.py`, `default_config.json`, 9 files) · **Usage:** `echo '{"k":1}' | python -m tools.filesystem_access write_file --path "workspace/out.json"`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### contractions
+**Status:** Implemented (preprocessing for tokenizer/negation_detector; depends on `contractions` PyPI lib v0.1.73 + transitives textsearch/anyascii/pyahocorasick — first tools pkg needing a 3rd-party dep; installed in .venv). 3 functions: expand_contractions (text + per-contraction word-positions), expand_word (single token + is_contraction), list_contractions (791-entry merged dict: contractions_dict+leftovers_dict+slang_dict; SPEC's `contractions.CONTRACTION_MAP` does NOT exist in v0.1.73). Case preserved via library (don't→do not, DON'T→DO NOT). Possessives NOT expanded (library behavior; SPEC case-5 example stale). Errors: ValueError→1 (None/empty), RuntimeError→2 (lib failure). Exit 0/1/2.
+**Intended output:** JSON-serializable dicts (library + CLI).
+**Spec:** `SPEC-contractions_v1.md` · **Code:** `contractions/` (6 files) · **Usage:** `echo "I don't think I'll go." | python -m tools.contractions expand_contractions`
+(Requires the `contractions` dep; invoke via Kitbash `.venv` with `PYTHONPATH= `.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
