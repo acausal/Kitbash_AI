@@ -89,6 +89,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-ner_v1.md` · **Code:** `ner/` · **Usage:** `python -m tools.ner input.txt [--labels PERSON,ORG] [--output out.json]`
 (Reuses `spacy` + `en_core_web_sm`; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### svo
+**Status:** Implemented (input sieve / preprocessing; spaCy)
+**Scope:** Subject-Verb-Object extraction via spaCy dependency parse (`en_core_web_sm`). One SVO per main clause; head-word subject/object (nsubj/nsubjpass, dobj/iobj/attr). Sentences without a main verb skipped. Full-span phrases / subordinate clauses / SRL deferred to v2+.
+**Intended output:** `SVO` list (library) or JSON `{svos, svo_count, with_subject, with_object}` (CLI).
+**Integration target:** input-sieve query handling + document preprocessing (complements NER + negation_detector).
+**Spec:** `SPEC-svo_v1.md` · **Code:** `svo/` · **Usage:** `python -m tools.svo input.txt [-o out.json]`
+(Reuses `spacy` + `en_core_web_sm`; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
