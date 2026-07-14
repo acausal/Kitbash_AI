@@ -153,6 +153,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-line_filtering_v1.md` · **Code:** `line_filtering/` · **Usage:** `echo -e "a\nb\nc" | python -m tools.line_filtering sort_lines`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### json_query_filter
+**Status:** Implemented (data plumbing; stdlib only)
+**Scope:** 5 functions — query_json (recursive-descent path DSL: `.field.nested`, `[i]`, `[*]`, `[s:e]`, `[?filter]`, `// default`, `.{a,b}`, `| type|length`), filter_json_array (`?field op value`, op∈== != > <), extract_fields (object/array subset), flatten_json (separator, max_depth; arrays kept as values), validate_schema (required + types; extra fields allowed). Missing/null/type-mismatch -> null+found=false (graceful).
+**Intended output:** JSON-serializable dicts (library + CLI); CLI reads JSON from stdin. Exit 0/1/2.
+**Integration target:** pairs with line_filtering/text_search for data plumbing.
+**Spec:** `SPEC-json_query_filter_v1.md` · **Code:** `json_query_filter/` (+ `query_parser.py`, 7 files) · **Usage:** `echo '{"u":{"n":"A"}}' | python -m tools.json_query_filter query_json --query .u.n`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
