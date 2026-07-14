@@ -129,6 +129,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-log_parser_v1.md` · **Code:** `log_parser/` · **Usage:** `cat traces.jsonl | python -m tools.log_parser parse_jsonl_traces`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### sequence_pattern_miner
+**Status:** Implemented (pattern mining; stdlib only)
+**Scope:** 5 functions — extract_ngrams (sliding-window n-grams, freq rank, trace-level chain_filter fact_only/grain_only/mixed), extract_ngrams_by_length (n=min..max in one call), filter_sequences (min/max freq, re-ranked), rank_sequences_by_element_type (group by fact→fact/grain→grain/mixed), sequences_to_markov_transitions (bigrams → per-source transition probabilities summing to 1.0). Prefixed "<type>_<id>" elements. Exact counting, no stats (v1).
+**Intended output:** JSON-serializable dicts (library + CLI); CLI reads JSON from stdin, writes stdout; typed flags override payload. Exit 0/1/2.
+**Integration target:** consumes log_parser output; feeds sleep Tier-2 meta-learning + Markov Chain tool.
+**Spec:** `SPEC-sequence_pattern_miner_v1.md` · **Code:** `sequence_pattern_miner/` · **Usage:** `echo '{"traces":[...]}' | python -m tools.sequence_pattern_miner extract_ngrams --n 2`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
