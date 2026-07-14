@@ -240,6 +240,9 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 ### templating
 **Status:** Implemented (string interpolation; stdlib only). `template_render(template, variables, mode="strict")` wraps `string.Template`: strict (default) errors on missing variable, lenient leaves `$placeholder` intact; `$$` → literal `$`; values serialized via `str()`/JSON. `extract_variables(template)` for logging. Errors → `{"status":"error",...}`, never raised. **Spec:** `SPEC-templating_v1.md` · **Test:** `TEST-templating_examples.json` · **Code:** `templating/` · **Usage:** `python -m tools.templating render "Hello $name" '{"name":"Alice"}'`. (Pure stdlib; `PYTHONPATH= ` prefix.)
 
+### diff_patch
+**Status:** Implemented (unified diff generate/apply; stdlib only). `diff_generate(text_a, text_b, context_lines=3)` uses `difflib.unified_diff`; `diff_apply(text, patch)` parses hunks and applies with 1-line fuzz tolerance. Binary (null-byte) input errors; mismatched context → `{"status":"error","reason":"Patch does not apply cleanly:..."}`. Errors returned as dicts, never raised. **Spec:** `SPEC-diff_patch_v1.md` · **Test:** `TEST-diff_patch_examples.json` · **Code:** `diff_patch/` · **Usage:** `python -m tools.diff_patch generate a.txt b.txt --context 1`. (Pure stdlib; `PYTHONPATH= ` prefix.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).

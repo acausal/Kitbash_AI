@@ -1,0 +1,59 @@
+{
+  "test_cases": [
+    {
+      "name": "diff_simple",
+      "function": "diff_generate",
+      "input": {"text_a": "hello", "text_b": "world"},
+      "expected_output": {"status": "success", "operation": "diff", "diff_includes": "hello", "diff_includes2": "world"}
+    },
+    {
+      "name": "diff_multiline",
+      "function": "diff_generate",
+      "input": {"text_a": "line1\nline2\nline3\n", "text_b": "line1\nLINE2\nline3\n"},
+      "expected_output": {"status": "success", "diff_includes": "-line2", "diff_includes2": "+LINE2"}
+    },
+    {
+      "name": "diff_empty_add", "function": "diff_generate",
+      "input": {"text_a": "", "text_b": "hello"}, "expected_output": {"status": "success", "diff_includes": "+hello"}
+    },
+    {
+      "name": "diff_empty_remove", "function": "diff_generate",
+      "input": {"text_a": "hello", "text_b": ""}, "expected_output": {"status": "success", "diff_includes": "-hello"}
+    },
+    {
+      "name": "apply_simple", "function": "diff_apply",
+      "input": {"text": "hello\nworld\n", "patch": "--- a\n+++ b\n@@ -1,2 +1,2 @@\n hello\n-world\n+WORLD\n"},
+      "expected_output": {"status": "success", "result": "hello\nWORLD\n"}
+    },
+    {
+      "name": "apply_add_lines", "function": "diff_apply",
+      "input": {"text": "a\nc\n", "patch": "--- a\n+++ b\n@@ -1,2 +1,3 @@\n a\n+b\n c\n"},
+      "expected_output": {"status": "success", "result_includes": "b"}
+    },
+    {
+      "name": "apply_remove_lines", "function": "diff_apply",
+      "input": {"text": "a\nb\nc\n", "patch": "--- a\n+++ b\n@@ -1,3 +1,2 @@\n a\n-b\n c\n"},
+      "expected_output": {"status": "success", "result_not_includes": "b"}
+    },
+    {
+      "name": "apply_bad_patch", "function": "diff_apply",
+      "input": {"text": "hello\nworld\n", "patch": "--- a\n+++ b\n@@ -1,2 +1,2 @@\n goodbye\n-world\n+WORLD\n"},
+      "expected_output": {"status": "error", "reason_includes": "does not apply"}
+    },
+    {
+      "name": "roundtrip_generate_then_apply", "function": "roundtrip",
+      "input": {"text_a": "1\n2\n3\n4\n5\n", "text_b": "1\n2\nX\n4\n5\n", "context_lines": 0},
+      "expected_output": {"status": "success", "result": "1\n2\nX\n4\n5\n"}
+    },
+    {
+      "name": "cli_generate", "function": "cli_generate",
+      "input": {"text_a": "hello\nworld\n", "text_b": "hello\nWORLD\n", "context": 3},
+      "expected_output": {"status": "success", "diff_includes": "-world", "cli_rc": 0}
+    },
+    {
+      "name": "cli_apply", "function": "cli_apply",
+      "input": {"text": "hello\nworld\n", "patch": "--- a\n+++ b\n@@ -1,2 +1,2 @@\n hello\n-world\n+WORLD\n"},
+      "expected_output": {"status": "success", "result": "hello\nWORLD\n", "cli_rc": 0}
+    }
+  ]
+}
