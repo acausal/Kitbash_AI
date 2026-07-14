@@ -1,0 +1,23 @@
+{
+  "samples": {
+    "trace": {"trace_id":"tr_1","sequence":["tokenizer","negation_detector","svo_extractor","json_filter"],"outcome":"success","error_signal":0.05,"timestamp":"2026-07-14T10:30:00Z"},
+    "grain_trace": {"trace_id":"tr_g","grain_activations":[42,137,89,56],"outcome":"success","error_signal":0.05,"timestamp":"2026-07-14T10:30:00Z"},
+    "pattern": {"pattern_id":"succ_seq_001","sequence":["tokenizer","negation_detector","svo_extractor"],"frequency":47,"signal_strength":0.87},
+    "hist": [
+      {"trace_id":"h1","sequence":["tokenizer","negation_detector","svo_extractor","json_filter"],"outcome":"success","error_signal":0.03},
+      {"trace_id":"h2","sequence":["tokenizer","negation_detector","svo_extractor"],"outcome":"success","error_signal":0.04},
+      {"trace_id":"h3","sequence":["tokenizer"],"outcome":"failure","error_signal":0.6},
+      {"trace_id":"h4","sequence":["negation_detector","json_filter"],"outcome":"success","error_signal":0.1}
+    ],
+    "weak_trace": {"trace_id":"tr_w","sequence":["tokenizer","weak_tool"],"outcome":"success","error_signal":0.05,"timestamp":"2026-07-14T10:30:00Z"}
+  },
+  "test_cases": [
+    {"name":"simple_chain_positions","function":"attribute_credit_to_tools","input":{"trace":"__trace__","success_patterns":null,"historical_traces":null,"weights":null,"tool_metadata":null},"expected_output":{"last_positional_gt_first":true,"total_eq_1":true,"n_attributions":4}},
+    {"name":"pattern_membership","function":"attribute_credit_to_tools","input":{"trace":"__trace__","success_patterns":["__pattern__"],"historical_traces":null,"weights":null,"tool_metadata":null},"expected_output":{"svo_pattern_membership_gt_0":true}},
+    {"name":"historical_correlation","function":"attribute_credit_to_tools","input":{"trace":"__trace__","success_patterns":null,"historical_traces":["__hist__"],"weights":null,"tool_metadata":null},"expected_output":{"tokenizer_hist_rate":0.6667}},
+    {"name":"weak_link_lower","function":"attribute_credit_to_tools","input":{"trace":"__weak_trace__","success_patterns":null,"historical_traces":["__hist__"],"weights":null,"tool_metadata":null},"expected_output":{"weak_tool_rate_lt_tokenizer":true}},
+    {"name":"batch_attribution","function":"batch_attribute_credit","input":{"traces":["__trace__","__weak_trace__"],"success_patterns":null,"historical_traces":null,"weights":null},"expected_output":{"traces_processed":2,"agg_has_tools":true}},
+    {"name":"grain_attribution","function":"attribute_credit_to_grains","input":{"trace":"__grain_trace__","grain_signal_scores":null,"historical_traces":null,"weights":null},"expected_output":{"n_grains":4,"total_eq_1":true}},
+    {"name":"positional_only_no_inputs","function":"attribute_credit_to_tools","input":{"trace":"__trace__","success_patterns":null,"historical_traces":null,"weights":null,"tool_metadata":null},"expected_output":{"confidence":"low","total_eq_1":true}}
+  ]
+}
