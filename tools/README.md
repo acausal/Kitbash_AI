@@ -113,6 +113,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-datetime_v1.md` · **Code:** `datetime_utils/` · **Usage:** `echo '{"timestamp":"..."}' | python -m tools.datetime_utils parse_iso8601`
 (Requires `pytz`; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### neighborhood_projection
+**Status:** Implemented (graph plumbing; stdlib only)
+**Scope:** 5 functions — project_neighborhood (BFS, depth + strength filter), project_neighborhood_bidirectional (marks in/out edges), filter_neighborhood (min_strength + min_degree), rank_neighborhood_by_weight (asc/desc), explain_path (shortest path ≤5 hops). Multiplicative path weights. Node type/cartridge DERIVED from edges (no node registry). Read-only over an edge-graph snapshot.
+**Intended output:** JSON-serializable dicts (library + CLI); CLI reads JSON from stdin, writes JSON to stdout. Exit 0/1/2.
+**Integration target:** post-1.0 sleep-pipeline Tier-2 context expansion + query-time debugging.
+**Spec:** `SPEC-neighborhood_projection_v1.md` · **Code:** `neighborhood_projection/` · **Usage:** `echo '{"edge_graph":{...},"seed_nodes":["fact_123"]}' | python -m tools.neighborhood_projection project_neighborhood`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
