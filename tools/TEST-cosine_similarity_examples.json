@@ -1,0 +1,284 @@
+# TEST-cosine_similarity_examples.json
+# Test cases for Cosine Similarity v1
+# Validates computation, matrix generation, and interpretability
+
+{
+  "test_cases": [
+    {
+      "name": "single_pair_identical_vectors",
+      "description": "Two identical vectors should have similarity 1.0",
+      "function": "compute_similarity",
+      "input": {
+        "vector_a": [1, 0, 0],
+        "vector_b": [1, 0, 0],
+        "normalize": true
+      },
+      "expected_output": {
+        "cosine_similarity": 1.0,
+        "interpretation": "high_similarity"
+      }
+    },
+    {
+      "name": "single_pair_orthogonal_vectors",
+      "description": "Orthogonal vectors (perpendicular) should have similarity 0.0",
+      "function": "compute_similarity",
+      "input": {
+        "vector_a": [1, 0, 0],
+        "vector_b": [0, 1, 0],
+        "normalize": true
+      },
+      "expected_output": {
+        "cosine_similarity": 0.0,
+        "interpretation": "low_similarity"
+      }
+    },
+    {
+      "name": "single_pair_parallel_different_magnitude",
+      "description": "Parallel vectors (same direction, different length) should have similarity 1.0 after normalization",
+      "function": "compute_similarity",
+      "input": {
+        "vector_a": [2, 0, 0],
+        "vector_b": [1, 0, 0],
+        "normalize": true
+      },
+      "expected_output": {
+        "cosine_similarity": 1.0,
+        "interpretation": "high_similarity"
+      }
+    },
+    {
+      "name": "single_pair_high_similarity",
+      "description": "Two similar vectors should have similarity ~0.856",
+      "function": "compute_similarity",
+      "input": {
+        "vector_a": [0.5, 0.3, 0.1, 0.0, 0.1],
+        "vector_b": [0.4, 0.2, 0.15, 0.05, 0.2],
+        "normalize": true
+      },
+      "expected_output": {
+        "cosine_similarity_min": 0.80,
+        "cosine_similarity_max": 1.0,
+        "interpretation": "high_similarity"
+      }
+    },
+    {
+      "name": "all_pairs_matrix_identical_vectors",
+      "description": "Matrix of identical vectors should have diagonal all 1.0, all off-diagonal 1.0",
+      "function": "compute_similarity_matrix",
+      "input": {
+        "vectors": [
+          [1, 0, 0],
+          [1, 0, 0],
+          [1, 0, 0]
+        ],
+        "vector_ids": ["v0", "v1", "v2"],
+        "normalize": true
+      },
+      "expected_output": {
+        "n_vectors": 3,
+        "statistics": {
+          "mean_similarity": 1.0,
+          "std_similarity": 0.0,
+          "min_similarity": 1.0,
+          "max_similarity": 1.0
+        }
+      }
+    },
+    {
+      "name": "all_pairs_matrix_orthogonal_vectors",
+      "description": "Matrix of orthogonal vectors should have diagonal 1.0, all off-diagonal 0.0",
+      "function": "compute_similarity_matrix",
+      "input": {
+        "vectors": [
+          [1, 0, 0],
+          [0, 1, 0],
+          [0, 0, 1]
+        ],
+        "vector_ids": ["v0", "v1", "v2"],
+        "normalize": true
+      },
+      "expected_output": {
+        "n_vectors": 3,
+        "statistics": {
+          "mean_similarity": 0.0,
+          "std_similarity": 0.0,
+          "min_similarity": 0.0,
+          "max_similarity": 1.0
+        }
+      }
+    },
+    {
+      "name": "all_pairs_matrix_collision_cluster_high_coherence",
+      "description": "High-coherence collision cluster (grains 42, 137, 89) should have mean similarity > 0.5",
+      "function": "compute_similarity_matrix",
+      "input": {
+        "vectors": [
+          [0.5, 0.3, 0.1, 0.1],
+          [0.4, 0.35, 0.15, 0.1],
+          [0.45, 0.28, 0.12, 0.15]
+        ],
+        "vector_ids": ["grain_42", "grain_137", "grain_89"],
+        "normalize": true
+      },
+      "expected_output": {
+        "n_vectors": 3,
+        "statistics": {
+          "mean_similarity_min": 0.70,
+          "max_similarity_min": 0.90,
+          "min_similarity_min": 0.80
+        },
+        "highest_similarity_pairs_count": 3,
+        "highest_similarity_pairs_top_1_similarity_min": 0.80
+      }
+    },
+    {
+      "name": "all_pairs_matrix_low_coherence_cluster",
+      "description": "Low-coherence cluster (diverse vectors) should have mean similarity close to 0.0",
+      "function": "compute_similarity_matrix",
+      "input": {
+        "vectors": [
+          [1, 0, 0, 0],
+          [0, 1, 0, 0],
+          [0, 0, 1, 0],
+          [0, 0, 0, 1]
+        ],
+        "vector_ids": ["v0", "v1", "v2", "v3"],
+        "normalize": true
+      },
+      "expected_output": {
+        "n_vectors": 4,
+        "statistics": {
+          "mean_similarity": 0.0,
+          "min_similarity": 0.0,
+          "max_similarity": 1.0
+        }
+      }
+    },
+    {
+      "name": "knn_find_neighbors_identical_query",
+      "description": "Query identical to one candidate should rank it first (similarity 1.0)",
+      "function": "compute_vector_neighbors",
+      "input": {
+        "query_vector": [1, 0, 0, 0],
+        "vectors": [
+          [1, 0, 0, 0],
+          [0.7, 0.3, 0, 0],
+          [0, 1, 0, 0],
+          [0, 0, 1, 0],
+          [0, 0, 0, 1]
+        ],
+        "vector_ids": ["v0", "v1", "v2", "v3", "v4"],
+        "top_k": 3
+      },
+      "expected_output": {
+        "neighbors_count": 3,
+        "rank_1": {
+          "vector_id": "v0",
+          "similarity": 1.0
+        },
+        "rank_2": {
+          "vector_id": "v1",
+          "similarity_min": 0.90,
+          "similarity_max": 1.0
+        },
+        "rank_3": {
+          "vector_id": "v2",
+          "similarity": 0.0
+        }
+      }
+    },
+    {
+      "name": "knn_find_neighbors_low_similarity_all",
+      "description": "Query with low similarity to all candidates should flag as outlier",
+      "function": "compute_vector_neighbors",
+      "input": {
+        "query_vector": [0.25, 0.25, 0.25, 0.25],
+        "vectors": [
+          [1, 0, 0, 0],
+          [0, 1, 0, 0],
+          [0, 0, 1, 0],
+          [0, 0, 0, 1]
+        ],
+        "vector_ids": ["v0", "v1", "v2", "v3"],
+        "top_k": 2
+      },
+      "expected_output": {
+        "neighbors_count": 2,
+        "statistics": {
+          "query_vector_is_outlier": true,
+          "mean_neighbor_similarity": 0.5
+        }
+      }
+    },
+    {
+      "name": "compare_sets_high_alignment",
+      "description": "Set A and Set B with high alignment should show strong cross-similarities",
+      "function": "compare_vector_sets",
+      "input": {
+        "vectors_a": [
+          [1, 0],
+          [0.7, 0.3]
+        ],
+        "vectors_b": [
+          [0.9, 0.1],
+          [0.6, 0.4]
+        ],
+        "vector_ids_a": ["grain_A1", "grain_A2"],
+        "vector_ids_b": ["grain_B1", "grain_B2"]
+      },
+      "expected_output": {
+        "set_a": {"n_vectors": 2},
+        "set_b": {"n_vectors": 2},
+        "statistics": {
+          "mean_cross_similarity_min": 0.70,
+          "max_similarity_min": 0.95
+        }
+      }
+    },
+    {
+      "name": "compare_sets_orthogonal",
+      "description": "Orthogonal sets should show low cross-similarities",
+      "function": "compare_vector_sets",
+      "input": {
+        "vectors_a": [
+          [1, 0, 0],
+          [0, 1, 0]
+        ],
+        "vectors_b": [
+          [0, 0, 1],
+          [0, 0, 1]
+        ],
+        "vector_ids_a": ["query_today", "query_week_ago"],
+        "vector_ids_b": ["query_7days_ago", "query_14days_ago"]
+      },
+      "expected_output": {
+        "statistics": {
+          "mean_cross_similarity": 0.0,
+          "max_similarity": 0.0
+        }
+      }
+    },
+    {
+      "name": "tfidf_vectors_grain_similarity",
+      "description": "TF-IDF vectors (dicts) for grains should compute similarity correctly",
+      "function": "compute_similarity_matrix",
+      "input": {
+        "vectors": [
+          {"photosynthesis": 0.5, "chloroplast": 0.3, "glucose": 0.1, "light": 0.1},
+          {"photosynthesis": 0.4, "chloroplast": 0.2, "ATP": 0.15, "light": 0.25},
+          {"respiration": 0.8, "ATP": 0.2}
+        ],
+        "vector_ids": ["grain_photosynthesis", "grain_ATP", "grain_respiration"],
+        "normalize": true
+      },
+      "expected_output": {
+        "n_vectors": 3,
+        "statistics": {
+          "mean_similarity_min": 0.20,
+          "max_similarity_min": 0.60
+        },
+        "highest_similarity_pairs_top_1_interpretation": "high_similarity"
+      }
+    }
+  ]
+}

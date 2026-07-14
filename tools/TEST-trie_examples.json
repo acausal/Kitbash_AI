@@ -1,0 +1,266 @@
+# TEST-trie_examples.json
+# Test cases for Trie/Prefix Tree v1
+# Validates prefix search, negation, autocomplete, and case sensitivity
+
+{
+  "test_cases": [
+    {
+      "name": "build_trie_simple_vocabulary",
+      "description": "Build trie from small vocabulary",
+      "function": "build_trie",
+      "input": {
+        "vocabulary": ["photosynthesis", "photorespiration", "photo-oxidation", "chlorophyll", "respiration", "ATP"],
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "vocabulary_size": 6,
+        "node_count_min": 30,
+        "node_count_max": 70,
+        "trie_depth_min": 10,
+        "vocabulary_retained": 6
+      }
+    },
+    {
+      "name": "search_exact_match_found",
+      "description": "Exact match search for existing term",
+      "function": "search_trie",
+      "input": {
+        "query": "photosynthesis",
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "found": true,
+        "is_terminal": true,
+        "path_traversed_length_min": 14
+      }
+    },
+    {
+      "name": "search_exact_match_not_found_partial",
+      "description": "Partial match that is not a complete term should fail",
+      "function": "search_trie",
+      "input": {
+        "query": "photo",
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "found": false,
+        "is_terminal": false
+      }
+    },
+    {
+      "name": "search_exact_match_not_found_absent",
+      "description": "Term not in vocabulary should fail",
+      "function": "search_trie",
+      "input": {
+        "query": "glycolysis",
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "found": false
+      }
+    },
+    {
+      "name": "prefix_search_photo",
+      "description": "Find all terms starting with 'photo'",
+      "function": "prefix_search",
+      "input": {
+        "prefix": "photo",
+        "case_sensitive": true,
+        "max_results": null
+      },
+      "expected_output": {
+        "prefix": "photo",
+        "matches_count": 3,
+        "matches_include": ["photosynthesis", "photorespiration", "photo-oxidation"],
+        "truncated": false
+      }
+    },
+    {
+      "name": "prefix_search_single_match",
+      "description": "Prefix with single match",
+      "function": "prefix_search",
+      "input": {
+        "prefix": "chlor",
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "matches_count": 1,
+        "matches": ["chlorophyll"]
+      }
+    },
+    {
+      "name": "prefix_search_no_matches",
+      "description": "Prefix with no matches",
+      "function": "prefix_search",
+      "input": {
+        "prefix": "xyz",
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "matches_count": 0,
+        "matches": [],
+        "truncated": false
+      }
+    },
+    {
+      "name": "prefix_search_with_max_results",
+      "description": "Prefix search truncated by max_results",
+      "function": "prefix_search",
+      "input": {
+        "prefix": "photo",
+        "case_sensitive": true,
+        "max_results": 2
+      },
+      "expected_output": {
+        "matches_count_max": 2,
+        "truncated": true
+      }
+    },
+    {
+      "name": "suggest_completions_partial",
+      "description": "Autocomplete suggestions for partial input",
+      "function": "suggest_completions",
+      "input": {
+        "prefix": "pho",
+        "case_sensitive": true,
+        "max_suggestions": 5
+      },
+      "expected_output": {
+        "suggestions_count": 3,
+        "rank_1_completion": "photosynthesis",
+        "rank_2_completion": "photorespiration",
+        "rank_3_completion": "photo-oxidation"
+      }
+    },
+    {
+      "name": "suggest_completions_exact_match",
+      "description": "Autocomplete where input is exact term",
+      "function": "suggest_completions",
+      "input": {
+        "prefix": "ATP",
+        "case_sensitive": true,
+        "max_suggestions": 5
+      },
+      "expected_output": {
+        "suggestions_count": 1,
+        "rank_1_completion": "ATP"
+      }
+    },
+    {
+      "name": "suggest_completions_no_matches",
+      "description": "Autocomplete with no matching terms",
+      "function": "suggest_completions",
+      "input": {
+        "prefix": "xyz",
+        "case_sensitive": true,
+        "max_suggestions": 5
+      },
+      "expected_output": {
+        "suggestions_count": 0,
+        "suggestions": []
+      }
+    },
+    {
+      "name": "negation_search_exclude_photo",
+      "description": "Find all terms EXCEPT those starting with 'photo'",
+      "function": "negation_search",
+      "input": {
+        "patterns": ["photo"],
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "excluded_count": 3,
+        "included_count": 3,
+        "included_terms_include": ["chlorophyll", "respiration", "ATP"]
+      }
+    },
+    {
+      "name": "negation_search_exclude_multiple_patterns",
+      "description": "Exclude multiple patterns (OR logic)",
+      "function": "negation_search",
+      "input": {
+        "patterns": ["photo", "ATP"],
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "excluded_count": 4,
+        "included_count": 2,
+        "included_terms_include": ["chlorophyll", "respiration"]
+      }
+    },
+    {
+      "name": "negation_search_exclude_all",
+      "description": "Pattern excluding most/all terms",
+      "function": "negation_search",
+      "input": {
+        "patterns": ["photo", "chlor", "resp", "ATP"],
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "excluded_count_min": 5,
+        "included_count_max": 1
+      }
+    },
+    {
+      "name": "case_sensitivity_exact_match",
+      "description": "Case-sensitive exact match fails on case mismatch",
+      "function": "search_trie",
+      "input": {
+        "query": "Photosynthesis",
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "found": false
+      }
+    },
+    {
+      "name": "case_sensitivity_prefix_search",
+      "description": "Case-sensitive prefix search excludes case mismatches",
+      "function": "prefix_search",
+      "input": {
+        "prefix": "Photo",
+        "case_sensitive": true
+      },
+      "expected_output": {
+        "matches_count": 0
+      }
+    },
+    {
+      "name": "case_insensitivity_search",
+      "description": "Case-insensitive search (requires rebuild with case_sensitive=False)",
+      "note": "This test assumes trie was built with case_sensitive=False",
+      "function": "search_trie",
+      "input": {
+        "query": "Photosynthesis",
+        "case_sensitive": false
+      },
+      "expected_output": {
+        "found": true
+      }
+    },
+    {
+      "name": "get_trie_stats",
+      "description": "Compute statistics about trie structure",
+      "function": "get_trie_stats",
+      "input": {},
+      "expected_output": {
+        "vocabulary_size": 6,
+        "node_count_min": 30,
+        "max_depth_min": 10,
+        "branch_factor_avg_min": 1.0
+      }
+    },
+    {
+      "name": "serialization_round_trip",
+      "description": "Serialize trie, deserialize, query again",
+      "function": "serialize_trie",
+      "input": {},
+      "expected_output": {
+        "serialization_params": {
+          "format": "nested_dict",
+          "encodable": true
+        }
+      }
+    }
+  ]
+}
