@@ -97,6 +97,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-svo_v1.md` · **Code:** `svo/` · **Usage:** `python -m tools.svo input.txt [-o out.json]`
 (Reuses `spacy` + `en_core_web_sm`; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### structured_validator
+**Status:** Implemented (input sieve / preprocessing; Lark)
+**Scope:** Generic Lark-grammar validation. `validate_input(text, grammar, grammar_start)` → `ParseResult` (success, serialized parse tree dict, error, grammar_name, input_text). Inline EBNF or `.lark` file. No built-in grammars (v1 = infrastructure; concrete grammars deferred to use cases).
+**Intended output:** `ParseResult` (library) or JSON `{success, grammar_name, parse_tree, error, input_text}` (CLI). Exit 0=pass / 1=validation fail / 2=grammar/file error.
+**Integration target:** optional validation stage after tokenizer/ner/svo in the input sieve.
+**Spec:** `SPEC-structured_validator_v1.md` · **Code:** `structured_validator/` · **Usage:** `python -m tools.structured_validator input.txt --grammar g.lark [--output out.json]`
+(Requires `lark`; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
