@@ -27,6 +27,7 @@ These have full SPEC files; all built and shipped:
 15. Pattern Explainer v1 ✅ (built & shipped; sleep Tier 2; completes explainer triad)
 16. Cosine Similarity v1 ✅ (built & shipped; vector math)
 17. Trie/Prefix Tree v1 ✅ (built & shipped; prefix-tree)
+18. Episode Annotation Tool v1 ✅ (built & shipped; CWL episode boundaries, isolation-safe)
 
 ---
 
@@ -440,7 +441,7 @@ These exist in codebase; no spec needed:
 
 ## Summary: Tool Counts
 
-- **Specced & Built (14):** all 14 complete & shipped (DateTime, Neighborhood Projection, Log Parser, Sequence Pattern Miner, Text Search, Conditional Pattern Detector, Line Filtering, JSON Query/Filter, Filesystem Access, Contractions, CSV Operations, Unicode Normalizer, Pattern Confidence Scorer, Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie/Prefix Tree)
+- **Specced & Built (18):** all 18 complete & shipped (DateTime, Neighborhood Projection, Log Parser, Sequence Pattern Miner, Text Search, Conditional Pattern Detector, Line Filtering, JSON Query/Filter, Filesystem Access, Contractions, CSV Operations, Unicode Normalizer, Pattern Confidence Scorer, Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie/Prefix Tree, Episode Annotation Tool)
 - **Built (13):** Extractors + input sieves + dispatcher + normalization
 - **Remaining to Spec (32):**
   - Tier 1 (Post-Queue, 4): Excel Extractor, Keyword Search, CSV Dialect Detector, Archive Manager
@@ -448,10 +449,10 @@ These exist in codebase; no spec needed:
   - Tier 3 (Lower Priority, 4): Success Pattern Miner, Positive Signal Scorer, Causal Credit Attribution, Topological Statistics
   - Tier 4 (Post-2.0, 5): STT, TTS, Image metadata, Image transcoder, Image features, Image classifier
 
-**Total: 59 tools** (14 specced & built, 13 built baseline, 32 remaining)
+**Total: 63 tools** (18 specced & built, 13 built baseline, 32 remaining)
 
 ---
 
-**Last updated:** 2026-07-14 (updated — 17 specced + shipped including Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie; sleep Tier 2 triad complete)
+**Last updated:** 2026-07-14 (updated — 18 specced + shipped including Episode Annotation Tool; all SPEC'd tools now built)
 **For:** Isaac & team (roadmap + prioritization)
-**Status:** 17 spec'd tools shipped this cycle (11 original + Unicode Normalizer + Pattern Confidence Scorer + Anomaly Scorer + Pattern Explainer + Cosine Similarity + Trie). Remaining pipeline: 32 tools across Tiers 1–4.
+**Status:** 18 spec'd tools shipped this cycle (11 original + Unicode Normalizer + Pattern Confidence Scorer + Anomaly Scorer + Pattern Explainer + Cosine Similarity + Trie + Episode Annotation Tool). Remaining pipeline: 32 tools across Tiers 1–4.

@@ -225,6 +225,12 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-trie_v1.md` · **Code:** `trie/` (+ `trie_node.py`, `negation.py`, `serialization.py`, `trie_schema.py`, 9 files) · **Usage:** `python -m tools.trie build --vocabulary vocab.jsonl --output trie.json`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### episode_annotation_tool
+**Status:** Implemented (CWL episode boundary marking; stdlib only). Marks exploratory (`expl`) vs. action (`act`) episode boundaries; writes SPEC-shaped records (`episode_id, phase, summary, timestamp, session_id, query_id, agent_context`) to JSONL. `episode_id` = `{phase}_{YYYYmmdd_HHMMSS}_{uuid8}`. Invalid phase / empty summary → `{"status":"error",...}` (never raises). Write-only, non-blocking. **Isolation note:** SPEC postcondition is `DreamBucketWriter.append("episodes", record)`; importing `dream_bucket.py` would violate the tools/ Isolation Contract, so this writes JSONL to a configurable `log_path` (default `dream_bucket/live/episodes.jsonl`) via stdlib — format-compatible with the real `episodes` log type, with a `writer` arg for drop-in Dream Bucket wiring. **Test:** `TEST-episode_annotation_tool_examples.json` (generated; no upstream TEST existed).
+**Intended output:** JSON-serializable dict (library + CLI).
+**Spec:** `SPEC-episode_annotation_tool_v1.md` · **Code:** `episode_annotation_tool/` (+ `core.py`, `cli.py`, `__init__.py`, `__main__.py`, `README.md`, 6 files) · **Usage:** `python -m tools.episode_annotation_tool annotate --phase expl --summary "read thermodynamics_general cartridge"`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).

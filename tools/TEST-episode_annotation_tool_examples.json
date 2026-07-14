@@ -1,0 +1,83 @@
+{
+  "test_cases": [
+    {
+      "name": "valid_exploratory_episode",
+      "function": "annotate_episode",
+      "input": {
+        "phase": "expl",
+        "summary": "read thermodynamics_general cartridge",
+        "session_id": "session_20260714_140000",
+        "query_id": "query_002"
+      },
+      "expected_output": {
+        "phase": "expl",
+        "summary": "read thermodynamics_general cartridge",
+        "session_id": "session_20260714_140000",
+        "query_id": "query_002",
+        "status": "logged",
+        "episode_id_prefix": "expl_"
+      }
+    },
+    {
+      "name": "valid_action_episode",
+      "function": "annotate_episode",
+      "input": {
+        "phase": "act",
+        "summary": "generate hypothesis linking 2nd law to information theory"
+      },
+      "expected_output": {
+        "phase": "act",
+        "summary": "generate hypothesis linking 2nd law to information theory",
+        "status": "logged",
+        "episode_id_prefix": "act_"
+      }
+    },
+    {
+      "name": "action_episode_with_agent_context",
+      "function": "annotate_episode",
+      "input": {
+        "phase": "act",
+        "summary": "trigger cartridge crystallization",
+        "agent_context": {"active_cartridges": ["thermodynamics_general"], "grain_count_activated": 3}
+      },
+      "expected_output": {
+        "phase": "act",
+        "summary": "trigger cartridge crystallization",
+        "status": "logged",
+        "agent_context_active_cartridges_include": "thermodynamics_general"
+      }
+    },
+    {
+      "name": "invalid_phase",
+      "function": "annotate_episode",
+      "input": {"phase": "think", "summary": "introspective phase"},
+      "expected_output": {
+        "status": "error",
+        "reason_includes": "Invalid phase"
+      }
+    },
+    {
+      "name": "empty_summary",
+      "function": "annotate_episode",
+      "input": {"phase": "expl", "summary": ""},
+      "expected_output": {
+        "status": "error",
+        "reason_includes": "summary"
+      }
+    },
+    {
+      "name": "read_back_persists_records",
+      "function": "annotate_episode_then_read",
+      "input": {
+        "phase": "expl",
+        "summary": "first exploration",
+        "phase2": "act",
+        "summary2": "decision made"
+      },
+      "expected_output": {
+        "read_count_min": 2,
+        "read_phases_include": ["expl", "act"]
+      }
+    }
+  ]
+}
