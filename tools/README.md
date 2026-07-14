@@ -161,6 +161,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-json_query_filter_v1.md` · **Code:** `json_query_filter/` (+ `query_parser.py`, 7 files) · **Usage:** `echo '{"u":{"n":"A"}}' | python -m tools.json_query_filter query_json --query .u.n`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### conditional_pattern_detector
+**Status:** Implemented (Tier 2 meta-learning; stdlib only)
+**Scope:** 5 functions — detect_conditional_patterns (auto-conditions: chain_length, element_presence, element_type_distribution, element_count, traversal_type_pattern; outcomes: element_type_distribution/sequence, next_element_type, traversal_type_dominance; metrics support/confidence/lift/inverse_confidence), detect_seeded_patterns, extract_decision_trees (entropy/info-gain, target FIXED = `grain_present_in_chain`), filter_patterns (AND thresholds), rank_patterns_by_metric (confidence/lift/support). Traces = log_parser normalized objects (skip empty/missing chain). SKIPPED (post-1.0, documented in `skipped_types`): conditions cartridge_crossing/session_consistency, outcomes success_rate/cartridge_distribution (log_parser lacks per-step confidence/success). lift guard: baseline=1.0 -> 1.0.
+**Intended output:** JSON-serializable dicts (library + CLI). Exit 0/1/2.
+**Integration target:** consumes log_parser traces; feeds sleep Tier 2 meta-learning.
+**Spec:** `SPEC-conditional_pattern_detector_v1.md` · **Code:** `conditional_pattern_detector/` (6 files) · **Usage:** `echo '{"traces":[...]}' | python -m tools.conditional_pattern_detector detect_conditional_patterns --min_support 2`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
