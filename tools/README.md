@@ -231,6 +231,12 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-episode_annotation_tool_v1.md` · **Code:** `episode_annotation_tool/` (+ `core.py`, `cli.py`, `__init__.py`, `__main__.py`, `README.md`, 6 files) · **Usage:** `python -m tools.episode_annotation_tool annotate --phase expl --summary "read thermodynamics_general cartridge"`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### math_evaluation
+**Status:** Implemented (arithmetic; stdlib only). Safe `ast`-based evaluation (no `eval`/`exec`, no builtins except `math`): `safe_evaluate(expression, precision=10)`. Supports `+ - * / // % **` (and `^` as exponentiation), `sqrt/abs/sin/cos/tan/log/ln/log10/exp/ceil/floor/min/max/...`, constants `pi e tau inf nan`. Result int when integral else float; `/` always float. Errors (invalid syntax, undefined variable, math domain, division by zero, overflow) → `{"status":"error",...}`, never raised. **Spec:** `SPEC-math_evaluation_v1.md` · **Test:** `TEST-math_evaluation_examples.json` · **Code:** `math_evaluation/` · **Usage:** `python -m tools.math_evaluation evaluate "2 + 2 * 3"`. (Pure stdlib; `PYTHONPATH= ` prefix.)
+
+### unit_conversion
+**Status:** Implemented (units; stdlib only). `convert_units(value, from_unit, to_unit, precision=2)` across 6 categories (temperature, distance, weight, volume, time, area) with full-name + alias support (C/F/K, km/m, kg/lb, …). Temperature absolute (C↔F↔K); others factor-to-base. Unknown unit returns `did you mean?` hint; incompatible category errors; all returned as dicts, never raised. **Spec:** `SPEC-unit_conversion_v1.md` · **Test:** `TEST-unit_conversion_examples.json` · **Code:** `unit_conversion/` · **Usage:** `python -m tools.unit_conversion convert 100 celsius fahrenheit`. (Pure stdlib; `PYTHONPATH= ` prefix.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).

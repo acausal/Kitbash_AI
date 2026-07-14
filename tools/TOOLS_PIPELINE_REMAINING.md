@@ -28,6 +28,8 @@ These have full SPEC files; all built and shipped:
 16. Cosine Similarity v1 ✅ (built & shipped; vector math)
 17. Trie/Prefix Tree v1 ✅ (built & shipped; prefix-tree)
 18. Episode Annotation Tool v1 ✅ (built & shipped; CWL episode boundaries, isolation-safe)
+19. Math Evaluation v1 ✅ (built & shipped; safe ast arithmetic)
+20. Unit Conversion v1 ✅ (built & shipped; 6 categories, aliases)
 
 ---
 
@@ -441,18 +443,18 @@ These exist in codebase; no spec needed:
 
 ## Summary: Tool Counts
 
-- **Specced & Built (18):** all 18 complete & shipped (DateTime, Neighborhood Projection, Log Parser, Sequence Pattern Miner, Text Search, Conditional Pattern Detector, Line Filtering, JSON Query/Filter, Filesystem Access, Contractions, CSV Operations, Unicode Normalizer, Pattern Confidence Scorer, Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie/Prefix Tree, Episode Annotation Tool)
+- **Specced & Built (20):** all 20 complete & shipped (DateTime, Neighborhood Projection, Log Parser, Sequence Pattern Miner, Text Search, Conditional Pattern Detector, Line Filtering, JSON Query/Filter, Filesystem Access, Contractions, CSV Operations, Unicode Normalizer, Pattern Confidence Scorer, Anomaly Scorer, Pattern Explainer, Cosine Similarity, Trie/Prefix Tree, Episode Annotation Tool, Math Evaluation, Unit Conversion)
 - **Built (13):** Extractors + input sieves + dispatcher + normalization
-- **Remaining to Spec (32):**
+- **Remaining to Spec (30):**
   - Tier 1 (Post-Queue, 4): Excel Extractor, Keyword Search, CSV Dialect Detector, Archive Manager
-  - Tier 2 (High Priority, 22): Historical AI + Ingestion/Egress + Data Integrity + Graph/Time-Series + Text Ops + Routing
+  - Tier 2 (High Priority, 20): TF-IDF Ranker, Boolean Search, Inverted Index, Markov, Naive Bayes, Frequency Analysis, RSS, HTTP, IMAP, DNS, Webhook, Home Assistant, Version Control, Data Validation, DAG Resolver, Edge Weight Mutation, Time Series, Text Set Ops, Content Hasher, Text Canonicalizer, String Distance, Templating, Diff/Patch, Duplicate Detection, Hypergraph Traversal
   - Tier 3 (Lower Priority, 4): Success Pattern Miner, Positive Signal Scorer, Causal Credit Attribution, Topological Statistics
   - Tier 4 (Post-2.0, 5): STT, TTS, Image metadata, Image transcoder, Image features, Image classifier
 
-**Total: 63 tools** (18 specced & built, 13 built baseline, 32 remaining)
+**Total: 63 tools** (20 specced & built, 13 built baseline, 30 remaining)
 
 ---
 
-**Last updated:** 2026-07-14 (updated — 18 specced + shipped including Episode Annotation Tool; all SPEC'd tools now built)
+**Last updated:** 2026-07-14 (updated — 20 specced + shipped including Math Evaluation, Unit Conversion)
 **For:** Isaac & team (roadmap + prioritization)
-**Status:** 18 spec'd tools shipped this cycle (11 original + Unicode Normalizer + Pattern Confidence Scorer + Anomaly Scorer + Pattern Explainer + Cosine Similarity + Trie + Episode Annotation Tool). Remaining pipeline: 32 tools across Tiers 1–4.
+**Status:** 20 spec'd tools shipped this cycle. Remaining pipeline: 30 tools across Tiers 1–4.

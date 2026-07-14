@@ -1,0 +1,76 @@
+{
+  "test_cases": [
+    {
+      "name": "temperature_c_to_f",
+      "function": "convert_units",
+      "input": {"value": 100, "from_unit": "celsius", "to_unit": "fahrenheit", "precision": 2},
+      "expected_output": {"status": "success", "result": 212.0, "from_unit": "celsius", "to_unit": "fahrenheit"}
+    },
+    {
+      "name": "temperature_c_to_k",
+      "function": "convert_units",
+      "input": {"value": 0, "from_unit": "celsius", "to_unit": "kelvin", "precision": 2},
+      "expected_output": {"status": "success", "result": 273.15}
+    },
+    {
+      "name": "distance_km_to_m",
+      "function": "convert_units",
+      "input": {"value": 1, "from_unit": "kilometers", "to_unit": "meters", "precision": 2},
+      "expected_output": {"status": "success", "result": 1000.0}
+    },
+    {
+      "name": "distance_miles_to_km",
+      "function": "convert_units",
+      "input": {"value": 1, "from_unit": "miles", "to_unit": "kilometers", "precision": 2},
+      "expected_output": {"status": "success", "result_min": 1.60, "result_max": 1.61}
+    },
+    {
+      "name": "weight_kg_to_lb",
+      "function": "convert_units",
+      "input": {"value": 1, "from_unit": "kilograms", "to_unit": "pounds", "precision": 2},
+      "expected_output": {"status": "success", "result_min": 2.19, "result_max": 2.21}
+    },
+    {
+      "name": "alias_km_to_m",
+      "function": "convert_units",
+      "input": {"value": 1, "from_unit": "km", "to_unit": "m", "precision": 2},
+      "expected_output": {"status": "success", "result": 1000.0}
+    },
+    {
+      "name": "precision_feet",
+      "function": "convert_units",
+      "input": {"value": 1, "from_unit": "meters", "to_unit": "feet", "precision": 4},
+      "expected_output": {"status": "success", "result_min": 3.2807, "result_max": 3.2809}
+    },
+    {
+      "name": "unknown_unit_with_hint",
+      "function": "convert_units",
+      "input": {"value": 1, "from_unit": "meters", "to_unit": "fahrenheight", "precision": 2},
+      "expected_output": {"status": "error", "reason_includes": "Unknown unit", "reason_includes2": "did you mean"}
+    },
+    {
+      "name": "unknown_unit_no_hint",
+      "function": "convert_units",
+      "input": {"value": 1, "from_unit": "meters", "to_unit": "foobar", "precision": 2},
+      "expected_output": {"status": "error", "reason_includes": "Unknown unit"}
+    },
+    {
+      "name": "incompatible_units",
+      "function": "convert_units",
+      "input": {"value": 1, "from_unit": "meters", "to_unit": "kilograms", "precision": 2},
+      "expected_output": {"status": "error", "reason_includes": "Incompatible units"}
+    },
+    {
+      "name": "cli_roundtrip",
+      "function": "cli",
+      "input": {"value": 100, "from_unit": "celsius", "to_unit": "fahrenheit", "precision": 2},
+      "expected_output": {"status": "success", "result": 212.0, "cli_rc": 0}
+    },
+    {
+      "name": "cli_error_rc",
+      "function": "cli",
+      "input": {"value": 1, "from_unit": "meters", "to_unit": "kilograms", "precision": 2},
+      "expected_output": {"cli_rc": 1, "status": "error"}
+    }
+  ]
+}
