@@ -105,6 +105,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-structured_validator_v1.md` · **Code:** `structured_validator/` · **Usage:** `python -m tools.structured_validator input.txt --grammar g.lark [--output out.json]`
 (Requires `lark`; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### datetime_utils
+**Status:** Implemented (data plumbing; stdlib + pytz)
+**Scope:** 7 functions — parse_iso8601, parse_epoch (s/ms), parse_string (strptime), format_timestamp (iso8601/unix[s|ms]/human), get_current_time, duration_between (with breakdown), timezone_offset (DST-aware). Thin wrapper over datetime + pytz; UTC-internal, seconds precision. No calendar/NL parsing (v2+).
+**Intended output:** JSON-serializable dicts (library + CLI); CLI reads JSON from stdin, writes JSON to stdout. Exit 0/1/2.
+**Integration target:** data plumbing for time-series ops + log parsing.
+**Spec:** `SPEC-datetime_v1.md` · **Code:** `datetime_utils/` · **Usage:** `echo '{"timestamp":"..."}' | python -m tools.datetime_utils parse_iso8601`
+(Requires `pytz`; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
