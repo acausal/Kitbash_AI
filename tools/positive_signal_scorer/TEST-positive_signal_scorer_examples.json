@@ -1,0 +1,18 @@
+{
+  "samples": {
+    "high_pattern": {"pattern_id":"p_high","sequence":["tokenizer","svo_extractor"],"frequency":40,"support":0.8,"coverage":0.8},
+    "lowcons_pattern": {"pattern_id":"p_lowcons","sequence":["a","b"],"frequency":15,"support":0.3,"coverage":0.3},
+    "drift_pattern": {"pattern_id":"p_drift","sequence":["x","y"],"frequency":12,"support":0.24,"coverage":0.24},
+    "small_pattern": {"pattern_id":"p_small","sequence":["q"],"frequency":5,"support":0.1,"coverage":0.1},
+    "trace": {"trace_id":"t","sequence":["tokenizer","svo_extractor"],"outcome":"success","error_signal":0.05,"timestamp":"2026-07-14T10:00:00Z"}
+  },
+  "test_cases": [
+    {"name":"high_signal","function":"score_patterns","input":{"patterns":["__high_pattern__"],"traces":["__make_high_traces__"],"weights":null},"expected_output":{"patterns_scored":1,"first_signal_strength_ge":0.7,"first_confidence":"adequate"}},
+    {"name":"low_consistency","function":"score_patterns","input":{"patterns":["__lowcons_pattern__"],"traces":["__make_lowcons_traces__"],"weights":null},"expected_output":{"patterns_scored":1,"first_consistency_lt":0.5}},
+    {"name":"temporal_drift","function":"score_patterns","input":{"patterns":["__drift_pattern__"],"traces":["__make_drift_traces__"],"weights":null},"expected_output":{"patterns_scored":1,"first_temp_stability_lt":0.5}},
+    {"name":"low_sample_flag","function":"score_patterns","input":{"patterns":["__small_pattern__"],"traces":["__make_small_traces__"],"weights":null},"expected_output":{"patterns_scored":1,"first_confidence":"low"}},
+    {"name":"custom_weights","function":"score_patterns","input":{"patterns":["__high_pattern__"],"traces":["__make_high_traces__"],"weights":{"outcome_correlation":0.5,"frequency":0.1,"support":0.1,"consistency":0.1,"temporal_stability":0.2}},"expected_output":{"patterns_scored":1,"has_outcome_weight_dominant":true}},
+    {"name":"single_dimension","function":"compute_signal_dimension","input":{"patterns":["__high_pattern__"],"traces":["__make_high_traces__"],"dimension":"outcome_correlation"},"expected_output":{"dimension":"outcome_correlation","pattern_scores_len":1,"first_score_ge":0.9}},
+    {"name":"empty_patterns","function":"score_patterns","input":{"patterns":[],"traces":[],"weights":null},"expected_output":{"patterns_scored":0,"patterns_len":0}}
+  ]
+}
