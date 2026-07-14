@@ -36,7 +36,7 @@ sys.path.insert(0, REPO)
 # heterogeneous fixture conventions are SKIPped, not failed.
 OWNED_PACKAGES = {
     "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
-    "templating",
+    "templating", "frequency_analysis",
 }
 
 # function name -> {fixture_input_key: real_param_name}
@@ -50,20 +50,21 @@ NORM_RESULT_KEYS = ("total_credit_attributed",)
 
 def _pkg_for(fixture_path: str) -> str:
     d = os.path.dirname(fixture_path)
+    # Nested: tools/<pkg>/TEST-*.json -> package is the parent dir name.
+    pkg = os.path.basename(d)
+    if pkg != "tools":
+        return pkg
+    # Flat: tools/TEST-<pkg>_examples.json (e.g. templating). Derive from filename
+    # only when it matches a known owned package, else 'tools' (will be skipped).
     name = os.path.basename(fixture_path)
-    if os.path.abspath(d) == os.path.abspath(os.path.join(REPO, "tools")):
-        # flat tools/TEST-<pkg>_examples.json  (pkg may include underscores)
-        stem = name[len("TEST-"):] if name.startswith("TEST-") else name
-        stem = stem[:-len("_examples.json")] if stem.endswith("_examples.json") else stem
-        # best-effort package: the part before the first underscore that matches
-        # an importable tools.<pkg>; try progressively shorter prefixes.
-        parts = stem.split("_")
-        for i in range(len(parts), 0, -1):
-            cand = "_".join(parts[:i])
-            if os.path.isdir(os.path.join(REPO, "tools", cand)):
-                return cand
-        return parts[0]
-    return os.path.basename(d)
+    stem = name[len("TEST-"):] if name.startswith("TEST-") else name
+    stem = stem[:-len("_examples.json")] if stem.endswith("_examples.json") else stem
+    parts = stem.split("_")
+    for i in range(len(parts), 0, -1):
+        cand = "_".join(parts[:i])
+        if cand in OWNED_PACKAGES:
+            return cand
+    return "tools"
 
 
 def _expand(v, samples):
@@ -136,6 +137,40 @@ def _check_expected(fn_name, res, exp) -> str:
     if "total_credit_attributed" in res:
         if abs(res["total_credit_attributed"] - 1.0) > 0.05:
             return f"total credit {res['total_credit_attributed']}"
+    # frequency_analysis expected_output keys
+    if fn_name in ("analyze_frequencies", "analyze_corpus_frequencies"):
+        s = res.get("input_summary", {})
+        if "total_tokens" in exp and s.get("total_tokens") != exp["total_tokens"]:
+            return f"total_tokens {s.get('total_tokens')}"
+        if "unique_tokens" in exp and s.get("unique_tokens") != exp["unique_tokens"]:
+            return f"unique_tokens {s.get('unique_tokens')}"
+        if "documents" in exp and s.get("documents") != exp["documents"]:
+            return f"documents {s.get('documents')}"
+        if "top_token" in exp:
+            top = (res.get("top_tokens") or [{}])[0]
+            if not top.get("token"):
+                # corpus mode emits frequency_distribution instead of top_tokens
+                fd = res.get("frequency_distribution", {})
+                top = {"token": next(iter(fd))} if fd else {}
+            if top.get("token") != exp["top_token"]:
+                return f"top_token {top.get('token')}"
+        if "top_freq" in exp:
+            top = (res.get("top_tokens") or [{}])[0]
+            if not top.get("frequency"):
+                fd = res.get("frequency_distribution", {})
+                top = {"frequency": (next(iter(fd.values())) or {}).get("total_frequency", 0)} if fd else {}
+            if top.get("frequency") != exp["top_freq"]:
+                return f"top_freq {top.get('frequency')}"
+        if "gini_lt" in exp:
+            gini = res.get("statistics", {}).get("token_stats", {}).get("gini_coefficient", 1)
+            if not (gini < exp["gini_lt"]):
+                return f"gini {gini}"
+    if fn_name == "compute_coverage":
+        ca = res.get("coverage_analysis", {})
+        if "tokens_needed_ge" in exp and not (ca.get("tokens_needed", 0) >= exp["tokens_needed_ge"]):
+            return f"tokens_needed {ca.get('tokens_needed')}"
+        if "coverage_achieved_ge" in exp and not (ca.get("coverage_achieved", 0) >= exp["coverage_achieved_ge"]):
+            return f"coverage_achieved {ca.get('coverage_achieved')}"
     return ""
 
 

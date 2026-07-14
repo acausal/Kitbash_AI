@@ -1,0 +1,228 @@
+{
+  "samples": {
+    "tokens": [
+      "machine",
+      "learning",
+      "machine",
+      "algorithm",
+      "learning",
+      "learning"
+    ],
+    "corpus": [
+      {
+        "id": "d1",
+        "tokens": [
+          "machine",
+          "learning"
+        ]
+      },
+      {
+        "id": "d2",
+        "tokens": [
+          "learning",
+          "algorithm"
+        ]
+      },
+      {
+        "id": "d3",
+        "tokens": [
+          "machine",
+          "learning"
+        ]
+      }
+    ],
+    "freqs": {
+      "a": 100,
+      "b": 50,
+      "c": 30,
+      "d": 20
+    }
+  },
+  "test_cases": [
+    {
+      "name": "simple_distribution",
+      "function": "analyze_frequencies",
+      "input": {
+        "tokens": "__tokens__",
+        "config": {}
+      },
+      "expected_output": {
+        "total_tokens": 6,
+        "unique_tokens": 3,
+        "top_token": "learning",
+        "top_freq": 3
+      }
+    },
+    {
+      "name": "uniform",
+      "function": "analyze_frequencies",
+      "input": {
+        "tokens": [
+          "x",
+          "x",
+          "x",
+          "y",
+          "y",
+          "y",
+          "z",
+          "z",
+          "z"
+        ],
+        "config": {}
+      },
+      "expected_output": {
+        "unique_tokens": 3,
+        "gini_lt": 0.4
+      }
+    },
+    {
+      "name": "skewed",
+      "function": "analyze_frequencies",
+      "input": {
+        "tokens": [
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "a",
+          "b",
+          "c",
+          "d",
+          "e",
+          "f",
+          "g",
+          "h",
+          "i",
+          "j",
+          "k"
+        ],
+        "config": {}
+      },
+      "expected_output": {
+        "unique_tokens": 11,
+        "top_freq": 90
+      }
+    },
+    {
+      "name": "corpus_mode",
+      "function": "analyze_corpus_frequencies",
+      "input": {
+        "corpus": "__corpus__",
+        "config": {}
+      },
+      "expected_output": {
+        "documents": 3,
+        "top_token": "learning"
+      }
+    },
+    {
+      "name": "coverage",
+      "function": "compute_coverage",
+      "input": {
+        "frequencies": "__freqs__",
+        "coverage_threshold": 0.8
+      },
+      "expected_output": {
+        "tokens_needed_ge": 1,
+        "coverage_achieved_ge": 0.8
+      }
+    },
+    {
+      "name": "empty",
+      "function": "analyze_frequencies",
+      "input": {
+        "tokens": [],
+        "config": {}
+      },
+      "expected_output": {
+        "total_tokens": 0,
+        "unique_tokens": 0
+      }
+    }
+  ]
+}
