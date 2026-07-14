@@ -169,6 +169,14 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-conditional_pattern_detector_v1.md` · **Code:** `conditional_pattern_detector/` (6 files) · **Usage:** `echo '{"traces":[...]}' | python -m tools.conditional_pattern_detector detect_conditional_patterns --min_support 2`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### filesystem_access
+**Status:** Implemented (safety-critical Airlock; stdlib only)
+**Scope:** 6 functions — read_file, write_file (atomic temp→fsync→os.replace; modes w/a/x), delete_file, list_directory (non-recursive/recursive, metadata), file_exists, get_file_metadata. path_validator: rejects absolute paths, traversal (resolve-outside-root), symlinks, non-allowed dirs, per-op permission (read/write/delete per allowed_paths). Boundary violations -> ValueError (CLI 1); missing -> FileNotFoundError (CLI 2); IO -> RuntimeError/IOError (CLI 3). Audit JSONL appended per op (best-effort). config_loader falls back to bundled default_config.json (does NOT write to cartridges/ — tracked/sensitive; deploy real config there to use it).
+**Intended output:** JSON-serializable dicts (library + CLI). Exit 0/1/2/3.
+**Integration target:** All tool I/O should flow through it (unblocks I/O-heavy tools).
+**Spec:** `SPEC-filesystem_access_v1.md` · **Code:** `filesystem_access/` (+ `path_validator.py`, `config_loader.py`, `default_config.json`, 9 files) · **Usage:** `echo '{"k":1}' | python -m tools.filesystem_access write_file --path "workspace/out.json"`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).

@@ -1,0 +1,19 @@
+{
+  "workspace_root": ".",
+  "allowed_paths": {
+    "workspace/":       {"read": true,  "write": true,  "delete": true,  "promote_from": []},
+    "scratch/":         {"read": true,  "write": true,  "delete": true,  "promote_from": []},
+    "inbox/trusted/":   {"read": true,  "write": false, "delete": false, "promote_from": []},
+    "inbox/external/":  {"read": true,  "write": true,  "delete": true,  "promote_from": []},
+    "outbox/":          {"read": true,  "write": true,  "delete": true,  "promote_from": []},
+    "cartridges/":      {"read": true,  "write": false, "delete": false, "promote_from": []}
+  },
+  "rejected_operations": [
+    "write_to_cartridges",
+    "promote_external_to_workspace",
+    "follow_symlinks",
+    "path_traversal"
+  ],
+  "audit_log_path": "inbox/external/filesystem_audit.jsonl",
+  "last_updated": "2026-07-14T00:00:00Z"
+}
