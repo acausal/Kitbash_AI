@@ -217,5 +217,5 @@ If the answer to any is "no," either redesign or defer.
 ---
 
 **Last updated:** 2026-07-13  
-**Philosophy owner:** acausal (Kitbash AI)  
+**Philosophy owner:** Isaac (Kitbash AI)  
 **For:** Tool stack designers, future contributors, anyone building cognitive systems the local-first way
