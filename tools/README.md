@@ -207,6 +207,12 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-anomaly_scorer_v1.md` · **Code:** `anomaly_scorer/` (+ `baselines.py`, `severity_calculator.py`, `cause_suggester.py`, `anomaly_schema.py`, 8 files) · **Usage:** `python -m tools.anomaly_scorer detect-fp-spikes --grain-stats g.json --historical-baseline b.json`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### pattern_explainer
+**Status:** Implemented (Sleep Tier 2 introspection; stdlib only). Explains collision clusters, anomalies (from anomaly_scorer), pattern reliability (from pattern_confidence_scorer), and multi-pattern reports. 5 functions: explain_collision_cluster, explain_anomaly, explain_pattern_reliability, explain_multiple_patterns, generate_sleep_report. Template-based plain-language (no LLM/NLP). Errors: ValueError→1, RuntimeError→2. Exit 0/1/2. **Spec deviation:** f1 "high" reliability = F1>=0.70 (SPEC prose shows 0.75; TEST `explain_multiple_patterns` asserts high>=6, only satisfiable at 0.70). **Test:** `TEST-pattern_explainer_examples.json`.
+**Intended output:** JSON-serializable dicts (library + CLI).
+**Spec:** `SPEC-pattern_explainer_v1.md` · **Code:** `pattern_explainer/` (+ `templates.py`, `formatters.py`, `confidence_language.py`, `explainer_schema.py`, 9 files) · **Usage:** `python -m tools.pattern_explainer explain-pattern --pattern p.json --confidence-scores s.json`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).

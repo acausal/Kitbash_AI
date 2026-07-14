@@ -120,7 +120,7 @@ These exist in codebase; no spec needed:
 - **Effort:** Medium spec, build straightforward
 - **Unblocks:** Failure detection for sleep pipeline
 
-**9. Pattern Explainer v1** (SPEC AFTER Anomaly Scorer)
+**9. ~~Pattern Explainer v1~~ ✅ **built & shipped** (completes Sleep Tier 2 explainer triad: pattern_confidence_scorer → anomaly_scorer → pattern_explainer)
 - **What:** Generate human-readable summaries of discovered patterns
 - **Why:** Sleep Tier 2 report generation; debugging
 - **Dependencies:** stdlib (+ Templating tool recommended)

@@ -1,0 +1,203 @@
+# TEST-pattern_explainer_examples.json
+# Test cases for Pattern Explainer v1
+# Validates explanation generation, formatting, and confidence calibration
+
+{
+  "test_cases": [
+    {
+      "name": "collision_cluster_explanation_high_coherence",
+      "description": "Explain a high-coherence collision cluster (photosynthesis/respiration/ATP)",
+      "function": "explain_collision_cluster",
+      "input": {
+        "cluster": {
+          "cluster_id": "bio_energy_transfer",
+          "members": [42, 137, 89],
+          "query_theme": "photosynthesis/respiration/ATP",
+          "coherence": 0.87,
+          "size": 3,
+          "collision_density": 0.94,
+          "pairwise_collisions": [
+            {"pair": [42, 137], "count": 47},
+            {"pair": [42, 89], "count": 23},
+            {"pair": [137, 89], "count": 18}
+          ]
+        }
+      },
+      "expected_output": {
+        "cluster_id": "bio_energy_transfer",
+        "one_liner_includes": ["semantic collision cluster", "energy transfer"],
+        "summary_length_min": 100,
+        "implications_count_min": 2,
+        "recommendations_count_min": 3,
+        "confidence": "high",
+        "confidence_justification_includes": ["0.87", "0.94"]
+      }
+    },
+    {
+      "name": "anomaly_explanation_high_severity_spike",
+      "description": "Explain a high-severity false positive rate spike (5.17x baseline)",
+      "function": "explain_anomaly",
+      "input": {
+        "anomaly": {
+          "anomaly_id": "anom_grain_42_spike",
+          "grain_id": 42,
+          "anomaly_type": "sudden_increase_false_positives",
+          "baseline_rate": 0.06,
+          "observed_rate": 0.31,
+          "deviation_magnitude": 5.17,
+          "severity": 0.78,
+          "possible_causes": ["search_weight_shift", "query_pattern_change"],
+          "evidence": ["fp_rate_jumped_from_0.06_to_0.31", "12.5_standard_deviations_above_baseline"],
+          "window": "2026-07-14T10:00:00Z to 2026-07-14T14:00:00Z"
+        }
+      },
+      "expected_output": {
+        "anomaly_id": "anom_grain_42_spike",
+        "severity_label": "high",
+        "one_liner_includes": ["sudden spike", "5.17x"],
+        "summary_includes": ["31%", "6%"],
+        "implications_count_min": 2,
+        "recommendations_count_min": 4,
+        "possible_causes_expanded_count": 2,
+        "confidence": "high",
+        "detailed_explanation_includes": ["12.5 standard deviations"]
+      }
+    },
+    {
+      "name": "anomaly_explanation_low_severity",
+      "description": "Explain a low-severity anomaly with insufficient data",
+      "function": "explain_anomaly",
+      "input": {
+        "anomaly": {
+          "anomaly_id": "anom_grain_50_minor",
+          "grain_id": 50,
+          "anomaly_type": "sudden_increase_false_positives",
+          "baseline_rate": 0.05,
+          "observed_rate": 0.10,
+          "deviation_magnitude": 2.0,
+          "severity": 0.35,
+          "possible_causes": ["transient_noise"],
+          "evidence": ["fp_rate_increased_but_sample_size_small"],
+          "window": "2026-07-14T14:00:00Z to 2026-07-14T14:30:00Z"
+        }
+      },
+      "expected_output": {
+        "severity_label": "low",
+        "one_liner_includes": ["2.0x"],
+        "confidence": "medium",
+        "confidence_justification_includes": ["sample_size"]
+      }
+    },
+    {
+      "name": "pattern_reliability_explanation_high_f1",
+      "description": "Explain a pattern with high F1 score (0.82)",
+      "function": "explain_pattern_reliability",
+      "input": {
+        "pattern": {
+          "pattern_id": "seq_001",
+          "sequence": ["tokenizer", "negation_detector", "svo_extractor"],
+          "frequency": 47
+        },
+        "confidence_scores": {
+          "pattern_id": "seq_001",
+          "metrics": {
+            "precision": 0.89,
+            "recall": 0.76,
+            "f1_score": 0.82,
+            "support": 47
+          },
+          "interpretation": {
+            "reliability": "high",
+            "confidence_flag": "none"
+          }
+        }
+      },
+      "expected_output": {
+        "reliability_level": "high",
+        "one_liner_includes": ["0.82", "highly reliable"],
+        "summary_includes": ["89%", "76%"],
+        "use_cases_count": 3,
+        "recommendation_includes": ["Sleep Tier 3", "hypothesis generation"],
+        "confidence": "high"
+      }
+    },
+    {
+      "name": "pattern_reliability_explanation_low_f1_low_sample",
+      "description": "Explain a pattern with low F1 (0.45) and low sample size (n=8)",
+      "function": "explain_pattern_reliability",
+      "input": {
+        "pattern": {
+          "pattern_id": "seq_002",
+          "sequence": ["json_filter", "text_search"],
+          "frequency": 8
+        },
+        "confidence_scores": {
+          "pattern_id": "seq_002",
+          "metrics": {
+            "precision": 0.75,
+            "recall": 0.50,
+            "f1_score": 0.60,
+            "support": 8
+          },
+          "interpretation": {
+            "reliability": "medium",
+            "confidence_flag": "low_sample_size"
+          }
+        }
+      },
+      "expected_output": {
+        "reliability_level": "medium",
+        "one_liner_includes": ["0.60"],
+        "sample_size_assessment_includes": ["below", "recommend"],
+        "confidence_flags_count_min": 1,
+        "confidence": "medium"
+      }
+    },
+    {
+      "name": "multiple_patterns_summary_brief",
+      "description": "Generate brief summary of 12 patterns (mixed reliability)",
+      "function": "explain_multiple_patterns",
+      "input": {
+        "patterns_list": [
+          {"pattern_id": "seq_001", "sequence": ["A", "B", "C"]},
+          {"pattern_id": "seq_002", "sequence": ["B", "C"]},
+          {"pattern_id": "seq_003", "sequence": ["C", "D"]},
+          {"pattern_id": "seq_004", "sequence": ["A", "D"]},
+          {"pattern_id": "seq_005", "sequence": ["E", "F"]},
+          {"pattern_id": "seq_006", "sequence": ["F", "G"]},
+          {"pattern_id": "seq_007", "sequence": ["G", "H"]},
+          {"pattern_id": "seq_008", "sequence": ["H", "I"]},
+          {"pattern_id": "seq_009", "sequence": ["I", "J"]},
+          {"pattern_id": "seq_010", "sequence": ["J", "K"]},
+          {"pattern_id": "seq_011", "sequence": ["K", "L"]},
+          {"pattern_id": "seq_012", "sequence": ["L", "M"]}
+        ],
+        "confidence_scores_list": [
+          {"pattern_id": "seq_001", "metrics": {"f1_score": 0.89, "support": 50}},
+          {"pattern_id": "seq_002", "metrics": {"f1_score": 0.87, "support": 45}},
+          {"pattern_id": "seq_003", "metrics": {"f1_score": 0.84, "support": 42}},
+          {"pattern_id": "seq_004", "metrics": {"f1_score": 0.78, "support": 35}},
+          {"pattern_id": "seq_005", "metrics": {"f1_score": 0.76, "support": 30}},
+          {"pattern_id": "seq_006", "metrics": {"f1_score": 0.73, "support": 28}},
+          {"pattern_id": "seq_007", "metrics": {"f1_score": 0.71, "support": 25}},
+          {"pattern_id": "seq_008", "metrics": {"f1_score": 0.68, "support": 22}},
+          {"pattern_id": "seq_009", "metrics": {"f1_score": 0.65, "support": 20}},
+          {"pattern_id": "seq_010", "metrics": {"f1_score": 0.62, "support": 18}},
+          {"pattern_id": "seq_011", "metrics": {"f1_score": 0.55, "support": 12}},
+          {"pattern_id": "seq_012", "metrics": {"f1_score": 0.45, "support": 8, "confidence_flag": "low_sample_size"}}
+        ],
+        "summary_style": "brief"
+      },
+      "expected_output": {
+        "total_patterns": 12,
+        "high_reliability_patterns_min": 6,
+        "medium_reliability_patterns_min": 3,
+        "low_reliability_patterns_min": 1,
+        "aggregate_summary_includes": ["dominated by high-confidence"],
+        "top_patterns_by_reliability_count": 3,
+        "patterns_needing_attention_count": 1,
+        "recommendations_count_min": 3
+      }
+    }
+  ]
+}
