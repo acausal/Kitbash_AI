@@ -1,0 +1,33 @@
+# TEST-unicode_normalizer_examples.txt
+# Simple test cases for Unicode Normalizer v1
+# Format: input | expected_output | description
+
+Café|Cafe|Accented Latin
+naïve Zürich|naive Zurich|Multiple accents
+Москва|Moskva|Cyrillic script
+запуск|zapusk|Cyrillic word
+北京|Bei Jing|Chinese (CJK)
+Αθήνα|Athena|Greek script
+
+"hello"|"hello"|Smart double quotes (curly)
+'hello'|'hello'|Smart single quotes (curly)
+hello|hello|ASCII quotes (no change)
+
+—|−|Em dash to hyphen
+–|−|En dash to hyphen
+-|-|Regular hyphen (no change)
+
+🚀|rocket|Rocket emoji
+😀|smiley face|Smiley emoji
+🎉|party popper|Party emoji
+
+Москва café 😀|Moskva cafe smiley face|Mixed script + emoji
+北京 запуск café|Bei Jing zapusk cafe|Multiple non-Latin scripts
+
+hello|hello|ASCII-only (no change)
+||Empty string (no change)
+
+café — "Москва" 🚀|cafe - "Moskva" rocket|Complex mixed example
+
+# Edge cases
+Москва запуск "smart quotes" 😀 café — more text|Moskva zapusk "smart quotes" smiley face cafe - more text|Full pipeline example

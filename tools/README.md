@@ -189,6 +189,12 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-csv_operations_v1.md` · **Code:** `csv_operations/` (+ `csv_parser.py`, `filters.py`, 8 files) · **Usage:** `echo "name,age\nAlice,30" | python -m tools.csv_operations parse_csv`
 (Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
 
+### unicode_normalizer
+**Status:** Implemented (text pipeline completion; `anyascii` dep, already in `.venv` via `contractions`). 3 functions: normalize_text (deterministic Unicode→ASCII, preserve/strip-unknown, control-char strip, space-collapse, script classifier), normalize_file (line-by-line UTF-8 in→out with counts), detect_mojibake (heuristic: U+FFFD / Latin-1-misread sequences / script-mixing). Errors: ValueError→1, FileNotFoundError/OSError/RuntimeError→2. Exit 0/1/2. **Spec deviations:** emoji→`:rocket:`/`:grinning:`/`:tada:` (not "rocket"/"smiley face"/"party"), `北京`→`BeiJing` (no space), `Αθήνα`→`Athina`; TEST doc's `−` (U+2212) dash glitch → actual `-`. Honors anyascii defaults (custom maps out of scope).
+**Intended output:** JSON-serializable dicts (library + CLI).
+**Spec:** `SPEC-unicode_normalizer_v1.md` · **Code:** `unicode_normalizer/` (6 files) · **Usage:** `echo "Москва café 😀" | python -m tools.unicode_normalizer normalize`
+(`anyascii` dep; invoke via Kitbash `.venv` with `PYTHONPATH= `.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).
