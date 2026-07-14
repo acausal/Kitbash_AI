@@ -195,6 +195,12 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Spec:** `SPEC-unicode_normalizer_v1.md` · **Code:** `unicode_normalizer/` (6 files) · **Usage:** `echo "Москва café 😀" | python -m tools.unicode_normalizer normalize`
 (`anyascii` dep; invoke via Kitbash `.venv` with `PYTHONPATH= `.)
 
+### pattern_confidence_scorer
+**Status:** Implemented (Tier 2 meta-learning; stdlib only). 4 functions: score_patterns_against_traces (sequence/collision/grain_chain matching → TP/FP/TN/FN → precision/recall/F1/TPR/FPR/specificity/support + reliability + flags + aggregate), score_patterns_against_dream_bucket (JSONL observations), compare_pattern_reliability (traces vs dream_bucket + divergence), decay_confidence_by_age (exp decay by age). **Spec deviation:** implements STANDARD textbook FPR=FP/(FP+TN) & specificity=1−FPR; the TEST-pattern_confidence_scorer_examples.json's FPR/specificity are non-standard & internally inconsistent (documented in README + tool as known-bad refs). Errors: ValueError→1, FileNotFoundError/OSError/RuntimeError→2. Exit 0/1/2.
+**Intended output:** JSON-serializable dicts (library + CLI).
+**Spec:** `SPEC-pattern_confidence_scorer_v1.md` · **Code:** `pattern_confidence_scorer/` (+ `metrics.py`, `pattern_matching.py`, `scorer_schema.py`, 8 files) · **Usage:** `python -m tools.pattern_confidence_scorer score-traces --patterns p.json --traces t.jsonl`
+(Pure stdlib; same `PYTHONPATH= ` prefix rule in the Kitbash `.venv`.)
+
 ### txt_extractor
 **Status:** Implemented (Document Format Extractors, stdlib)
 **Scope:** `.txt` → normalized text (UTF-8, Latin-1 fallback; line-endings + blank-line collapse).

@@ -106,7 +106,7 @@ These exist in codebase; no spec needed:
 
 #### Introspection & Pattern Discovery (Sleep Tier 2)
 
-**7. Pattern Confidence Scorer v1** (SPEC AFTER Conditional Pattern Detector shipping)
+**7. Pattern Confidence Scorer v1** ✅ (built & shipped)
 - **What:** Measure reliability (precision, recall, F1) of discovered patterns against trace data
 - **Why:** Feeds sleep Tier 2; ranks patterns by trustworthiness
 - **Dependencies:** stdlib
@@ -405,7 +405,7 @@ These exist in codebase; no spec needed:
 ### **Next Week (Post-Filesystem)**
 
 4. ~~Unicode Normalizer v1 (AnyAscii)~~ ✅ **built & shipped** (text pipeline completion)
-5. **Pattern Confidence Scorer v1** — Continues sleep Tier 2 chain
+5. ~~Pattern Confidence Scorer v1~~ ✅ **built & shipped** (continues sleep Tier 2 chain)
 6. **Anomaly Scorer v1** — Completes introspection triad
 
 ### **Following 2 Weeks (Conditional)**
