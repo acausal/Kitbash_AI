@@ -370,6 +370,7 @@ class QueryOrchestrator:
                         top_grain_confidence=confidence,
                         response_length=len(answer.split()),
                         parse_errors=[],
+                        query=user_query,
                     )
                     if result.passed:
                         _md = getattr(winning_response, "metadata", {}) or {}
