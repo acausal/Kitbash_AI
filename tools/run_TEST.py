@@ -38,7 +38,7 @@ OWNED_PACKAGES = {
     "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
     "templating", "frequency_analysis", "inverted_index_builder", "boolean_search",
     "tfidf_ranker", "markov_chain", "naive_bayes_classifier", "duplicate_detection",
-    "hypergraph_traversal",
+    "hypergraph_traversal", "topological_statistics",
 }
 
 # function name -> {fixture_input_key: real_param_name}
@@ -294,6 +294,27 @@ def _check_expected(fn_name, res, exp) -> str:
             return f"fully_connected {s.get('is_fully_connected_from_start')}"
         if "covering_count_ge" in exp and not (s.get("covering_hyperedge_count", 0) >= exp["covering_count_ge"]):
             return f"covering_count {s.get('covering_hyperedge_count')}"
+    # topological_statistics expected_output keys
+    if fn_name in ("compute_degree_stats", "compute_clustering_coefficients",
+                  "compute_path_lengths", "compute_centrality", "analyze_components"):
+        s = res.get("summary", {})
+        if "mean_degree" in exp and abs(s.get("mean_degree", -1) - exp["mean_degree"]) > 1e-6:
+            return f"mean_degree {s.get('mean_degree')}"
+        if "edge_count" in exp and s.get("edge_count") != exp["edge_count"]:
+            return f"edge_count {s.get('edge_count')}"
+        if "mean_clustering" in exp and abs(s.get("mean_clustering_coefficient", -1) - exp["mean_clustering"]) > 1e-6:
+            return f"mean_clustering {s.get('mean_clustering_coefficient')}"
+        if "diameter" in exp and s.get("diameter") != exp["diameter"]:
+            return f"diameter {s.get('diameter')}"
+        if "component_count" in exp and s.get("component_count") != exp["component_count"]:
+            return f"component_count {s.get('component_count')}"
+        if "is_connected" in exp and bool(s.get("is_connected")) != bool(exp["is_connected"]):
+            return f"is_connected {s.get('is_connected')}"
+        if "has_isolated" in exp and bool(len(s.get("isolated_nodes", [])) > 0) != bool(exp["has_isolated"]):
+            return f"has_isolated {s.get('isolated_nodes')}"
+        if "most_central_present" in exp and exp["most_central_present"] is True:
+            if not res.get("summary", {}).get("most_central_by_degree"):
+                return "most_central_by_degree missing"
     return ""
 
 

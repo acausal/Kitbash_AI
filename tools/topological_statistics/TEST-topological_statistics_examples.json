@@ -1,0 +1,176 @@
+{
+  "samples": {
+    "g": {
+      "nodes": [
+        {
+          "id": "A"
+        },
+        {
+          "id": "B"
+        },
+        {
+          "id": "C"
+        },
+        {
+          "id": "D"
+        },
+        {
+          "id": "I"
+        }
+      ],
+      "edges": [
+        {
+          "source": "A",
+          "target": "B"
+        },
+        {
+          "source": "B",
+          "target": "C"
+        },
+        {
+          "source": "C",
+          "target": "D"
+        },
+        {
+          "source": "D",
+          "target": "A"
+        }
+      ]
+    },
+    "gtri": {
+      "nodes": [
+        {
+          "id": "A"
+        },
+        {
+          "id": "B"
+        },
+        {
+          "id": "C"
+        }
+      ],
+      "edges": [
+        {
+          "source": "A",
+          "target": "B"
+        },
+        {
+          "source": "B",
+          "target": "C"
+        },
+        {
+          "source": "C",
+          "target": "A"
+        }
+      ]
+    }
+  },
+  "test_cases": [
+    {
+      "name": "degree",
+      "function": "compute_degree_stats",
+      "input": {
+        "graph": "__g__",
+        "config": {}
+      },
+      "expected_output": {
+        "mean_degree": 1.6,
+        "edge_count": 4
+      }
+    },
+    {
+      "name": "clustering_cycle",
+      "function": "compute_clustering_coefficients",
+      "input": {
+        "graph": "__g__",
+        "config": {}
+      },
+      "expected_output": {
+        "mean_clustering": 0.0
+      }
+    },
+    {
+      "name": "clustering_triangle",
+      "function": "compute_clustering_coefficients",
+      "input": {
+        "graph": "__gtri__",
+        "config": {}
+      },
+      "expected_output": {
+        "mean_clustering": 1.0
+      }
+    },
+    {
+      "name": "paths",
+      "function": "compute_path_lengths",
+      "input": {
+        "graph": "__g__",
+        "config": {}
+      },
+      "expected_output": {
+        "diameter": 2
+      }
+    },
+    {
+      "name": "centrality",
+      "function": "compute_centrality",
+      "input": {
+        "graph": "__g__",
+        "config": {}
+      },
+      "expected_output": {
+        "most_central_present": true
+      }
+    },
+    {
+      "name": "components",
+      "function": "analyze_components",
+      "input": {
+        "graph": "__g__",
+        "config": {}
+      },
+      "expected_output": {
+        "component_count": 2,
+        "is_connected": false,
+        "has_isolated": true
+      }
+    },
+    {
+      "name": "empty_graph",
+      "function": "compute_degree_stats",
+      "input": {
+        "graph": {
+          "nodes": [],
+          "edges": []
+        },
+        "config": {}
+      },
+      "expected_output": {
+        "raises": "ValueError"
+      }
+    },
+    {
+      "name": "malformed_edge",
+      "function": "analyze_components",
+      "input": {
+        "graph": {
+          "nodes": [
+            {
+              "id": "A"
+            }
+          ],
+          "edges": [
+            {
+              "source": "A",
+              "target": "Z"
+            }
+          ]
+        },
+        "config": {}
+      },
+      "expected_output": {
+        "raises": "ValueError"
+      }
+    }
+  ]
+}
