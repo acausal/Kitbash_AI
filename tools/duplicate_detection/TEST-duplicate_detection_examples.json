@@ -1,0 +1,128 @@
+{
+  "samples": {
+    "corpus": [
+      {
+        "id": "d1",
+        "tokens": [
+          "the",
+          "cat",
+          "sat"
+        ]
+      },
+      {
+        "id": "d2",
+        "tokens": [
+          "cat",
+          "sat",
+          "the"
+        ]
+      },
+      {
+        "id": "d3",
+        "tokens": [
+          "dog",
+          "ran",
+          "fast"
+        ]
+      },
+      {
+        "id": "d4",
+        "tokens": [
+          "the",
+          "cat",
+          "sat",
+          "down"
+        ]
+      }
+    ]
+  },
+  "test_cases": [
+    {
+      "name": "exact_dups",
+      "function": "detect_duplicates",
+      "input": {
+        "corpus": "__corpus__",
+        "strategy": "exact",
+        "threshold": 1.0,
+        "keep_strategy": "first"
+      },
+      "expected_output": {
+        "group_count_ge": 1,
+        "total_dups": 2
+      }
+    },
+    {
+      "name": "jaccard_threshold",
+      "function": "detect_duplicates",
+      "input": {
+        "corpus": "__corpus__",
+        "strategy": "jaccard",
+        "threshold": 0.5,
+        "keep_strategy": "shortest"
+      },
+      "expected_output": {
+        "group_count_ge": 1
+      }
+    },
+    {
+      "name": "shingle_threshold",
+      "function": "detect_duplicates",
+      "input": {
+        "corpus": "__corpus__",
+        "strategy": "shingle",
+        "threshold": 0.3,
+        "keep_strategy": "longest"
+      },
+      "expected_output": {
+        "group_count_ge": 1
+      }
+    },
+    {
+      "name": "minhash_threshold",
+      "function": "detect_duplicates",
+      "input": {
+        "corpus": "__corpus__",
+        "strategy": "minhash",
+        "threshold": 0.6,
+        "keep_strategy": "first"
+      },
+      "expected_output": {
+        "group_count_ge": 1
+      }
+    },
+    {
+      "name": "empty_corpus",
+      "function": "detect_duplicates",
+      "input": {
+        "corpus": [],
+        "strategy": "exact"
+      },
+      "expected_output": {
+        "raises": "ValueError"
+      }
+    },
+    {
+      "name": "bad_strategy",
+      "function": "detect_duplicates",
+      "input": {
+        "corpus": "__corpus__",
+        "strategy": "bogus"
+      },
+      "expected_output": {
+        "raises": "ValueError"
+      }
+    },
+    {
+      "name": "bad_threshold",
+      "function": "detect_duplicates",
+      "input": {
+        "corpus": "__corpus__",
+        "strategy": "exact",
+        "threshold": 1.5
+      },
+      "expected_output": {
+        "raises": "ValueError"
+      }
+    }
+  ]
+}

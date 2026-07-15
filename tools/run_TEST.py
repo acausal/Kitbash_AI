@@ -37,7 +37,7 @@ sys.path.insert(0, REPO)
 OWNED_PACKAGES = {
     "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
     "templating", "frequency_analysis", "inverted_index_builder", "boolean_search",
-    "tfidf_ranker", "markov_chain", "naive_bayes_classifier",
+    "tfidf_ranker", "markov_chain", "naive_bayes_classifier", "duplicate_detection",
 }
 
 # function name -> {fixture_input_key: real_param_name}
@@ -273,6 +273,13 @@ def _check_expected(fn_name, res, exp) -> str:
             return f"test_documents {res.get('test_documents')}"
         if "accuracy" in exp and abs(res.get("results", {}).get("accuracy", -1) - exp["accuracy"]) > 1e-6:
             return f"accuracy {res.get('results', {}).get('accuracy')}"
+    # duplicate_detection expected_output keys (nested under 'summary')
+    if fn_name == "detect_duplicates":
+        s = res.get("summary", {})
+        if "group_count_ge" in exp and not (s.get("duplicate_group_count", 0) >= exp["group_count_ge"]):
+            return f"group_count {s.get('duplicate_group_count')} < {exp['group_count_ge']}"
+        if "total_dups" in exp and s.get("total_duplicate_documents") != exp["total_dups"]:
+            return f"total_dups {s.get('total_duplicate_documents')}"
     return ""
 
 
