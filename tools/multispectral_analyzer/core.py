@@ -202,7 +202,7 @@ def _to_dict(result: MultispectralResult) -> dict:
             k: {
                 "tool_id": r.tool_id,
                 "success": r.success,
-                "output": r.output,
+                "output": st._serialize(r.output) if r.output is not None else None,
                 "error": r.error,
                 "execution_time_ms": r.execution_time_ms,
             }

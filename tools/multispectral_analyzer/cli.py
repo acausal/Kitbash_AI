@@ -22,8 +22,7 @@ def main(argv=None) -> int:
     ap.add_argument("--data-type", default="text", choices=["text", "json", "log"])
     ap.add_argument("--spectrum-config", help="JSON: {\"enabled\":[...],\"disabled\":[...]}")
     ap.add_argument("--detect-divergence", default="true", choices=["true", "false"])
-    ap.add_argument("--output", help="write result JSON here (canonical)")
-    ap.add_argument("--output-json", help="alias for --output")
+    ap.add_argument("--output-json", help="alias for --output (from SPEC; project convention keeps --output)")
     args = ap.parse_args(argv)
 
     out_path = args.output or args.output_json

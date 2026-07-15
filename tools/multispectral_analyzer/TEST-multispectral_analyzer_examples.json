@@ -51,7 +51,7 @@
         "spectra_attempted": 6,
         "has_signature": true,
         "fingerprint_present": true,
-        "divergence_count": 0
+        "divergence_count": 1
       }
     },
     {

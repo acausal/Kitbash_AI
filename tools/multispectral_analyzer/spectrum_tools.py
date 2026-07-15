@@ -106,22 +106,23 @@ def run_all_spectra(data: str, enabled: List[str]) -> Dict[str, dict]:
 
 
 def _serialize(obj):
-    """Best-effort JSON-safe conversion of tool outputs (handles dataclasses/lists)."""
+    """Recursively convert tool outputs (dataclasses/lists/dicts) to JSON-safe form.
+
+    spaCy spectra return lists of dataclass instances (Token/SVO/Entity) possibly
+    nested; convert every dataclass instance to a dict so the result is JSON-serializable
+    even when historical_common.write_output uses a plain json.dumps (no default=).
+    """
     import dataclasses
-    import json
 
     def conv(o):
         if dataclasses.is_dataclass(o) and not isinstance(o, type):
-            return dataclasses.asdict(o)
+            return {k: conv(v) for k, v in dataclasses.asdict(o).items()}
+        if isinstance(o, dict):
+            return {k: conv(v) for k, v in o.items()}
+        if isinstance(o, (list, tuple)):
+            return [conv(x) for x in o]
         if hasattr(o, "__dict__"):
-            return {k: v for k, v in vars(o).items() if not k.startswith("_")}
-        return str(o)
+            return {k: conv(v) for k, v in vars(o).items() if not k.startswith("_")}
+        return o
 
-    try:
-        json.dumps(obj, default=conv)
-        return obj
-    except Exception:
-        # Fall back to a fully stringified form so the envelope never breaks.
-        if isinstance(obj, (list, tuple)):
-            return [conv(x) for x in obj]
-        return conv(obj)
+    return conv(obj)
