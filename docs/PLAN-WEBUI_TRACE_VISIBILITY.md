@@ -10,9 +10,9 @@ just forwards NDJSON it already forwards.
 Three independent, verifiable pieces. UI is a chat-POC; keep changes additive to the existing
 `static/index.html` (no rewrite). No server-side tracer, no `/trace` persistence (deferred).
 
-- [ ] **P1. `execution_tracer.py`** (new, repo root, core) — pure dataclass module.
-- [ ] **P2. Trace emission in `kitbash_cli.py`** — use P1 to emit `trace_event` NDJSON.
-- [ ] **P3. Additive frontend** in `static/index.html` — chat history + trace pane.
+- [x] **P1. `execution_tracer.py`** (new, repo root, core) — pure dataclass module. `a12587d`
+- [x] **P2. Trace emission in `kitbash_cli.py`** — use P1 to emit `trace_event` NDJSON. `fb77562`
+- [x] **P3. Additive frontend** in `static/index.html` — chat history + trace pane. `9fa41ce`
 
 Deferred (per DEVNOTE): server-side tracer, `context_builder` point (needs `QueryResult`
 extension), `/trace/{query_id}` persistence.
