@@ -36,12 +36,13 @@ sys.path.insert(0, REPO)
 # heterogeneous fixture conventions are SKIPped, not failed.
 OWNED_PACKAGES = {
     "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
-    "templating", "frequency_analysis",
+    "templating", "frequency_analysis", "inverted_index_builder",
 }
 
 # function name -> {fixture_input_key: real_param_name}
 ALIASES = {
     "score_patterns": {"traces": "execution_traces"},
+    "add_document": {"index_state": "index"},
 }
 
 # result keys that mean "total credit normalized to ~1.0"
@@ -137,23 +138,36 @@ def _check_expected(fn_name, res, exp) -> str:
     if "total_credit_attributed" in res:
         if abs(res["total_credit_attributed"] - 1.0) > 0.05:
             return f"total credit {res['total_credit_attributed']}"
-    # frequency_analysis expected_output keys
-    if fn_name in ("analyze_frequencies", "analyze_corpus_frequencies"):
+    # inverted_index_builder expected_output keys
+    if fn_name in ("build_index", "add_document", "merge_indexes"):
         s = res.get("input_summary", {})
-        if "total_tokens" in exp and s.get("total_tokens") != exp["total_tokens"]:
-            return f"total_tokens {s.get('total_tokens')}"
-        if "unique_tokens" in exp and s.get("unique_tokens") != exp["unique_tokens"]:
-            return f"unique_tokens {s.get('unique_tokens')}"
         if "documents" in exp and s.get("documents") != exp["documents"]:
             return f"documents {s.get('documents')}"
-        if "top_token" in exp:
-            top = (res.get("top_tokens") or [{}])[0]
-            if not top.get("token"):
-                # corpus mode emits frequency_distribution instead of top_tokens
-                fd = res.get("frequency_distribution", {})
-                top = {"token": next(iter(fd))} if fd else {}
-            if top.get("token") != exp["top_token"]:
-                return f"top_token {top.get('token')}"
+        if "unique_tokens" in exp and s.get("unique_tokens") != exp["unique_tokens"]:
+            return f"unique_tokens {s.get('unique_tokens')}"
+        if "documents_ge" in exp and not (s.get("documents", 0) >= exp["documents_ge"]):
+            return f"documents {s.get('documents')} < {exp['documents_ge']}"
+        idx = res.get("index", {})
+        if "token_df" in exp:
+            for tok, want_df in exp["token_df"].items():
+                got = idx.get(tok, {}).get("document_frequency")
+                if got != want_df:
+                    return f"df[{tok}] {got} want {want_df}"
+    if fn_name == "compute_idf":
+        idf = res.get("idf_values", {})
+        if "idf_ge" in exp:
+            if not all(v >= exp["idf_ge"] for v in idf.values()):
+                return f"idf min {min(idf.values()) if idf else None}"
+
+    # frequency_analysis expected_output keys
+    if fn_name in ("analyze_frequencies", "analyze_corpus_frequencies"):
+        top = (res.get("top_tokens") or [{}])[0]
+        if not top.get("token"):
+            # corpus mode emits frequency_distribution instead of top_tokens
+            fd = res.get("frequency_distribution", {})
+            top = {"token": next(iter(fd))} if fd else {}
+        if "top_token" in exp and top.get("token") != exp["top_token"]:
+            return f"top_token {top.get('token')}"
         if "top_freq" in exp:
             top = (res.get("top_tokens") or [{}])[0]
             if not top.get("frequency"):

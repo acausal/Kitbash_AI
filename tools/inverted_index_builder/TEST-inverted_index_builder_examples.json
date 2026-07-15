@@ -1,0 +1,494 @@
+{
+  "samples": {
+    "idx3": {
+      "input_summary": {
+        "documents": 3,
+        "total_tokens": 10,
+        "unique_tokens": 5,
+        "avg_doc_length": 3.3333
+      },
+      "index": {
+        "ai": {
+          "document_frequency": 2,
+          "postings": [
+            {
+              "doc_id": "d1",
+              "term_frequency": 2
+            },
+            {
+              "doc_id": "d3",
+              "term_frequency": 1
+            }
+          ]
+        },
+        "ml": {
+          "document_frequency": 2,
+          "postings": [
+            {
+              "doc_id": "d1",
+              "term_frequency": 1
+            },
+            {
+              "doc_id": "d2",
+              "term_frequency": 1
+            }
+          ]
+        },
+        "nlp": {
+          "document_frequency": 2,
+          "postings": [
+            {
+              "doc_id": "d1",
+              "term_frequency": 1
+            },
+            {
+              "doc_id": "d2",
+              "term_frequency": 1
+            }
+          ]
+        },
+        "cv": {
+          "document_frequency": 2,
+          "postings": [
+            {
+              "doc_id": "d2",
+              "term_frequency": 1
+            },
+            {
+              "doc_id": "d3",
+              "term_frequency": 1
+            }
+          ]
+        },
+        "robotics": {
+          "document_frequency": 1,
+          "postings": [
+            {
+              "doc_id": "d3",
+              "term_frequency": 1
+            }
+          ]
+        }
+      },
+      "idf_values": {
+        "ai": 0.47000362924573563,
+        "ml": 0.47000362924573563,
+        "nlp": 0.47000362924573563,
+        "cv": 0.47000362924573563,
+        "robotics": 0.9808292530117263
+      },
+      "metadata": {
+        "computation_time_ms": 0,
+        "config_used": {
+          "lowercase": true,
+          "remove_stopwords": false,
+          "stopword_list": [
+            "for",
+            "on",
+            "or",
+            "i",
+            "must",
+            "were",
+            "to",
+            "will",
+            "would",
+            "may",
+            "we",
+            "is",
+            "should",
+            "they",
+            "by",
+            "his",
+            "your",
+            "so",
+            "can",
+            "her",
+            "have",
+            "might",
+            "those",
+            "in",
+            "are",
+            "no",
+            "from",
+            "this",
+            "a",
+            "that",
+            "been",
+            "you",
+            "had",
+            "was",
+            "being",
+            "of",
+            "as",
+            "if",
+            "them",
+            "then",
+            "at",
+            "into",
+            "with",
+            "could",
+            "does",
+            "did",
+            "yes",
+            "but",
+            "do",
+            "it",
+            "has",
+            "not",
+            "she",
+            "and",
+            "than",
+            "an",
+            "be",
+            "our",
+            "its",
+            "he",
+            "else",
+            "their",
+            "these",
+            "the"
+          ],
+          "min_token_length": 1,
+          "max_token_length": null,
+          "top_k": 10,
+          "threshold": 0.0,
+          "verbose": false
+        },
+        "idf_scheme": "standard"
+      }
+    },
+    "idx_a": {
+      "input_summary": {
+        "documents": 1,
+        "total_tokens": 2,
+        "unique_tokens": 2,
+        "avg_doc_length": 2.0
+      },
+      "index": {
+        "x": {
+          "document_frequency": 1,
+          "postings": [
+            {
+              "doc_id": "da",
+              "term_frequency": 1
+            }
+          ]
+        },
+        "y": {
+          "document_frequency": 1,
+          "postings": [
+            {
+              "doc_id": "da",
+              "term_frequency": 1
+            }
+          ]
+        }
+      },
+      "idf_values": {
+        "x": 0.28768207245178085,
+        "y": 0.28768207245178085
+      },
+      "metadata": {
+        "computation_time_ms": 0,
+        "config_used": {
+          "lowercase": true,
+          "remove_stopwords": false,
+          "stopword_list": [
+            "for",
+            "on",
+            "or",
+            "i",
+            "must",
+            "were",
+            "to",
+            "will",
+            "would",
+            "may",
+            "we",
+            "is",
+            "should",
+            "they",
+            "by",
+            "his",
+            "your",
+            "so",
+            "can",
+            "her",
+            "have",
+            "might",
+            "those",
+            "in",
+            "are",
+            "no",
+            "from",
+            "this",
+            "a",
+            "that",
+            "been",
+            "you",
+            "had",
+            "was",
+            "being",
+            "of",
+            "as",
+            "if",
+            "them",
+            "then",
+            "at",
+            "into",
+            "with",
+            "could",
+            "does",
+            "did",
+            "yes",
+            "but",
+            "do",
+            "it",
+            "has",
+            "not",
+            "she",
+            "and",
+            "than",
+            "an",
+            "be",
+            "our",
+            "its",
+            "he",
+            "else",
+            "their",
+            "these",
+            "the"
+          ],
+          "min_token_length": 1,
+          "max_token_length": null,
+          "top_k": 10,
+          "threshold": 0.0,
+          "verbose": false
+        },
+        "idf_scheme": "standard"
+      }
+    },
+    "idx_b": {
+      "input_summary": {
+        "documents": 1,
+        "total_tokens": 2,
+        "unique_tokens": 2,
+        "avg_doc_length": 2.0
+      },
+      "index": {
+        "y": {
+          "document_frequency": 1,
+          "postings": [
+            {
+              "doc_id": "db",
+              "term_frequency": 1
+            }
+          ]
+        },
+        "z": {
+          "document_frequency": 1,
+          "postings": [
+            {
+              "doc_id": "db",
+              "term_frequency": 1
+            }
+          ]
+        }
+      },
+      "idf_values": {
+        "y": 0.28768207245178085,
+        "z": 0.28768207245178085
+      },
+      "metadata": {
+        "computation_time_ms": 0,
+        "config_used": {
+          "lowercase": true,
+          "remove_stopwords": false,
+          "stopword_list": [
+            "for",
+            "on",
+            "or",
+            "i",
+            "must",
+            "were",
+            "to",
+            "will",
+            "would",
+            "may",
+            "we",
+            "is",
+            "should",
+            "they",
+            "by",
+            "his",
+            "your",
+            "so",
+            "can",
+            "her",
+            "have",
+            "might",
+            "those",
+            "in",
+            "are",
+            "no",
+            "from",
+            "this",
+            "a",
+            "that",
+            "been",
+            "you",
+            "had",
+            "was",
+            "being",
+            "of",
+            "as",
+            "if",
+            "them",
+            "then",
+            "at",
+            "into",
+            "with",
+            "could",
+            "does",
+            "did",
+            "yes",
+            "but",
+            "do",
+            "it",
+            "has",
+            "not",
+            "she",
+            "and",
+            "than",
+            "an",
+            "be",
+            "our",
+            "its",
+            "he",
+            "else",
+            "their",
+            "these",
+            "the"
+          ],
+          "min_token_length": 1,
+          "max_token_length": null,
+          "top_k": 10,
+          "threshold": 0.0,
+          "verbose": false
+        },
+        "idf_scheme": "standard"
+      }
+    },
+    "dfmap": {
+      "ai": 2,
+      "ml": 2,
+      "nlp": 2,
+      "cv": 2,
+      "robotics": 1
+    }
+  },
+  "test_cases": [
+    {
+      "name": "build_basic",
+      "function": "build_index",
+      "input": {
+        "corpus": [
+          {
+            "id": "d1",
+            "tokens": [
+              "ai",
+              "ml",
+              "ai",
+              "nlp"
+            ]
+          },
+          {
+            "id": "d2",
+            "tokens": [
+              "ml",
+              "nlp",
+              "cv"
+            ]
+          },
+          {
+            "id": "d3",
+            "tokens": [
+              "ai",
+              "cv",
+              "robotics"
+            ]
+          }
+        ],
+        "config": {}
+      },
+      "expected_output": {
+        "documents": 3,
+        "unique_tokens": 5,
+        "token_df": {
+          "ai": 2,
+          "ml": 2
+        }
+      }
+    },
+    {
+      "name": "idf_standard",
+      "function": "compute_idf",
+      "input": {
+        "document_frequencies": "__dfmap__",
+        "total_documents": 3,
+        "idf_scheme": "standard"
+      },
+      "expected_output": {
+        "idf_ge": 0
+      }
+    },
+    {
+      "name": "add_doc",
+      "function": "add_document",
+      "input": {
+        "index_state": "__idx3__",
+        "doc": {
+          "id": "d4",
+          "tokens": [
+            "ai",
+            "ml",
+            "ml"
+          ]
+        },
+        "config": {}
+      },
+      "expected_output": {
+        "documents": 4,
+        "token_df": {
+          "ai": 3
+        }
+      }
+    },
+    {
+      "name": "merge",
+      "function": "merge_indexes",
+      "input": {
+        "indexes": [
+          "__idx_a__",
+          "__idx_b__"
+        ],
+        "config": {}
+      },
+      "expected_output": {
+        "documents_ge": 2
+      }
+    },
+    {
+      "name": "empty",
+      "function": "build_index",
+      "input": {
+        "corpus": [],
+        "config": {}
+      },
+      "expected_output": {
+        "documents": 0,
+        "unique_tokens": 0
+      }
+    }
+  ]
+}
