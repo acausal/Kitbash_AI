@@ -30,6 +30,7 @@ from heartbeat_service import HeartbeatService
 from grain_engine import GrainEngine
 from cartridge_engine import CartridgeEngine
 from bitnet_engine import BitNetEngine
+from llama_cpp_engine import LlamaCppEngine
 from rule_based_triage import RuleBasedTriageAgent
 from mock_mamba_service import MockMambaService
 from real_mamba_service import RealMambaService
@@ -68,6 +69,9 @@ def create_query_orchestrator(
     enable_bitnet: bool = False,
     bitnet_url: str = "http://127.0.0.1:8080",
     bitnet_max_tokens: int = 64,
+    enable_llm: bool = False,
+    llm_url: str = "http://127.0.0.1:8081",
+    llm_max_tokens: int = 256,
     enable_mamba: bool = False,
     mamba_host: str = "127.0.0.1",
     mamba_port: int = 8731,
@@ -144,6 +148,7 @@ def create_query_orchestrator(
         raise
     
     # State Manager
+    loaded_mtr_state = None  # bound up-front; set below only if a checkpoint loads
     try:
         state_manager = MTRStateCheckpoint(state_dir)
         # SPEC Step 4: resume MTR state at build if a checkpoint exists.
@@ -259,6 +264,15 @@ def create_query_orchestrator(
             logger.info(f"  ✓ BitNetEngine created (server: {bitnet_url}, max_tokens={bitnet_max_tokens})")
     except Exception as e:
         logger.warning(f"  ⚠ BitNet initialization skipped: {e}")
+
+    try:
+        # Local generation LLM via llama.cpp (optional, proposal ~3.1)
+        if enable_llm:
+            llm_engine = LlamaCppEngine(server_url=llm_url, max_tokens=llm_max_tokens)
+            engines["LLM"] = llm_engine
+            logger.info(f"  ✓ LlamaCppEngine created (server: {llm_url}, max_tokens={llm_max_tokens})")
+    except Exception as e:
+        logger.warning(f"  ⚠ LlamaCpp (LLM) initialization skipped: {e}")
     
     if not engines:
         logger.error("No inference engines available!")
