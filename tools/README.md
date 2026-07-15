@@ -301,6 +301,32 @@ This directory contains Kitbash accessories—tools, skill systems, preprocessor
 **Integration target:** Post-1.0; consumes Stage 1 (dispatcher/extractor) output.
 **Spec:** `SPEC-stage2_normalization.md` · **Code:** `stage2_normalization/` · **Usage:** `python -m tools.stage2_normalization input.txt [-o cleaned.txt]`
 
+## Historical AI Batch (2026-07-14)
+
+A self-contained family of stateless, deterministic, **stdlib-only** retrieval / IR / stats tools, built against `SPEC-historical_ai_shared_contract_v1.md`. They share a common envelope (`tool` / `version` / `run_id` / `timestamp` / `input_summary` / result block), the shared config (`lowercase`, `remove_stopwords`, `stopword_list`, `min_token_length`, `top_k`, `threshold`, `verbose`), and a uniform CLI (`--input` / `--output` / `--verbose` + tool flags; exit 0/1/2 with JSON error on stderr). No runtime cross-tool dependencies — tools compose via CLI piping only.
+
+**Shared helper (not a tool):** `tools/historical_common.py` — config normalization, stopword filtering, envelope, CLI/error boilerplate used by every tool below. Not in `run_TEST.py`'s OWNED_PACKAGES (no TEST fixture of its own).
+
+**Durable test runner:** `tools/run_TEST.py` — scans `tools/**/TEST-*.json`, executes every owned `test_cases` entry (placeholder expansion + function-scoped alias remap + generic expected_output assertions), exits non-zero on any FAIL. `python tools/run_TEST.py` → **70 PASS / 0 FAIL**. Legacy/heterogeneous fixtures are SKIPped, not failed.
+
+### frequency_analysis
+**Status:** Implemented. `analyze_frequencies` (Counter stats + mean/median/std/quantiles, TTR, Gini, ranks/percentiles; top/bottom tokens), `analyze_corpus_frequencies` (doc-level TF/DF/per-doc avg), `compute_coverage`, `frequency_histogram`. **Spec:** `SPEC-frequency_analysis_v1.md` · **Test:** `TEST-frequency_analysis_examples.json` · **Code:** `frequency_analysis/`.
+
+### inverted_index_builder
+**Status:** Implemented. `build_index` (TF/DF inverted index, postings sorted by doc_id), `compute_idf` (standard/log/probabilistic), `add_document` / `merge_indexes` (pure, recompute DF+IDF), `index_ops` helpers. **Spec:** `SPEC-inverted_index_builder_v1.md` · **Test:** `TEST-inverted_index_builder_examples.json` · **Code:** `inverted_index_builder/`.
+
+### boolean_search
+**Status:** Implemented. Recursive-descent boolean query engine: `search` (corpus), `parse_query` (AST), `execute_query` (eval AST on one doc). Precedence NOT > AND > OR; parentheses; quoted terms. Syntax errors → ValueError → exit 1. **Spec:** `SPEC-boolean_search_v1.md` · **Test:** `TEST-boolean_search_examples.json` · **Code:** `boolean_search/`.
+
+### tfidf_ranker
+**Status:** Implemented. `compute_tfidf` (per-doc vectors + smoothed IDF), `rank_documents` (standard / sublinear / bm25 variants, cosine ranking), `cosine_similarity`, `bm25_score`, `scoring` helpers. **Spec:** `SPEC-tfidf_ranker_v1.md` · **Test:** `TEST-tfidf_ranker_examples.json` · **Code:** `tfidf_ranker/`.
+
+### markov_chain
+**Status:** Implemented. `build_chain` (order-n transitions + smoothed probs), `compute_entropy` (per-context −Σ p·log₂p, count-weighted avg), `generate_sequence` (seeded/reproducible via `random.Random(seed)`; context backoff; stops on dead-end), `next_token_distribution`, `generation` helpers. **Spec:** `SPEC-markov_chain_v1.md` · **Test:** `TEST-markov_chain_examples.json` · **Code:** `markov_chain/`.
+
+### naive_bayes_classifier
+**Status:** Implemented. `train_classifier` (Bernoulli / Multinomial, Laplace), `classify`, `batch_classify`, `evaluate_classifier` (precision/recall/F1, macro_f1), `features` + `smoothing` helpers. **Spec:** `SPEC-naive_bayes_classifier_v1.md` · **Test:** `TEST-naive_bayes_classifier_examples.json` · **Code:** `naive_bayes_classifier/`.
+
 ## Adding a New Tool
 
 1. Create a subdirectory: `tools/<tool_name>/`
