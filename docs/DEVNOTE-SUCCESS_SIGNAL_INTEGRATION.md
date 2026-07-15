@@ -4,7 +4,7 @@
 **Spec:** `docs/SPEC-SUCCESS_SIGNAL_INTEGRATION_v1.md` (Status: Ready for Implementation)
 **Auditor:** Hermes (verified against repo at HEAD, not inferred)
 **Scope classification:** Core infrastructure (Dream Bucket + Query Orchestrator) — **NOT `tools/` sandbox**
-**Verdict:** Architecturally sound, but written against the pre-`attic/` repo layout. Spec prose diverges from current code in 3 places. All fixable; none are architectural errors.
+**Verdict:** Architecturally sound, but written against the pre-`attic/` repo layout. Spec prose diverges from current code in 3 places. All fixable; none are architectural errors. **Implementation status (2026-07-15): Steps 1–2 DONE & verified (commit `d4a6938`) — `dream_bucket.py` success methods + `query_completion_heuristic.py` landed. Step 3 (orchestrator wiring) PENDING at checkpoint. See `docs/STATUS_2026-07-15_success_signal.md`.**
 
 ---
 

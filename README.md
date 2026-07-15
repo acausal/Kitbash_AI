@@ -71,8 +71,9 @@ CARTRIDGE.)
 
 **Not yet done (separate workstreams, not blockers for chat):**
 - Sleep pipeline stages (consolidation, hypothesis generation, recalibration), MTR↔Grain bridge (RED — soft-fail patterns), Epistemic layer names (YELLOW), HatKappaMapper, Dream Bucket read, RedisBlackboard core (API built, not wired into canonical path), Coupling validator, Cartridge file format, MTR checkpoints, SQLite stores. These are the memory/consolidation and shared-state planes — intentionally out of scope for the current chat-POC milestone.
+- **Success Signal Integration (Dream Bucket ↔ Orchestrator):** spec `docs/SPEC-SUCCESS_SIGNAL_INTEGRATION_v1.md`, deviation audit `docs/DEVNOTE-SUCCESS_SIGNAL_INTEGRATION.md`, impl log `docs/STATUS_2026-07-15_success_signal.md`. **As of 2026-07-15:** Steps 1–2 DONE — `dream_bucket.py` gained `success_traces` logging (`log_success` / `count_recent_violations` / `read_success_traces`) and `query_completion_heuristic.py` provides the `CoherenceChecker` (verified, commit `d4a6938`). Step 3 (wire the coherence check into `query_orchestrator_posix.py`) is PENDING. The `slm success-stats` CLI is deferred.
 
-**Tests** live in `tests/` (run `python tests/TEST-<name>.py` from the repo root). **Specs/docs** live in `docs/done/` (project specs, archived from `docs/`); tool specs live in `tools/`. Web UI assets live in `static/`. The per-day work log lives in `status/`. `SOCKET_MAP.md` and `STATUS_2026-07-10.md` remain at the repo root.
+**Tests** live in `tests/` (run `python tests/TEST-<name>.py` from the repo root). **Specs/docs** live in `docs/done/` (project specs, archived from `docs/`); tool specs live in `tools/`. Web UI assets live in `static/`. The per-day work log lives in `status/`. `SOCKET_MAP.md` remains at the repo root; historical `STATUS_2026-07-10.md` is archived under `docs/done/`.
 
 ## Tools (`tools/`)
 

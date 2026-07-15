@@ -27,8 +27,9 @@ Terse, additive, honest. Mirror the discipline in `STATUS_2026-07-10.md` and
 - Flag caveats and deferred items explicitly.
 
 ## What does NOT belong here
-- `STATUS_2026-07-10.md` / `SOCKET_MAP.md` remain the socket-level "is it done?"
-  map (separate files, updated in place). This `status/` dir is the chronological
-  work log that references them.
+- `SOCKET_MAP.md` is the socket-level "is it done?" map (updated in place). The
+  historical `STATUS_2026-07-10.md` was archived to `docs/done/STATUS_2026-07-10.md`.
+  This `status/` dir is the chronological work log that references them.
+
 - Cross-project / non-Kitbash activity — that stays in `session_log.md`.
 - Raw session transcripts, secrets, or local-only config.
