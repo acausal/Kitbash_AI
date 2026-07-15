@@ -1,0 +1,93 @@
+{
+  "tool": "relevance_gate",
+  "version": "v1",
+  "description": "Deterministic query-time relevance filter over retrieved candidates. Wraps duplicate_detection, tfidf_ranker, cosine_similarity, ner, svo, negation_detector. No models. See docs/SPEC-relevance_gate_v1.md.",
+  "test_cases": [
+    {
+      "name": "clear_winner_pass_through",
+      "function": "apply_relevance_gate",
+      "input": {
+        "query": "What is ATP synthase and how does it make ATP?",
+        "context": "user has been discussing cellular respiration",
+        "candidates": [
+          {"id": "fact_atp", "text": "ATP synthase is the enzyme that produces ATP in the mitochondrial membrane during cellular respiration."},
+          {"id": "fact_photo", "text": "Photosynthesis converts sunlight into glucose in plant chloroplasts."},
+          {"id": "fact_cook", "text": "Boiling pasta requires a large pot of salted water."}
+        ]
+      },
+      "expected_output": {"gate_fired": false, "trigger": null}
+    },
+    {
+      "name": "close_margin_fires_margin",
+      "function": "apply_relevance_gate",
+      "input": {
+        "query": "How does ATP synthase produce ATP in the cell?",
+        "context": "",
+        "candidates": [
+          {"id": "fact_a", "text": "A makes ATP in the cell membrane"},
+          {"id": "fact_b", "text": "A makes ATP in the cell membrane too"}
+        ]
+      },
+      "expected_output": {"gate_fired": true, "trigger": "margin"}
+    },
+    {
+      "name": "volume_overflow_fires_volume",
+      "function": "apply_relevance_gate",
+      "input": {
+        "query": "Tell me about biology",
+        "context": "",
+        "candidates": [
+          {"id": "f1", "text": "Mitochondria are the powerhouse of the cell producing ATP."},
+          {"id": "f2", "text": "Ribosomes assemble proteins from amino acids."},
+          {"id": "f3", "text": "The nucleus stores DNA and directs cell activity."},
+          {"id": "f4", "text": "Chloroplasts perform photosynthesis in plant cells."},
+          {"id": "f5", "text": "The Golgi apparatus modifies and packages proteins."},
+          {"id": "f6", "text": "Lysosomes break down waste using digestive enzymes."},
+          {"id": "f7", "text": "The cell membrane controls what enters and leaves the cell."},
+          {"id": "f8", "text": "Vacuoles store water and nutrients in the cell."},
+          {"id": "f9", "text": "Centrioles help organize microtubules during division."},
+          {"id": "f10", "text": "The endoplasmic reticulum synthesizes lipids and proteins."}
+        ]
+      },
+      "expected_output": {"gate_fired": true, "trigger": "volume"}
+    },
+    {
+      "name": "duplicate_candidates_collapse",
+      "function": "apply_relevance_gate",
+      "input": {
+        "query": "What is ATP synthase?",
+        "context": "",
+        "candidates": [
+          {"id": "c1", "text": "ATP synthase produces ATP in the mitochondrial membrane."},
+          {"id": "c2", "text": "ATP synthase produces ATP in the mitochondrial membrane."}
+        ]
+      },
+      "expected_output": {"gate_fired": false, "trigger": null}
+    },
+    {
+      "name": "negation_flagged_on_mismatch",
+      "function": "apply_relevance_gate",
+      "input": {
+        "query": "Is glycolysis an aerobic process?",
+        "context": "",
+        "candidates": [
+          {"id": "n1", "text": "Glycolysis is not aerobic; it occurs without oxygen in the cytoplasm."},
+          {"id": "n2", "text": "Glycolysis is aerobic; it occurs with oxygen in the cytoplasm."}
+        ]
+      },
+      "expected_output": {"gate_fired": true, "trigger": "margin"}
+    },
+    {
+      "name": "malformed_candidate_raises",
+      "function": "apply_relevance_gate",
+      "input": {
+        "query": "anything",
+        "context": "",
+        "candidates": [
+          {"id": "x"}
+        ]
+      },
+      "expected_output": {"raises": "ValueError"}
+    }
+  ]
+}

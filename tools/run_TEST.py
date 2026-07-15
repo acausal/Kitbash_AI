@@ -39,6 +39,7 @@ OWNED_PACKAGES = {
     "templating", "frequency_analysis", "inverted_index_builder", "boolean_search",
     "tfidf_ranker", "markov_chain", "naive_bayes_classifier", "duplicate_detection",
     "hypergraph_traversal", "topological_statistics", "multispectral_analyzer",
+    "relevance_gate",
 }
 
 # function name -> {fixture_input_key: real_param_name}
