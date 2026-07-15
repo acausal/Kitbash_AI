@@ -1,0 +1,172 @@
+{
+  "samples": {
+    "corpus": [
+      {
+        "id": "d1",
+        "tokens": [
+          "machine",
+          "learning",
+          "success"
+        ],
+        "class": "positive"
+      },
+      {
+        "id": "d2",
+        "tokens": [
+          "deep",
+          "learning",
+          "success"
+        ],
+        "class": "positive"
+      },
+      {
+        "id": "d3",
+        "tokens": [
+          "random",
+          "failure"
+        ],
+        "class": "negative"
+      },
+      {
+        "id": "d4",
+        "tokens": [
+          "bug",
+          "error",
+          "failure"
+        ],
+        "class": "negative"
+      }
+    ],
+    "model": {
+      "model": {
+        "classes": [
+          "negative",
+          "positive"
+        ],
+        "class_priors": {
+          "negative": 0.5,
+          "positive": 0.5
+        },
+        "class_counts": {
+          "positive": 2,
+          "negative": 2
+        },
+        "feature_likelihoods": {
+          "negative": {
+            "error": 0.5,
+            "learning": 0.25,
+            "success": 0.25,
+            "random": 0.5,
+            "failure": 0.75,
+            "deep": 0.25,
+            "machine": 0.25,
+            "bug": 0.5
+          },
+          "positive": {
+            "error": 0.25,
+            "learning": 0.75,
+            "success": 0.75,
+            "random": 0.25,
+            "failure": 0.25,
+            "deep": 0.5,
+            "machine": 0.5,
+            "bug": 0.25
+          }
+        },
+        "smoothing": "laplace",
+        "feature_type": "bernoulli"
+      }
+    },
+    "test_doc": {
+      "id": "t1",
+      "tokens": [
+        "machine",
+        "learning",
+        "success"
+      ]
+    },
+    "batch_docs": [
+      {
+        "id": "t1",
+        "tokens": [
+          "machine",
+          "learning",
+          "success"
+        ]
+      },
+      {
+        "id": "t2",
+        "tokens": [
+          "bug",
+          "failure"
+        ]
+      }
+    ]
+  },
+  "test_cases": [
+    {
+      "name": "train_bernoulli",
+      "function": "train_classifier",
+      "input": {
+        "training_corpus": "__corpus__",
+        "feature_type": "bernoulli",
+        "config": {}
+      },
+      "expected_output": {
+        "classes": [
+          "negative",
+          "positive"
+        ],
+        "vocab_ge": 7,
+        "train_acc": 1.0
+      }
+    },
+    {
+      "name": "train_multinomial",
+      "function": "train_classifier",
+      "input": {
+        "training_corpus": "__corpus__",
+        "feature_type": "multinomial",
+        "config": {}
+      },
+      "expected_output": {
+        "feature_type": "multinomial",
+        "classes_len": 2
+      }
+    },
+    {
+      "name": "classify",
+      "function": "classify",
+      "input": {
+        "model": "__model__",
+        "document": "__test_doc__"
+      },
+      "expected_output": {
+        "predicted_class": "positive"
+      }
+    },
+    {
+      "name": "batch",
+      "function": "batch_classify",
+      "input": {
+        "model": "__model__",
+        "documents": "__batch_docs__"
+      },
+      "expected_output": {
+        "documents_classified": 2
+      }
+    },
+    {
+      "name": "evaluate",
+      "function": "evaluate_classifier",
+      "input": {
+        "model": "__model__",
+        "test_corpus": "__corpus__"
+      },
+      "expected_output": {
+        "test_documents": 4,
+        "accuracy": 1.0
+      }
+    }
+  ]
+}

@@ -37,7 +37,7 @@ sys.path.insert(0, REPO)
 OWNED_PACKAGES = {
     "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
     "templating", "frequency_analysis", "inverted_index_builder", "boolean_search",
-    "tfidf_ranker", "markov_chain",
+    "tfidf_ranker", "markov_chain", "naive_bayes_classifier",
 }
 
 # function name -> {fixture_input_key: real_param_name}
@@ -248,6 +248,31 @@ def _check_expected(fn_name, res, exp) -> str:
         if "stopped" in exp and exp["stopped"] is True:
             if s.get("generated_tokens", 0) > 0:
                 return f"expected stop, got {s.get('generated_tokens')} tokens"
+    # naive_bayes_classifier expected_output keys
+    if fn_name == "train_classifier":
+        s = res.get("input_summary", {})
+        if "classes" in exp and s.get("classes") != exp["classes"]:
+            return f"classes {s.get('classes')}"
+        if "classes_len" in exp and len(s.get("classes", [])) != exp["classes_len"]:
+            return f"classes_len {len(s.get('classes', []))}"
+        if "vocab_ge" in exp and not (s.get("vocabulary_size", 0) >= exp["vocab_ge"]):
+            return f"vocab {s.get('vocabulary_size')}"
+        if "feature_type" in exp and s.get("feature_type") != exp["feature_type"]:
+            return f"feature_type {s.get('feature_type')}"
+        if "train_acc" in exp and abs(res.get("training_stats", {}).get("accuracy_on_training_set", -1) - exp["train_acc"]) > 1e-6:
+            return f"train_acc {res.get('training_stats', {}).get('accuracy_on_training_set')}"
+    if fn_name == "classify":
+        pc = res.get("classification", {}).get("predicted_class")
+        if "predicted_class" in exp and pc != exp["predicted_class"]:
+            return f"predicted_class {pc}"
+    if fn_name == "batch_classify":
+        if "documents_classified" in exp and res.get("documents_classified") != exp["documents_classified"]:
+            return f"documents_classified {res.get('documents_classified')}"
+    if fn_name == "evaluate_classifier":
+        if "test_documents" in exp and res.get("test_documents") != exp["test_documents"]:
+            return f"test_documents {res.get('test_documents')}"
+        if "accuracy" in exp and abs(res.get("results", {}).get("accuracy", -1) - exp["accuracy"]) > 1e-6:
+            return f"accuracy {res.get('results', {}).get('accuracy')}"
     return ""
 
 
