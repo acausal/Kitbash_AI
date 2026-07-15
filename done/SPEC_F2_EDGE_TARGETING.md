@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-12
 **Baseline commit:** `0978672` (verify with `git log -1` before starting; STOP if HEAD differs)
-**Parent specs:** `docs/SPEC_AXIOM_RECALIBRATION.md` (F2, Step 1), `PROPOSAL_VIOLATION_SCHEMA.md` (approved)
+**Parent specs:** `done/SPEC_AXIOM_RECALIBRATION.md` (F2, Step 1), `PROPOSAL_VIOLATION_SCHEMA.md` (approved)
 **Socket map cell:** §5 "GAP — Violation records carry no edge/fact-chain reference" (currently YELLOW, follow-up (b))
 
 ---

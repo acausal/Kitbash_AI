@@ -66,13 +66,13 @@ BITNET_CTX=4096 bash scripts/start_bitnet.sh
 CARTRIDGE.)
 
 **Two ways to drive it (both verified this session):**
-- `kitbash_cli.py` — stdio JSON bridge. stdin = `{"query":...}`, **stdout = chat-only JSON** (`answer_chunk` / `answer_done` / `error`), **stderr = internal ops/logs**. Env toggles: `KITBASH_ENABLE_BITNET`, `KITBASH_ENABLE_MAMBA`, `KITBASH_BITNET_URL`. Wire contract in `docs/CLI_PROTOCOL.md`.
+- `kitbash_cli.py` — stdio JSON bridge. stdin = `{"query":...}`, **stdout = chat-only JSON** (`answer_chunk` / `answer_done` / `error`), **stderr = internal ops/logs**. Env toggles: `KITBASH_ENABLE_BITNET`, `KITBASH_ENABLE_MAMBA`, `KITBASH_BITNET_URL`. Wire contract in `done/CLI_PROTOCOL.md`.
 - `kitbash_web.py` — dead-simple POC web UI (stdlib `http.server`, no deps). `GET /` serves a chat page, `POST /query` streams the CLI's chat output to the browser, `GET /ops` exposes the internal operational stream. Run `python kitbash_web.py` → http://127.0.0.1:8777.
 
 **Not yet done (separate workstreams, not blockers for chat):**
 - Sleep pipeline stages (consolidation, hypothesis generation, recalibration), MTR↔Grain bridge (RED — soft-fail patterns), Epistemic layer names (YELLOW), HatKappaMapper, Dream Bucket read, RedisBlackboard core (API built, not wired into canonical path), Coupling validator, Cartridge file format, MTR checkpoints, SQLite stores. These are the memory/consolidation and shared-state planes — intentionally out of scope for the current chat-POC milestone.
 
-**Tests** live in `tests/` (run `python tests/TEST-<name>.py` from the repo root). **Specs/docs** live in `docs/`. Web UI assets live in `static/`. The per-day work log lives in `status/`. `SOCKET_MAP.md` and `STATUS_2026-07-10.md` remain at the repo root.
+**Tests** live in `tests/` (run `python tests/TEST-<name>.py` from the repo root). **Specs/docs** live in `done/` (project specs, archived from `docs/`); tool specs live in `tools/`. Web UI assets live in `static/`. The per-day work log lives in `status/`. `SOCKET_MAP.md` and `STATUS_2026-07-10.md` remain at the repo root.
 
 ## Tools (`tools/`)
 
