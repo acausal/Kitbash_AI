@@ -307,7 +307,7 @@ A self-contained family of stateless, deterministic, **stdlib-only** retrieval /
 
 **Shared helper (not a tool):** `tools/historical_common.py` — config normalization, stopword filtering, envelope, CLI/error boilerplate used by every tool below. Not in `run_TEST.py`'s OWNED_PACKAGES (no TEST fixture of its own).
 
-**Durable test runner:** `tools/run_TEST.py` — scans `tools/**/TEST-*.json`, executes every owned `test_cases` entry (placeholder expansion + function-scoped alias remap + generic expected_output assertions), exits non-zero on any FAIL. `python tools/run_TEST.py` → **70 PASS / 0 FAIL**. Legacy/heterogeneous fixtures are SKIPped, not failed.
+**Durable test runner:** `tools/run_TEST.py` — scans `tools/**/TEST-*.json`, executes every owned `test_cases` entry (placeholder expansion + function-scoped alias remap + generic expected_output assertions), exits non-zero on any FAIL. `python tools/run_TEST.py` → **92 PASS / 0 FAIL** (as of 2026-07-14; 14 legacy/heterogeneous fixtures SKIPped, not failed).
 
 ### frequency_analysis
 **Status:** Implemented. `analyze_frequencies` (Counter stats + mean/median/std/quantiles, TTR, Gini, ranks/percentiles; top/bottom tokens), `analyze_corpus_frequencies` (doc-level TF/DF/per-doc avg), `compute_coverage`, `frequency_histogram`. **Spec:** `SPEC-frequency_analysis_v1.md` · **Test:** `TEST-frequency_analysis_examples.json` · **Code:** `frequency_analysis/`.
@@ -327,7 +327,27 @@ A self-contained family of stateless, deterministic, **stdlib-only** retrieval /
 ### naive_bayes_classifier
 **Status:** Implemented. `train_classifier` (Bernoulli / Multinomial, Laplace), `classify`, `batch_classify`, `evaluate_classifier` (precision/recall/F1, macro_f1), `features` + `smoothing` helpers. **Spec:** `SPEC-naive_bayes_classifier_v1.md` · **Test:** `TEST-naive_bayes_classifier_examples.json` · **Code:** `naive_bayes_classifier/`.
 
-## Adding a New Tool
+### Graph / IR Batch (2026-07-14)
+
+A second self-contained family built against the same shared contract, this time
+graph / deduplication focused. All three are stateless, deterministic, **stdlib-only**,
+share `tools/historical_common`, reuse the same envelope + CLI (`--input` / `--output` /
+`--verbose`, exit 0/1/2), and are covered by `tools/run_TEST.py`. Registry/sieve_hooks
+manifests are **deferred to post-1.0** (each README notes this).
+
+**Locked graph defaults (apply to all three):** undirected by default (`--directed` opt-in);
+weighted with `1.0` fallback (`--unweighted`); cycles allowed; `find_paths` / shortest-path
+metrics return **simple paths only / hop-based** lengths (deterministic, O(N·E) bound);
+batch (single JSON in → single JSON out), no streaming.
+
+#### duplicate_detection
+**Status:** Implemented. `detect_duplicates` with four strategies — `exact` (sorted multiset), `jaccard`, `shingle` (k-shingles), `minhash` (seeded MD5 signatures) — transitive grouping via union-find; `keep_strategy` (first/shortest/longest) picks the representative. Errors (empty corpus / bad strategy / threshold ∉ [0,1]) → ValueError → exit 1. **Spec:** `SPEC-duplicate_detection_v1.md` · **Test:** `TEST-duplicate_detection_examples.json` · **Code:** `duplicate_detection/`.
+
+#### hypergraph_traversal
+**Status:** Implemented. `find_neighbors` (BFS, depth-limited), `find_paths` (simple paths only), `reachability_analysis` (BFS + full-connectivity flag), `hyperedge_coverage` (covering edges + node union). A hyperedge expands to an undirected clique. Errors (empty hypergraph / node-not-found / malformed edge) → ValueError → exit 1. **Spec:** `SPEC-hypergraph_traversal_v1.md` · **Test:** `TEST-hypergraph_traversal_examples.json` · **Code:** `hypergraph_traversal/`.
+
+#### topological_statistics
+**Status:** Implemented. `compute_degree_stats`, `compute_clustering_coefficients`, `compute_path_lengths` (all-pairs BFS), `compute_centrality` (degree/closeness/betweenness/eigenvector — Brandes + power iteration), `analyze_components`. Path metrics are hop-based (weights recorded, not used in distances). Errors (empty graph / malformed edge) → ValueError → exit 1. **Spec:** `SPEC-topological_statistics_v1.md` · **Test:** `TEST-topological_statistics_examples.json` · **Code:** `topological_statistics/`.
 
 1. Create a subdirectory: `tools/<tool_name>/`
 2. Include a `README.md` (one paragraph: what it does, who calls it, why it exists)

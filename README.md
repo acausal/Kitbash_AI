@@ -37,7 +37,7 @@ Most agent frameworks put the LLM in charge: it plans, calls tools, decides what
 
 ## Status
 
-Last updated: 2026-07-14. This is not a finished system — active development, not a stable release. Component status is tracked on `SOCKET_MAP.md` (per-interface contract map: GREEN = executed passing test suite, YELLOW/RED = wired but not fully verified). What follows is the honest high-level picture.
+Last updated: 2026-07-15. This is not a finished system — active development, not a stable release. Component status is tracked on `SOCKET_MAP.md` (per-interface contract map: GREEN = executed passing test suite, YELLOW/RED = wired but not fully verified). What follows is the honest high-level picture.
 
 **Current milestone:** a working chat front-end exists — `kitbash_cli.py` (stdio JSON) and `kitbash_web.py` (browser POC) — driven by the orchestrator with CARTRIDGE + BITNET + live BitMamba context. Both models are visibly engaged in the web UI. This is a proof-of-concept surface, not the final product.
 
@@ -76,7 +76,12 @@ CARTRIDGE.)
 
 ## Tools (`tools/`)
 
-`tools/` is an isolation-first sandbox (see `tools/README.md` for the full catalog and the Isolation Contract). On 2026-07-14 a self-contained batch of six stateless, deterministic, **stdlib-only** retrieval / IR / stats tools was built there against `SPEC-historical_ai_shared_contract_v1.md`: `frequency_analysis`, `inverted_index_builder`, `boolean_search`, `tfidf_ranker`, `markov_chain`, and `naive_bayes_classifier`. They share `tools/historical_common.py` (config/envelope/CLI boilerplate) and are covered by a durable runner, `tools/run_TEST.py` → **70 PASS / 0 FAIL**. This batch is confined to `tools/`; it does not touch core pipeline or `SOCKET_MAP.md`.
+`tools/` is an isolation-first sandbox (see `tools/README.md` for the full catalog and the Isolation Contract). Two self-contained batches of stateless, deterministic, **stdlib-only** tools were built there against the Historical AI shared contract:
+
+- **Batch 1 (2026-07-14):** six retrieval / IR / stats tools — `frequency_analysis`, `inverted_index_builder`, `boolean_search`, `tfidf_ranker`, `markov_chain`, `naive_bayes_classifier`.
+- **Batch 2 (2026-07-15):** three graph / deduplication tools — `duplicate_detection`, `hypergraph_traversal`, `topological_statistics`.
+
+All nine share `tools/historical_common.py` (config/envelope/CLI boilerplate) and are covered by a durable runner, `tools/run_TEST.py` → **92 PASS / 0 FAIL**. Registry/sieve_hooks integration is deferred to post-1.0. Both batches are confined to `tools/`; they do not touch the core pipeline or `SOCKET_MAP.md`.
 
 ## Influences
 
