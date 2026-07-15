@@ -38,6 +38,17 @@ from heartbeat_service import HeartbeatService
 from metabolism_scheduler import MetabolismScheduler
 from learning_observer import LearningObserver
 
+# Success Signal Integration (SPEC-SUCCESS_SIGNAL_INTEGRATION_v1):
+# non-blocking Dream Bucket writer + coherence heuristic. Both degrade gracefully
+# if unavailable so the answering path is never blocked.
+try:
+    from dream_bucket import DreamBucketWriter
+    from query_completion_heuristic import CoherenceChecker, generate_trace_id
+except ImportError:
+    DreamBucketWriter = None
+    CoherenceChecker = None
+    generate_trace_id = None
+
 # Phase 3B.3: Coupling Geometry Validation
 try:
     from redis_coupling import CouplingValidator
@@ -175,6 +186,15 @@ class QueryOrchestrator:
                 logger.warning(f"Could not initialize coupling validator: {e}")
 
         self.feed = self._init_feed(diagnostic_feed)
+
+        # Success Signal Integration: lazily-held non-blocking Dream Bucket
+        # writer for success_traces. None if dream_bucket unavailable.
+        self._success_writer = None
+        if DreamBucketWriter is not None:
+            try:
+                self._success_writer = DreamBucketWriter("dream_bucket")
+            except Exception as e:
+                logger.warning(f"Could not init success-trace writer: {e}")
 
         self._metrics: Dict[str, Any] = {
             "queries_total": 0,
@@ -334,6 +354,47 @@ class QueryOrchestrator:
             self._metrics["triage_latencies_ms"].append(triage_latency)
             self._metrics["total_latencies_ms"].append(total_latency)
 
+            # Success Signal Integration (SPEC-SUCCESS_SIGNAL_INTEGRATION_v1):
+            # post-answer, non-blocking coherence check. A clean answered query
+            # carries violations_count=0 (user decision A); grains/facts are
+            # pulled from the winning response's metadata. Fully guarded so a
+            # logging failure never breaks answering.
+            if (self._success_writer is not None
+                    and CoherenceChecker is not None
+                    and winning_response is not None
+                    and getattr(winning_response, "answer", None)):
+                try:
+                    checker = CoherenceChecker()
+                    result = checker.check(
+                        violations_count=0,
+                        top_grain_confidence=confidence,
+                        response_length=len(answer.split()),
+                        parse_errors=[],
+                    )
+                    if result.passed:
+                        _md = getattr(winning_response, "metadata", {}) or {}
+                        _facts = [_md["fact_id"]] if _md.get("fact_id") is not None else []
+                        _grains = (
+                            _md["grain_id"] if isinstance(_md.get("grain_id"), list)
+                            else ([_md["grain_id"]] if _md.get("grain_id") is not None else [])
+                        )
+                        from dream_bucket import log_success
+                        log_success(
+                            self._success_writer,
+                            response=answer,
+                            grains=_grains,
+                            facts=_facts,
+                            metadata={
+                                "query_id": query_id,
+                                "engine_name": engine_name,
+                                "coherence_check": result.to_dict(),
+                                "trace_id": generate_trace_id() if generate_trace_id else None,
+                            },
+                            session_id=session_id,
+                        )
+                except Exception as e:
+                    logger.warning(f"Success-signal logging failed (non-blocking): {e}")
+
             # SPEC Step 3: post-answer learning. Failure isolation with LOUD
             # telemetry — learning must never break answering, but a dead
             # observer must scream into the feed + logs every query (never a
@@ -444,6 +505,12 @@ class QueryOrchestrator:
                     writer.close()
                 except Exception as e:
                     logger.warning(f"DreamBucket flush on close failed: {e}")
+        # Flush the success-signal writer (success_traces) the same way.
+        if self._success_writer is not None and hasattr(self._success_writer, "close"):
+            try:
+                self._success_writer.close()
+            except Exception as e:
+                logger.warning(f"Success-trace flush on close failed: {e}")
 
     def get_metrics(self) -> Dict[str, Any]:
         """Return session-level performance metrics."""
