@@ -34,7 +34,7 @@ Structure:
 import json
 import os
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, List, Iterator
 import threading
 from queue import Queue
@@ -100,7 +100,8 @@ class DreamBucketWriter:
         """
         valid_types = {
             "false_positives", "collisions", "violations", 
-            "hypotheses", "traces", "pending_questions", "validated_observations"
+            "hypotheses", "traces", "pending_questions", "validated_observations",
+            "success_traces",
         }
         
         if log_type not in valid_types:
@@ -482,3 +483,52 @@ def log_trace(
         "context": context or {},
     }
     return writer.append("traces", record)
+
+
+def log_success(
+    writer: DreamBucketWriter,
+    response: str,
+    grains: List[Any] = None,
+    facts: List[Any] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+    session_id: Optional[str] = None,
+) -> bool:
+    """Convenience function to log a successful query outcome (success_traces).
+
+    Mirrors the existing violation/false-positive loggers: takes the writer as
+    first arg (non-blocking append) and routes to live/success_traces.jsonl.
+    'grains'/'facts' may be objects with an 'id' attribute or plain ints.
+    """
+    def _ids(items):
+        out = []
+        for it in (items or []):
+            out.append(it.id if hasattr(it, "id") else it)
+        return out
+
+    record = {
+        "type": "success",
+        "outcome": "success",
+        "response": response,
+        "grains_activated": _ids(grains),
+        "facts_used": _ids(facts),
+        "session_id": session_id,
+        "metadata": metadata or {},
+    }
+    return writer.append("success_traces", record)
+
+
+def count_recent_violations(reader: DreamBucketReader, hours: int = 24) -> int:
+    """Count consistency violations logged in the past N hours.
+
+    Uses read_live_log_since over the 'violations' log (non-destructive read).
+    """
+    since = (datetime.utcnow() - timedelta(hours=hours)).isoformat() + "Z"
+    return sum(1 for _ in reader.read_live_log_since("violations", since))
+
+
+def read_success_traces(reader: DreamBucketReader, limit: int = 100) -> List[Dict[str, Any]]:
+    """Read the most recent success traces (newest last), capped at `limit`."""
+    traces = list(reader.read_live_log("success_traces"))
+    if limit is not None:
+        traces = traces[-limit:]
+    return traces
