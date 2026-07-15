@@ -11,11 +11,11 @@ Wiring the LLM into the real triage (_insert_bitnet equivalent) is the
 separate Step-4 ticket; this harness is for live experimentation.
 
 Usage:
-    # server down (verifies fail-loud + construction):
+# server down (verifies fail-loud + construction):
+PYTHONPATH= .venv/Scripts/python.exe smoke_llm_cascade.py
+# server up on :8080 (you stand up llama-server on :8080 with your model):
+KITBASH_LLM_URL=http://127.0.0.1:8080 \
     PYTHONPATH= .venv/Scripts/python.exe smoke_llm_cascade.py
-    # server up (you stand up llama-server on :8081 with your model):
-    KITBASH_LLM_URL=http://127.0.0.1:8081 \
-        PYTHONPATH= .venv/Scripts/python.exe smoke_llm_cascade.py
 
 The harness reports each query's winning engine + answer, and degrades
 gracefully if the LLM server is unreachable (prints the RuntimeError

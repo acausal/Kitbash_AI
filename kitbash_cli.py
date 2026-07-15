@@ -33,6 +33,7 @@ from dataclasses import asdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from query_orchestrator_factory import create_query_orchestrator
+from interfaces.triage_agent import TriageDecision, TriageRequest
 from execution_tracer import (
     ExecutionTracer,
     STEP_QUERY_ENTRY,
@@ -51,15 +52,50 @@ def _emit_stdout(obj: dict) -> None:
 def _build_orchestrator():
     enable_bitnet = os.environ.get("KITBASH_ENABLE_BITNET", "1") != "0"
     enable_mamba = os.environ.get("KITBASH_ENABLE_MAMBA", "1") != "0"
+    # Local LLM (llama.cpp) as the generation tier. Off by default; set
+    # KITBASH_ENABLE_LLM=1 to slot it into the cascade (proposal Step 3/4 POC).
+    enable_llm = os.environ.get("KITBASH_ENABLE_LLM", "0") != "0"
     # Redirect any in-process prints (e.g. MTR state banner) to stderr during
     # build so the stdout chat channel stays clean. Subprocess output (e.g.
     # BitMamba autostart) is already routed to stderr by the engine.
     with contextlib.redirect_stdout(sys.stderr):
-        return create_query_orchestrator(
+        orch = create_query_orchestrator(
             enable_bitnet=enable_bitnet,
             enable_mamba=enable_mamba,
+            enable_llm=enable_llm,
             # BitMamba autostarts its server if not already running.
             mamba_autostart=True,
+        )
+    # When the LLM is enabled, override ONLY the routing decision to include
+    # the LLM in the cascade (GRAIN -> LLM -> CARTRIDGE -> ESCALATE). This is
+    # the POC wiring; the permanent triage change is the separate Step-4 ticket.
+    # (Keep BitNet OFF when your llama.cpp server sits on BitNet's :8080 port,
+    #  so the :8080 endpoint is treated as "LLM", not "BITNET".)
+    if enable_llm:
+        orch.triage_agent = _LLMStubTriage(
+            sequence=["GRAIN", "LLM", "CARTRIDGE", "ESCALATE"],
+            thresholds={"GRAIN": 0.90, "LLM": 0.50, "CARTRIDGE": 0.70},
+        )
+    return orch
+
+
+class _LLMStubTriage:
+    """Minimal triage stub that puts the LLM in the cascade.
+
+    Mirrors what the real RuleBasedTriageAgent would emit once the LLM slot is
+    wired (proposal Step 4). Confidence threshold for LLM is low (0.50) so it
+    actually fires on normal traffic — your call per proposal ~5.3 on the final
+    cascade position/threshold.
+    """
+    def __init__(self, sequence, thresholds):
+        self._seq = sequence
+        self._thr = thresholds
+
+    def route(self, request: TriageRequest) -> TriageDecision:
+        return TriageDecision(
+            layer_sequence=self._seq,
+            confidence_thresholds=self._thr,
+            reasoning="cli stub: LLM in cascade (not BitNet)",
         )
 
 

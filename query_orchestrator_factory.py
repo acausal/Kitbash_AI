@@ -70,7 +70,7 @@ def create_query_orchestrator(
     bitnet_url: str = "http://127.0.0.1:8080",
     bitnet_max_tokens: int = 64,
     enable_llm: bool = False,
-    llm_url: str = "http://127.0.0.1:8081",
+    llm_url: str = "http://127.0.0.1:8080",
     llm_max_tokens: int = 256,
     enable_mamba: bool = False,
     mamba_host: str = "127.0.0.1",

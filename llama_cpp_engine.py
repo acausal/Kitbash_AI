@@ -44,7 +44,7 @@ class LlamaCppEngine(InferenceEngine):
 
         Args:
             server_url: URL of the llama.cpp server. Defaults to the
-                KITBASH_LLM_URL env var, then http://127.0.0.1:8081.
+                KITBASH_LLM_URL env var, then http://127.0.0.1:8080.
             timeout_seconds: Request timeout (local gens can be slow).
             max_tokens: Maximum tokens to generate per query.
             temperature: Sampling temperature (0.0-2.0).
@@ -55,7 +55,7 @@ class LlamaCppEngine(InferenceEngine):
         super().__init__()
 
         self.server_url = (server_url or os.environ.get(
-            "KITBASH_LLM_URL", "http://127.0.0.1:8081"
+            "KITBASH_LLM_URL", "http://127.0.0.1:8080"
         )).rstrip('/')
         self.completion_endpoint = urljoin(self.server_url, '/completion')
         self.timeout_seconds = timeout_seconds
