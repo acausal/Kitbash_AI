@@ -1,0 +1,159 @@
+{
+  "samples": {
+    "corpus": [
+      {
+        "id": "d1",
+        "tokens": [
+          "ai",
+          "ml",
+          "nlp"
+        ]
+      },
+      {
+        "id": "d2",
+        "tokens": [
+          "ml",
+          "cv"
+        ]
+      },
+      {
+        "id": "d3",
+        "tokens": [
+          "ai",
+          "spam"
+        ]
+      },
+      {
+        "id": "d4",
+        "tokens": [
+          "robotics"
+        ]
+      }
+    ],
+    "ast": {
+      "op": "AND",
+      "left": {
+        "op": "OR",
+        "left": {
+          "op": "TERM",
+          "term": "ai"
+        },
+        "right": {
+          "op": "TERM",
+          "term": "ml"
+        }
+      },
+      "right": {
+        "op": "NOT",
+        "left": {
+          "op": "TERM",
+          "term": "spam"
+        }
+      }
+    }
+  },
+  "test_cases": [
+    {
+      "name": "and_terms",
+      "function": "search",
+      "input": {
+        "query": "ai AND ml",
+        "corpus": "__corpus__",
+        "config": {}
+      },
+      "expected_output": {
+        "matching_documents": 1,
+        "match_ids": [
+          "d1"
+        ]
+      }
+    },
+    {
+      "name": "or_terms",
+      "function": "search",
+      "input": {
+        "query": "ai OR cv",
+        "corpus": "__corpus__",
+        "config": {}
+      },
+      "expected_output": {
+        "matching_documents": 3,
+        "match_ids": [
+          "d1",
+          "d2",
+          "d3"
+        ]
+      }
+    },
+    {
+      "name": "not_term",
+      "function": "search",
+      "input": {
+        "query": "ml AND NOT spam",
+        "corpus": "__corpus__",
+        "config": {}
+      },
+      "expected_output": {
+        "matching_documents": 2,
+        "match_ids": [
+          "d1",
+          "d2"
+        ]
+      }
+    },
+    {
+      "name": "parens",
+      "function": "search",
+      "input": {
+        "query": "(ai OR ml) AND NOT spam",
+        "corpus": "__corpus__",
+        "config": {}
+      },
+      "expected_output": {
+        "matching_documents": 2,
+        "match_ids": [
+          "d1",
+          "d2"
+        ]
+      }
+    },
+    {
+      "name": "no_match",
+      "function": "search",
+      "input": {
+        "query": "quantum AND photonics",
+        "corpus": "__corpus__",
+        "config": {}
+      },
+      "expected_output": {
+        "matching_documents": 0
+      }
+    },
+    {
+      "name": "parse_only",
+      "function": "parse_query",
+      "input": {
+        "query": "(ai OR ml) AND NOT spam",
+        "config": {}
+      },
+      "expected_output": {
+        "parse_success": true
+      }
+    },
+    {
+      "name": "exec_one_doc",
+      "function": "execute_query",
+      "input": {
+        "query_ast": "__ast__",
+        "document_tokens": [
+          "ai",
+          "ml"
+        ],
+        "config": {}
+      },
+      "expected_output": {
+        "matched": true
+      }
+    }
+  ]
+}

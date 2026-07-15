@@ -36,7 +36,7 @@ sys.path.insert(0, REPO)
 # heterogeneous fixture conventions are SKIPped, not failed.
 OWNED_PACKAGES = {
     "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
-    "templating", "frequency_analysis", "inverted_index_builder",
+    "templating", "frequency_analysis", "inverted_index_builder", "boolean_search",
 }
 
 # function name -> {fixture_input_key: real_param_name}
@@ -158,7 +158,21 @@ def _check_expected(fn_name, res, exp) -> str:
         if "idf_ge" in exp:
             if not all(v >= exp["idf_ge"] for v in idf.values()):
                 return f"idf min {min(idf.values()) if idf else None}"
-
+    # boolean_search expected_output keys
+    if fn_name == "search":
+        s = res.get("input_summary", {})
+        if "matching_documents" in exp and s.get("matching_documents") != exp["matching_documents"]:
+            return f"matching {s.get('matching_documents')}"
+        if "match_ids" in exp:
+            got = [r["document_id"] for r in res.get("results", [])]
+            if got != exp["match_ids"]:
+                return f"match_ids {got}"
+    if fn_name == "parse_query":
+        if "parse_success" in exp and bool(res.get("input_summary", {}).get("parse_success")) != exp["parse_success"]:
+            return f"parse_success {res.get('input_summary', {}).get('parse_success')}"
+    if fn_name == "execute_query":
+        if "matched" in exp and bool(res.get("matched")) != exp["matched"]:
+            return f"matched {res.get('matched')}"
     # frequency_analysis expected_output keys
     if fn_name in ("analyze_frequencies", "analyze_corpus_frequencies"):
         top = (res.get("top_tokens") or [{}])[0]
