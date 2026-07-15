@@ -1,0 +1,18 @@
+{
+  "samples": {
+    "corpus": [
+      {"id":"d1","tokens":["ai","ml","ai","nlp"]},
+      {"id":"d2","tokens":["ml","cv","robotics"]},
+      {"id":"d3","tokens":["cooking","recipe"]}
+    ]
+  },
+  "test_cases": [
+    {"name":"rank_standard_top","function":"rank_documents","input":{"query":["ai","ml"],"corpus":"__corpus__","config":{"tfidf_variant":"standard"}},"expected_output":{"variant":"standard","top_doc":"d1"}},
+    {"name":"rank_bm25_top","function":"rank_documents","input":{"query":["ai","ml"],"corpus":"__corpus__","config":{"tfidf_variant":"bm25"}},"expected_output":{"variant":"bm25","top_doc":"d1"}},
+    {"name":"rank_sublinear_top","function":"rank_documents","input":{"query":["ai","ml"],"corpus":"__corpus__","config":{"tfidf_variant":"sublinear"}},"expected_output":{"variant":"sublinear","top_doc":"d1"}},
+    {"name":"rank_zero_match","function":"rank_documents","input":{"query":["quantum"],"corpus":"__corpus__","config":{}},"expected_output":{"matching_documents":0}},
+    {"name":"cosine_identical","function":"cosine_similarity","input":{"vector_a":{"a":1.0,"b":2.0},"vector_b":{"a":1.0,"b":2.0}},"expected_output":{"sim":1.0}},
+    {"name":"cosine_orthogonal","function":"cosine_similarity","input":{"vector_a":{"a":1.0},"vector_b":{"b":1.0}},"expected_output":{"sim":0.0}},
+    {"name":"tfidf_vectors","function":"compute_tfidf","input":{"corpus":"__corpus__","config":{}},"expected_output":{"documents":3,"vocab_ge":6}}
+  ]
+}

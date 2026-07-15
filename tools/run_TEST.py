@@ -37,12 +37,14 @@ sys.path.insert(0, REPO)
 OWNED_PACKAGES = {
     "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
     "templating", "frequency_analysis", "inverted_index_builder", "boolean_search",
+    "tfidf_ranker",
 }
 
 # function name -> {fixture_input_key: real_param_name}
 ALIASES = {
     "score_patterns": {"traces": "execution_traces"},
     "add_document": {"index_state": "index"},
+    "cosine_similarity": {"vector_a": "vec_a", "vector_b": "vec_b"},
 }
 
 # result keys that mean "total credit normalized to ~1.0"
@@ -94,6 +96,12 @@ def _check_expected(fn_name, res, exp) -> str:
     """Return '' if ok, else failure detail. Handles fixture expected_output keys."""
     # negative test: expects an exception (handled by caller); nothing to check
     if "raises" in exp:
+        return ""
+    # scalar-result functions return a non-dict (e.g. cosine_similarity -> float)
+    if not isinstance(res, dict):
+        if fn_name == "cosine_similarity" and "sim" in exp:
+            if abs(float(res) - exp["sim"]) > 1e-6:
+                return f"cosine {res}"
         return ""
     # success-trace count (success_pattern_miner)
     if "success_traces_count" in exp:
@@ -199,6 +207,23 @@ def _check_expected(fn_name, res, exp) -> str:
             return f"tokens_needed {ca.get('tokens_needed')}"
         if "coverage_achieved_ge" in exp and not (ca.get("coverage_achieved", 0) >= exp["coverage_achieved_ge"]):
             return f"coverage_achieved {ca.get('coverage_achieved')}"
+    # tfidf_ranker expected_output keys
+    if fn_name == "rank_documents":
+        s = res.get("input_summary", {})
+        if "variant" in exp and s.get("variant") != exp["variant"]:
+            return f"variant {s.get('variant')}"
+        if "matching_documents" in exp and s.get("matching_documents") != exp["matching_documents"]:
+            return f"matching {s.get('matching_documents')}"
+        if "top_doc" in exp:
+            top = (res.get("ranking") or [{}])[0]
+            if top.get("document_id") != exp["top_doc"]:
+                return f"top_doc {top.get('document_id')}"
+    if fn_name == "compute_tfidf":
+        s = res.get("input_summary", {})
+        if "documents" in exp and s.get("documents") != exp["documents"]:
+            return f"documents {s.get('documents')}"
+        if "vocab_ge" in exp and not (s.get("vocabulary_size", 0) >= exp["vocab_ge"]):
+            return f"vocab {s.get('vocabulary_size')}"
     return ""
 
 
