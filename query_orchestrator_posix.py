@@ -55,6 +55,13 @@ try:
 except ImportError:
     CouplingValidator = None  # Graceful degradation if not available
 
+# L5 user-model observation logger (roadmap Phase D2, observation-only).
+# Non-acting: appends per-query session signals; never blocks answering.
+try:
+    from l5_observation_logger import L5ObservationLogger
+except ImportError:
+    L5ObservationLogger = None
+
 logger = logging.getLogger(__name__)
 
 
@@ -195,6 +202,16 @@ class QueryOrchestrator:
                 self._success_writer = DreamBucketWriter("dream_bucket")
             except Exception as e:
                 logger.warning(f"Could not init success-trace writer: {e}")
+
+        # L5 observation logger (Phase D2, observation-only). On by default:
+        # appends per-query session signals to a JSONL log. Never blocks the
+        # answering path. Degrades to None if the module is unavailable.
+        self._l5_logger = None
+        if L5ObservationLogger is not None:
+            try:
+                self._l5_logger = L5ObservationLogger("data/l5_observations.jsonl")
+            except Exception as e:
+                logger.warning(f"Could not init L5 observation logger: {e}")
 
         self._metrics: Dict[str, Any] = {
             "queries_total": 0,
@@ -453,6 +470,18 @@ class QueryOrchestrator:
                     coupling_deltas = self.coupling_validator.get_deltas_for_query(query_id)
                 except Exception as e:
                     logger.debug(f"Could not retrieve coupling deltas: {e}")
+
+            # Phase D2 (L5 user model, observation-only): record per-query
+            # session signals. Non-acting; fully guarded so a logging failure
+            # never blocks answering.
+            if self._l5_logger is not None:
+                try:
+                    self._l5_logger.observe(
+                        query_id, user_query, context, decision,
+                        winning_response, total_latency,
+                    )
+                except Exception as e:
+                    logger.debug(f"L5 observation failed (non-blocking): {e}")
 
             return QueryResult(
                 query_id=query_id,
