@@ -1,0 +1,159 @@
+{
+  "samples": {
+    "hg": {
+      "nodes": [
+        {
+          "id": "A"
+        },
+        {
+          "id": "B"
+        },
+        {
+          "id": "C"
+        },
+        {
+          "id": "D"
+        }
+      ],
+      "hyperedges": [
+        {
+          "id": "e1",
+          "nodes": [
+            "A",
+            "B"
+          ],
+          "weight": 1.0
+        },
+        {
+          "id": "e2",
+          "nodes": [
+            "B",
+            "C"
+          ]
+        },
+        {
+          "id": "e3",
+          "nodes": [
+            "C",
+            "D",
+            "A"
+          ]
+        }
+      ]
+    }
+  },
+  "test_cases": [
+    {
+      "name": "find_neighbors",
+      "function": "find_neighbors",
+      "input": {
+        "graph": "__hg__",
+        "start_node": "A",
+        "max_depth": 2,
+        "config": {}
+      },
+      "expected_output": {
+        "neighbor_count_ge": 2
+      }
+    },
+    {
+      "name": "find_paths",
+      "function": "find_paths",
+      "input": {
+        "graph": "__hg__",
+        "start_node": "A",
+        "end_node": "D",
+        "max_length": 4,
+        "config": {}
+      },
+      "expected_output": {
+        "path_count_ge": 1
+      }
+    },
+    {
+      "name": "reachability",
+      "function": "reachability_analysis",
+      "input": {
+        "graph": "__hg__",
+        "start_node": "A",
+        "config": {}
+      },
+      "expected_output": {
+        "reachable_count": 3,
+        "fully_connected": true
+      }
+    },
+    {
+      "name": "coverage",
+      "function": "hyperedge_coverage",
+      "input": {
+        "graph": "__hg__",
+        "nodes": [
+          "A"
+        ],
+        "config": {}
+      },
+      "expected_output": {
+        "covering_count_ge": 1
+      }
+    },
+    {
+      "name": "node_not_found",
+      "function": "find_neighbors",
+      "input": {
+        "graph": "__hg__",
+        "start_node": "Z",
+        "config": {}
+      },
+      "expected_output": {
+        "raises": "ValueError"
+      }
+    },
+    {
+      "name": "malformed_edge",
+      "function": "find_neighbors",
+      "input": {
+        "graph": {
+          "nodes": [
+            {
+              "id": "A"
+            }
+          ],
+          "hyperedges": [
+            {
+              "id": "e",
+              "nodes": [
+                "A",
+                "Z"
+              ]
+            }
+          ]
+        },
+        "start_node": "A",
+        "config": {}
+      },
+      "expected_output": {
+        "raises": "ValueError"
+      }
+    },
+    {
+      "name": "empty_hg",
+      "function": "reachability_analysis",
+      "input": {
+        "graph": {
+          "nodes": [
+            {
+              "id": "A"
+            }
+          ],
+          "hyperedges": []
+        },
+        "start_node": "A",
+        "config": {}
+      },
+      "expected_output": {
+        "raises": "ValueError"
+      }
+    }
+  ]
+}

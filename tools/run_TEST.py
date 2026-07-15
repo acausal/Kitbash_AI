@@ -38,6 +38,7 @@ OWNED_PACKAGES = {
     "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
     "templating", "frequency_analysis", "inverted_index_builder", "boolean_search",
     "tfidf_ranker", "markov_chain", "naive_bayes_classifier", "duplicate_detection",
+    "hypergraph_traversal",
 }
 
 # function name -> {fixture_input_key: real_param_name}
@@ -280,6 +281,19 @@ def _check_expected(fn_name, res, exp) -> str:
             return f"group_count {s.get('duplicate_group_count')} < {exp['group_count_ge']}"
         if "total_dups" in exp and s.get("total_duplicate_documents") != exp["total_dups"]:
             return f"total_dups {s.get('total_duplicate_documents')}"
+    # hypergraph_traversal expected_output keys
+    if fn_name in ("find_neighbors", "find_paths", "reachability_analysis", "hyperedge_coverage"):
+        s = res.get("summary", {})
+        if "neighbor_count_ge" in exp and not (s.get("neighbor_count", 0) >= exp["neighbor_count_ge"]):
+            return f"neighbor_count {s.get('neighbor_count')}"
+        if "path_count_ge" in exp and not (s.get("path_count", 0) >= exp["path_count_ge"]):
+            return f"path_count {s.get('path_count')}"
+        if "reachable_count" in exp and s.get("reachable_count") != exp["reachable_count"]:
+            return f"reachable_count {s.get('reachable_count')}"
+        if "fully_connected" in exp and bool(s.get("is_fully_connected_from_start")) != bool(exp["fully_connected"]):
+            return f"fully_connected {s.get('is_fully_connected_from_start')}"
+        if "covering_count_ge" in exp and not (s.get("covering_hyperedge_count", 0) >= exp["covering_count_ge"]):
+            return f"covering_count {s.get('covering_hyperedge_count')}"
     return ""
 
 
