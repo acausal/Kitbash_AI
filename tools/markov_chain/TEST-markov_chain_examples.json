@@ -1,0 +1,216 @@
+{
+  "samples": {
+    "seqs": [
+      [
+        "ai",
+        "ml",
+        "nlp"
+      ],
+      [
+        "ai",
+        "ml",
+        "cv"
+      ],
+      [
+        "ai",
+        "cv",
+        "robotics"
+      ]
+    ],
+    "chain": {
+      "input_summary": {
+        "sequences": 3,
+        "order": 1,
+        "vocabulary_size": 5,
+        "total_pairs": 6
+      },
+      "transitions": {
+        "ai": {
+          "total_out": 3,
+          "distribution": {
+            "ml": 0.6666666666666666,
+            "cv": 0.3333333333333333
+          }
+        },
+        "ml": {
+          "total_out": 2,
+          "distribution": {
+            "nlp": 0.5,
+            "cv": 0.5
+          }
+        },
+        "cv": {
+          "total_out": 1,
+          "distribution": {
+            "robotics": 1.0
+          }
+        }
+      },
+      "metadata": {
+        "computation_time_ms": 0,
+        "config_used": {
+          "lowercase": true,
+          "remove_stopwords": false,
+          "stopword_list": [
+            "that",
+            "into",
+            "and",
+            "them",
+            "your",
+            "was",
+            "are",
+            "they",
+            "but",
+            "did",
+            "those",
+            "or",
+            "we",
+            "from",
+            "as",
+            "will",
+            "could",
+            "this",
+            "else",
+            "at",
+            "his",
+            "i",
+            "than",
+            "would",
+            "been",
+            "to",
+            "not",
+            "the",
+            "an",
+            "then",
+            "being",
+            "be",
+            "yes",
+            "these",
+            "so",
+            "is",
+            "he",
+            "does",
+            "had",
+            "it",
+            "might",
+            "can",
+            "has",
+            "for",
+            "on",
+            "her",
+            "in",
+            "should",
+            "have",
+            "our",
+            "a",
+            "do",
+            "by",
+            "their",
+            "must",
+            "with",
+            "you",
+            "of",
+            "no",
+            "may",
+            "were",
+            "if",
+            "she",
+            "its"
+          ],
+          "min_token_length": 1,
+          "max_token_length": null,
+          "top_k": 10,
+          "threshold": 0.0,
+          "verbose": false,
+          "order": 1
+        },
+        "smoothing": 0.0
+      }
+    }
+  },
+  "test_cases": [
+    {
+      "name": "build_order1",
+      "function": "build_chain",
+      "input": {
+        "sequences": "__seqs__",
+        "config": {
+          "order": 1
+        }
+      },
+      "expected_output": {
+        "order": 1,
+        "vocab_ge": 5,
+        "has_context": "ai"
+      }
+    },
+    {
+      "name": "build_order2",
+      "function": "build_chain",
+      "input": {
+        "sequences": "__seqs__",
+        "config": {
+          "order": 2
+        }
+      },
+      "expected_output": {
+        "order": 2
+      }
+    },
+    {
+      "name": "entropy",
+      "function": "compute_entropy",
+      "input": {
+        "chain": "__chain__",
+        "config": {}
+      },
+      "expected_output": {
+        "avg_entropy_ge": 0
+      }
+    },
+    {
+      "name": "next_dist",
+      "function": "next_token_distribution",
+      "input": {
+        "chain": "__chain__",
+        "context": [
+          "ai"
+        ]
+      },
+      "expected_output": {
+        "dist_sum_eq": 1.0
+      }
+    },
+    {
+      "name": "gen_deterministic",
+      "function": "generate_sequence",
+      "input": {
+        "chain": "__chain__",
+        "seed_context": [
+          "ai"
+        ],
+        "length": 4,
+        "seed": 42
+      },
+      "expected_output": {
+        "deterministic": true,
+        "gen_len": 2
+      }
+    },
+    {
+      "name": "gen_empty",
+      "function": "generate_sequence",
+      "input": {
+        "chain": "__chain__",
+        "seed_context": [
+          "zzz"
+        ],
+        "length": 4,
+        "seed": 1
+      },
+      "expected_output": {
+        "stopped": true
+      }
+    }
+  ]
+}

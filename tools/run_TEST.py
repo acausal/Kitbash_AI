@@ -37,7 +37,7 @@ sys.path.insert(0, REPO)
 OWNED_PACKAGES = {
     "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
     "templating", "frequency_analysis", "inverted_index_builder", "boolean_search",
-    "tfidf_ranker",
+    "tfidf_ranker", "markov_chain",
 }
 
 # function name -> {fixture_input_key: real_param_name}
@@ -224,6 +224,30 @@ def _check_expected(fn_name, res, exp) -> str:
             return f"documents {s.get('documents')}"
         if "vocab_ge" in exp and not (s.get("vocabulary_size", 0) >= exp["vocab_ge"]):
             return f"vocab {s.get('vocabulary_size')}"
+    # markov_chain expected_output keys
+    if fn_name == "build_chain":
+        s = res.get("input_summary", {})
+        if "order" in exp and s.get("order") != exp["order"]:
+            return f"order {s.get('order')}"
+        if "vocab_ge" in exp and not (s.get("vocabulary_size", 0) >= exp["vocab_ge"]):
+            return f"vocab {s.get('vocabulary_size')}"
+        if "has_context" in exp and exp["has_context"] not in res.get("transitions", {}):
+            return f"missing context {exp['has_context']}"
+    if fn_name == "compute_entropy":
+        if "avg_entropy_ge" in exp and not (res.get("average_entropy", -1) >= exp["avg_entropy_ge"]):
+            return f"avg_entropy {res.get('average_entropy')}"
+    if fn_name == "next_token_distribution":
+        if "dist_sum_eq" in exp:
+            total = sum(res.values())
+            if abs(total - exp["dist_sum_eq"]) > 1e-6:
+                return f"dist sum {total}"
+    if fn_name == "generate_sequence":
+        s = res.get("input_summary", {})
+        if "gen_len" in exp and s.get("generated_tokens") != exp["gen_len"]:
+            return f"gen_len {s.get('generated_tokens')}"
+        if "stopped" in exp and exp["stopped"] is True:
+            if s.get("generated_tokens", 0) > 0:
+                return f"expected stop, got {s.get('generated_tokens')} tokens"
     return ""
 
 
@@ -284,6 +308,11 @@ def main() -> int:
                     continue
                 res = fn(**kwargs)
                 detail = _check_expected(fn_name, res, exp)
+                # determinism re-check (e.g. seeded generation must reproduce)
+                if detail == "" and exp.get("deterministic") and fn_name == "generate_sequence":
+                    rerun = fn(**kwargs)
+                    if rerun.get("generated_sequence") != res.get("generated_sequence"):
+                        detail = "non-deterministic re-run"
                 results.append((fx, fn_name, detail == "", detail))
             except Exception as e:
                 results.append((fx, fn_name, False, f"{type(e).__name__}: {e}"))
