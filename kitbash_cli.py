@@ -27,11 +27,19 @@ import json
 import logging
 import time
 import contextlib
+from dataclasses import asdict
 
 # Make repo root importable when run as a bare script.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from query_orchestrator_factory import create_query_orchestrator
+from execution_tracer import (
+    ExecutionTracer,
+    STEP_QUERY_ENTRY,
+    STEP_MAMBA_CONTEXT,
+    STEP_ENGINE_CASCADE,
+    STEP_FINAL_ASSEMBLY,
+)
 
 
 def _emit_stdout(obj: dict) -> None:
@@ -68,11 +76,63 @@ def _chunk(text: str, size: int = 12):
         yield buf
 
 
+def _ms_since(t0: float) -> int:
+    """Milliseconds since perf_counter t0."""
+    return int((time.perf_counter() - t0) * 1000)
+
+
 def handle_query(orchestrator, user_query: str) -> None:
-    """Run one query; emit chat JSON on stdout, ops already on stderr."""
+    """Run one query; emit chat JSON on stdout, ops already on stderr.
+
+    Also emits `trace_event` NDJSON lines (BEFORE answer_done) so the web UI can
+    show intermediate pipeline steps. Tracing is additive: it never changes the
+    chat channel shape, and failures are swallowed so tracing can't break answers.
+    """
+    tracer = ExecutionTracer()
     t0 = time.perf_counter()
-    result = orchestrator.process_query(user_query)
-    latency_ms = (time.perf_counter() - t0) * 1000
+
+    # Step 1: query entry
+    tracer.trace(STEP_QUERY_ENTRY, {"query": user_query},
+                 {"query_len": len(user_query)}, 0)
+
+    try:
+        result = orchestrator.process_query(user_query)
+    except Exception as e:
+        # Still emit whatever we traced, then let the caller handle the error.
+        for ev in tracer.events():
+            _emit_stdout({"type": "trace_event", **asdict(ev)})
+        raise
+
+    total_ms = (time.perf_counter() - t0) * 1000
+
+    # Step 2: mamba context (what we can see on QueryResult)
+    tracer.trace(STEP_MAMBA_CONTEXT,
+                 {"query": user_query},
+                 {"mamba_injected": getattr(result, "mamba_injected", False)},
+                 _ms_since(t0))
+
+    # Step 3: engine cascade (from result.layer_results)
+    layers = [
+        {"engine": a.engine_name, "confidence": a.confidence,
+         "passed": a.passed, "latency_ms": a.latency_ms}
+        for a in (getattr(result, "layer_results", None) or [])
+    ]
+    tracer.trace(STEP_ENGINE_CASCADE,
+                 {"query": user_query},
+                 {"layers": layers},
+                 _ms_since(t0),
+                 {"num_layers": len(layers)})
+
+    # Step 4: final assembly
+    tracer.trace(STEP_FINAL_ASSEMBLY,
+                 {"engine": result.engine_name, "confidence": result.confidence},
+                 {"answer_len": len(result.answer or "")},
+                 round(total_ms, 1),
+                 {"total_latency_ms": round(total_ms, 1), "query_id": result.query_id})
+
+    # Emit trace events as NDJSON (before answer_done so the UI can capture them).
+    for ev in tracer.events():
+        _emit_stdout({"type": "trace_event", **asdict(ev)})
 
     answer = result.answer or ""
     # v1 fake streaming: emit chunks so the UI can render progressively.
@@ -85,13 +145,13 @@ def handle_query(orchestrator, user_query: str) -> None:
         "engine": result.engine_name,
         "confidence": result.confidence,
         "mamba_injected": getattr(result, "mamba_injected", False),
-        "total_latency_ms": round(latency_ms, 1),
+        "total_latency_ms": round(total_ms, 1),
     })
     # Ops note on stderr (chat channel stays clean).
     logging.info(
         "query=%s engine=%s conf=%.3f latency_ms=%.1f layers=%d",
         result.query_id[:8], result.engine_name, result.confidence,
-        latency_ms, len(result.layer_results),
+        total_ms, len(result.layer_results),
     )
 
 
