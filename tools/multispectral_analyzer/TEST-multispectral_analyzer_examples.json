@@ -1,0 +1,103 @@
+{
+  "test_cases": [
+    {
+      "name": "text_basic",
+      "function": "analyze_multispectral",
+      "input": {
+        "data": "The cat sat on the mat",
+        "data_type": "text",
+        "spectrum_config": {
+          "enabled": [
+            "surface",
+            "entities",
+            "semantics",
+            "epistemic",
+            "frequency",
+            "semantic_weight"
+          ],
+          "disabled": []
+        },
+        "detect_divergence": true
+      },
+      "expected_output": {
+        "spectra_succeeded": 6,
+        "spectra_attempted": 6,
+        "has_signature": true,
+        "fingerprint_present": true,
+        "divergence_count": 0
+      }
+    },
+    {
+      "name": "negation_heavy",
+      "function": "analyze_multispectral",
+      "input": {
+        "data": "The system did NOT work and it wasn't safe; nothing was correct.",
+        "data_type": "text",
+        "spectrum_config": {
+          "enabled": [
+            "surface",
+            "entities",
+            "semantics",
+            "epistemic",
+            "frequency",
+            "semantic_weight"
+          ],
+          "disabled": []
+        },
+        "detect_divergence": true
+      },
+      "expected_output": {
+        "spectra_succeeded": 6,
+        "spectra_attempted": 6,
+        "has_signature": true,
+        "fingerprint_present": true,
+        "divergence_count": 0
+      }
+    },
+    {
+      "name": "config_override",
+      "function": "analyze_multispectral",
+      "input": {
+        "data": "Alpha beta gamma delta.",
+        "data_type": "text",
+        "spectrum_config": {
+          "enabled": [
+            "surface",
+            "frequency"
+          ],
+          "disabled": [
+            "entities",
+            "semantics",
+            "epistemic",
+            "semantic_weight"
+          ]
+        },
+        "detect_divergence": true
+      },
+      "expected_output": {
+        "spectra_succeeded": 2,
+        "spectra_attempted": 2,
+        "has_signature": true,
+        "fingerprint_present": true,
+        "divergence_count": 0,
+        "only_these_spectra": [
+          "surface",
+          "frequency"
+        ]
+      }
+    },
+    {
+      "name": "empty_input",
+      "function": "analyze_multispectral",
+      "input": {
+        "data": "   ",
+        "data_type": "text",
+        "spectrum_config": null,
+        "detect_divergence": true
+      },
+      "expected_output": {
+        "raises": "ValueError"
+      }
+    }
+  ]
+}

@@ -38,7 +38,7 @@ OWNED_PACKAGES = {
     "success_pattern_miner", "positive_signal_scorer", "causal_credit_attribution",
     "templating", "frequency_analysis", "inverted_index_builder", "boolean_search",
     "tfidf_ranker", "markov_chain", "naive_bayes_classifier", "duplicate_detection",
-    "hypergraph_traversal", "topological_statistics",
+    "hypergraph_traversal", "topological_statistics", "multispectral_analyzer",
 }
 
 # function name -> {fixture_input_key: real_param_name}
@@ -294,7 +294,23 @@ def _check_expected(fn_name, res, exp) -> str:
             return f"fully_connected {s.get('is_fully_connected_from_start')}"
         if "covering_count_ge" in exp and not (s.get("covering_hyperedge_count", 0) >= exp["covering_count_ge"]):
             return f"covering_count {s.get('covering_hyperedge_count')}"
-    # topological_statistics expected_output keys
+    # multispectral_analyzer expected_output keys (nested under 'execution_summary' / top-level)
+    if fn_name == "analyze_multispectral":
+        es = res.get("execution_summary", {})
+        if "spectra_succeeded" in exp and es.get("spectra_succeeded") != exp["spectra_succeeded"]:
+            return f"spectra_succeeded {es.get('spectra_succeeded')}"
+        if "spectra_attempted" in exp and es.get("spectra_attempted") != exp["spectra_attempted"]:
+            return f"spectra_attempted {es.get('spectra_attempted')}"
+        if "has_signature" in exp and bool(res.get("fingerprint", {}).get("signature")) != exp["has_signature"]:
+            return "signature missing"
+        if "fingerprint_present" in exp and bool(res.get("fingerprint", {}).get("hash")) != exp["fingerprint_present"]:
+            return "fingerprint hash missing"
+        if "divergence_count" in exp and len(res.get("divergence_flags", [])) != exp["divergence_count"]:
+            return f"divergence_count {len(res.get('divergence_flags', []))}"
+        if "only_these_spectra" in exp:
+            present = set(res.get("spectral_results", {}).keys())
+            if present != set(exp["only_these_spectra"]):
+                return f"spectra {sorted(present)} != {exp['only_these_spectra']}"
     if fn_name in ("compute_degree_stats", "compute_clustering_coefficients",
                   "compute_path_lengths", "compute_centrality", "analyze_components"):
         s = res.get("summary", {})
