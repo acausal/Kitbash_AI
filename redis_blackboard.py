@@ -23,7 +23,7 @@ from redis import Redis
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Stream-format envelope (done/SPEC_STREAM_FORMAT.md §1)
+# Stream-format envelope (docs/done/SPEC_STREAM_FORMAT.md §1)
 # Every bus value is wrapped {v, schema, produced_at, producer, data}.
 # Unknown envelope version or payload version is loud-rejected — never
 # best-effort parsed (this is the v6 failure mode the spec guards against).
